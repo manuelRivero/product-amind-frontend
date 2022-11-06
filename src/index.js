@@ -15,30 +15,35 @@
 * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 */
-import React from "react";
-import ReactDOM from "react-dom";
-import { BrowserRouter, Route, Switch, Redirect } from "react-router-dom";
+import React from 'react'
+import ReactDOM from 'react-dom'
+import { BrowserRouter, Route, Switch, Redirect } from 'react-router-dom'
 
 // core components
-import Admin from "layouts/Admin.js";
-import RTL from "layouts/RTL.js";
+import Admin from 'layouts/Admin.js'
+import RTL from 'layouts/RTL.js'
 
-import "assets/css/material-dashboard-react.css?v=1.10.0";
-import Auth from "layouts/Auth";
-import { ThemeProvider } from "@material-ui/core";
-import theme from "theme";
+import 'assets/css/material-dashboard-react.css?v=1.10.0'
+import Auth from 'layouts/Auth'
+import { ThemeProvider } from '@material-ui/core'
+import theme from 'theme'
+
+//redux
+import { store } from './store'
+import { Provider } from 'react-redux'
 
 ReactDOM.render(
-  <ThemeProvider theme={theme}>
-
-  <BrowserRouter>
-    <Switch>
-    <Route path="/auth" component={Auth} />
-      <Route path="/admin" component={Admin} />
-      <Route path="/rtl" component={RTL} />
-      <Redirect from="/" to="/admin/dashboard" />
-    </Switch>
-  </BrowserRouter>
-</ThemeProvider>,
-  document.getElementById("root")
-);
+    <Provider store={store}>
+        <ThemeProvider theme={theme}>
+            <BrowserRouter>
+                <Switch>
+                    <Route path="/auth" component={Auth} />
+                    <Route path="/admin" component={Admin} />
+                    <Route path="/rtl" component={RTL} />
+                    <Redirect from="/" to="/admin/dashboard" />
+                </Switch>
+            </BrowserRouter>
+        </ThemeProvider>
+    </Provider>,
+    document.getElementById('root')
+)
