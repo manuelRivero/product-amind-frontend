@@ -20,10 +20,13 @@ import CustomInput from "components/CustomInput/CustomInput.js";
 import Button from "components/CustomButtons/Button.js";
 
 import styles from "assets/jss/material-dashboard-react/components/headerLinksStyle.js";
+import { logout } from "store/auth";
+import { useDispatch } from "react-redux";
 
 const useStyles = makeStyles(styles);
 
 export default function AdminNavbarLinks() {
+  const dispatch = useDispatch()
   const classes = useStyles();
   const [openNotification, setOpenNotification] = React.useState(null);
   const [openProfile, setOpenProfile] = React.useState(null);
@@ -207,7 +210,7 @@ export default function AdminNavbarLinks() {
                     </MenuItem>
                     <Divider light />
                     <MenuItem
-                      onClick={handleCloseProfile}
+                      onClick={()=>{handleCloseProfile(); dispatch(logout())}}
                       className={classes.dropdownItem}
                     >
                       Logout

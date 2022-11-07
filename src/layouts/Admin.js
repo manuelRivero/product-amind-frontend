@@ -17,6 +17,8 @@ import styles from 'assets/jss/material-dashboard-react/layouts/adminStyle.js'
 
 import bgImage from 'assets/img/sidebar-2.jpg'
 import logo from 'assets/img/reactlogo.png'
+import { useSelector } from 'react-redux'
+import { useHistory } from 'react-router-dom/cjs/react-router-dom.min'
 
 let ps
 
@@ -41,6 +43,12 @@ const switchRoutes = (
 const useStyles = makeStyles(styles)
 
 export default function Admin({ ...rest }) {
+
+    //router
+    const history = useHistory()
+    //redux
+    const {user} = useSelector(state => state.auth)
+
     // styles
     const classes = useStyles()
     // ref to help us initialize PerfectScrollbar on windows devices
@@ -92,6 +100,9 @@ export default function Admin({ ...rest }) {
             window.removeEventListener('resize', resizeFunction)
         }
     }, [mainPanel])
+    if(!user){
+        history.push("/auth/login")
+    }
     return (
         <div className={classes.wrapper}>
             <Sidebar

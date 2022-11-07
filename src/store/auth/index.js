@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
-
+import { history } from './../../index';
 // api
 const getUSer = () =>{
     const user = window.localStorage.getItem('PRODUCT-ADMIN-USER');
@@ -25,7 +25,13 @@ export const login = createAsyncThunk(
 export const authSlice = createSlice({
     name:"auth",
     initialState,
-    reducers: {},
+    reducers: {
+        logout: (state)=>{
+            state.user= null;
+            localStorage.removeItem('PRODUCT-ADMIN-USER');
+            history.push("/auth/login");
+        }
+    },
     extraReducers: {
         [login.pending]: (state) => {
             state.loadingLogin = true
@@ -42,7 +48,6 @@ export const authSlice = createSlice({
         },
     },
 })
-
-// export {} = authSlice.actions
+export const { logout } = authSlice.actions;
 
 export default authSlice.reducer

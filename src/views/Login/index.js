@@ -59,12 +59,15 @@ export default function Login() {
         try {
             const response = await dispatch(login({ data: values }))
             if (response.type === 'login/rejected') {
-                console.log("payload", response.payload)
-               throw new Error(response.payload.message)
+                console.log('payload', response.payload)
+                if (response.payload?.message) {
+                    throw new Error(response.payload.message)
+                } else {
+                    throw new Error('Error al iniciar sesión')
+                }
             }
-            history.push("/admin")
+            history.push('/admin')
         } catch (error) {
-            console.log("error", error.message)
             setFormAlert(error.message)
         }
     }
@@ -84,7 +87,7 @@ export default function Login() {
                                         fullWidth
                                         value={field.value}
                                         onChange={(e) => field.onChange(e)}
-                                        id="outlined-basic"
+                                        id="email"
                                         label="Email"
                                         variant="outlined"
                                     />
@@ -109,7 +112,7 @@ export default function Login() {
                                         fullWidth
                                         value={field.value}
                                         onChange={(e) => field.onChange(e)}
-                                        id="outlined-basic"
+                                        id="password"
                                         label="Contraseña"
                                         variant="outlined"
                                     />

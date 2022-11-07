@@ -32,10 +32,15 @@ import theme from 'theme'
 import { store } from './store'
 import { Provider } from 'react-redux'
 
+//
+import { createBrowserHistory } from "history";
+
+export const history = createBrowserHistory();
+
 ReactDOM.render(
     <Provider store={store}>
         <ThemeProvider theme={theme}>
-            <BrowserRouter>
+            <BrowserRouter history={history}>
                 <Switch>
                     <Route path="/auth" component={Auth} />
                     <Route path="/admin" component={Admin} />
