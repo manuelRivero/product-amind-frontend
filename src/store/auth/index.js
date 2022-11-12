@@ -38,9 +38,9 @@ export const authSlice = createSlice({
         },
         [login.fulfilled]: (state, action) => {
             state.loadingLogin = false
-            const {token, role} = action.payload.data.token
+            const {token, role} = action.payload.data
             state.user = {token, role}
-            const parseUser = JSON.stringify({...state.user})
+            const parseUser = JSON.stringify({token, role})
             localStorage.setItem('PRODUCT-ADMIN-USER', parseUser)
         },
         [login.rejected]: (state) => {
