@@ -11,12 +11,13 @@ const useStyles = makeStyles({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        width: "100%"
+        width: '100%',
     },
     settingButton: {
         cursor: 'pointer',
     },
     menu: {
+        right: 0,
         position: 'absolute',
         bottom: 0,
         backgroundColor: 'white',
@@ -31,12 +32,16 @@ const useStyles = makeStyles({
         marginBottom: '1rem',
         cursor: 'pointer',
         padding: '.25rem',
+        borderRadius: '.25rem',
         '& > p': {
             margin: 0,
         },
         '&:hover': {
             backgroundColor: '#c2c2c2',
         },
+    },
+    active: {
+        backgroundColor: '#c2c2c2',
     },
     range: {
         '& > p': {
@@ -58,10 +63,12 @@ export default function TotalSalesSelect() {
     //states
     const [isOpen, setIsOpen] = useState(false)
     const [selectedRange, setSelectedRange] = useState('Ultimos 7 dias')
+    const [selectedValue, setSelectedValue] = useState('week')
 
     const onChange = (value) => {
         dispatch(getSalesByDate({ access: user.token, from: value }))
         setSelectedRange(ranges[value])
+        setSelectedValue(value)
     }
     return (
         <Box className={classes.root}>
@@ -78,19 +85,28 @@ export default function TotalSalesSelect() {
                 <Box className={classes.menu}>
                     <Box
                         onClick={() => onChange('week')}
-                        className={classes.menuOption}
+                        className={[
+                            classes.menuOption,
+                            selectedValue === 'week' ? classes.active : '',
+                        ].join(' ')}
                     >
                         <p>Ultimos 7 días</p>
                     </Box>
                     <Box
                         onClick={() => onChange('month')}
-                        className={classes.menuOption}
+                        className={[
+                            classes.menuOption,
+                            selectedValue === 'month' ? classes.active : '',
+                        ].join(' ')}
                     >
                         <p>Ultimos 30 días</p>
                     </Box>
                     <Box
                         onClick={() => onChange('year')}
-                        className={classes.menuOption}
+                        className={[
+                            classes.menuOption,
+                            selectedValue === 'year' ? classes.active : '',
+                        ].join(' ')}
                     >
                         <p>Ultimo año</p>
                     </Box>
