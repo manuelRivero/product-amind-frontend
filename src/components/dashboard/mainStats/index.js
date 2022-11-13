@@ -19,6 +19,7 @@ import { makeStyles } from '@material-ui/core/styles'
 import styles from 'assets/jss/material-dashboard-react/views/dashboardStyle.js'
 import { useDispatch, useSelector } from 'react-redux'
 import { getStats } from 'store/dashboard'
+import TotalSalesSelect from '../totalSalesSelect'
 
 const useStyles = makeStyles(styles)
 
@@ -27,7 +28,6 @@ export default function MainStats() {
     const dispatch = useDispatch()
     const { user } = useSelector((state) => state.auth)
     const { salesStats, users } = useSelector((state) => state.dashboard)
-    console.log('salesStats from main staks', salesStats)
     const classes = useStyles()
 
     useEffect(() => {
@@ -48,9 +48,7 @@ export default function MainStats() {
                         <h3 className={classes.cardTitle}>{salesStats}</h3>
                     </CardHeader>
                     <CardFooter stats>
-                        <div className={classes.stats}>
-                            Los ultimos 7 días
-                        </div>
+                        <TotalSalesSelect/>
                     </CardFooter>
                 </Card>
             </GridItem>

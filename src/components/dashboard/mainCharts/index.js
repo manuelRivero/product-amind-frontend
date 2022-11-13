@@ -30,7 +30,7 @@ export default function MainCharts() {
             setDailyChartData(series)
         }
     }, [dailySales])
-    console.log('dailySales', dailyChartData)
+
     return (
         <GridContainer>
             <GridItem xs={12} sm={12} md={4}>

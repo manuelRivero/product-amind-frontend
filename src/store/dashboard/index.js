@@ -15,12 +15,22 @@ export const getStats = createAsyncThunk(
     async (args, { rejectWithValue }) => {
         try {
             const [salesStats, users, dailySales] = await Promise.all([
-                getSalesStats(args.access),
+                getSalesStats(args.access, "week"),
                 getUSers(args.access),
                 getDailySales(args.access)
             ])
-            console.log(salesStats, users)
             return [salesStats, users, dailySales]
+        } catch (error) {
+            return rejectWithValue(error.response.data)
+        }
+    }
+)
+export const getSalesByDate = createAsyncThunk(
+    '/get/getSalesByDate',
+    async (args, { rejectWithValue }) => {
+        try {
+            const response = await getSalesStats(args.access, args.from)
+            return response 
         } catch (error) {
             return rejectWithValue(error.response.data)
         }
@@ -37,12 +47,23 @@ export const dashboardSlice = createSlice({
         },
         [getStats.fulfilled]: (state, action) => {
             state.loadingStats = false
-            console.log('action', action.payload)
+            console.log("getStats action", action)
+
             state.salesStats = action.payload[0].data.total
             state.users = action.payload[1].data.users
             state.dailySales = action.payload[2].data.sales
         },
         [getStats.rejected]: (state) => {
+            state.loadingStats = false
+        },
+        [getSalesByDate.pending]: (state) => {
+            state.loadingStats = true
+        },
+        [getSalesByDate.fulfilled]: (state, action) => {
+            state.loadingStats = false
+            state.salesStats = action.payload.data.total
+        },
+        [getSalesByDate.rejected]: (state) => {
             state.loadingStats = false
         },
     },

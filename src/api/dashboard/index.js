@@ -1,9 +1,9 @@
 import client from 'api/client'
 
-export const getSalesStats = (access) => {
+export const getSalesStats = (access, from) => {
     return client.get(`api/sale/byDate`, {
         params: {
-            from: 'week',
+            from,
         },
         headers:{
             "x-token": access
