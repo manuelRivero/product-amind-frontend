@@ -1,13 +1,14 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { getDailySales } from 'api/dashboard'
 import { getUSers } from 'api/dashboard'
-import { getSalesStats } from 'api/dashboard'
+import { getSalesStats, getNotifications as getNotificationsRequest } from 'api/dashboard'
 
 const initialState = {
     salesStats: null,
     loadingStats: true,
     users: null,
-    dailySales: null
+    dailySales: null,
+    notifications:[]
 }
 
 export const getStats = createAsyncThunk(
@@ -36,11 +37,36 @@ export const getSalesByDate = createAsyncThunk(
         }
     }
 )
+export const getNotifications = createAsyncThunk(
+    '/get/notifications',
+    async (args, { rejectWithValue }) => {
+        try {
+            const response = await getNotificationsRequest(args.access, args.page)
+            return response 
+        } catch (error) {
+            return rejectWithValue(error.response.data)
+        }
+    }
+)
 
 export const dashboardSlice = createSlice({
     name: 'dashboard',
     initialState,
-    reducers: {},
+    reducers: {
+        userAdded : (state, action) =>{
+            state.users = [...state.users, action.payload]
+        },
+        notificationAdded : (state, action) =>{
+            console.log("notification added action", action)
+
+            state.notifications = [...state.notifications, action.payload]
+        },
+        setReadednotification : (state, action) =>{
+            console.log("notification added action", action)
+            const newNotifications = [...state.notifications].map(e => ({...e, readed: true}))
+            state.notifications = newNotifications
+        } 
+    },
     extraReducers: {
         [getStats.pending]: (state) => {
             state.loadingStats = true
@@ -66,8 +92,18 @@ export const dashboardSlice = createSlice({
         [getSalesByDate.rejected]: (state) => {
             state.loadingStats = false
         },
+        [getNotifications.pending]: (state) => {
+            state.loadingNotifications = true
+        },
+        [getNotifications.fulfilled]: (state, action) => {
+            state.loadingNotifications = false
+            state.notifications = action.payload.data.notifications
+        },
+        [getNotifications.rejected]: (state) => {
+            state.loadingNotifications = false
+        },
     },
 })
-export const { logout } = dashboardSlice.actions
+export const { userAdded, notificationAdded, setReadednotification } = dashboardSlice.actions
 
 export default dashboardSlice.reducer

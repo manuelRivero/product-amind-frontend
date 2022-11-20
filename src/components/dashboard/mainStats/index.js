@@ -20,6 +20,10 @@ import styles from 'assets/jss/material-dashboard-react/views/dashboardStyle.js'
 import { useDispatch, useSelector } from 'react-redux'
 import { getStats } from 'store/dashboard'
 import TotalSalesSelect from '../totalSalesSelect'
+import io from 'socket.io-client'
+import { userAdded } from 'store/dashboard'
+
+const socket = io('ws://localhost:5000')
 
 const useStyles = makeStyles(styles)
 
@@ -28,10 +32,23 @@ export default function MainStats() {
     const dispatch = useDispatch()
     const { user } = useSelector((state) => state.auth)
     const { salesStats, users } = useSelector((state) => state.dashboard)
+    //clasess
     const classes = useStyles()
+    //states
 
     useEffect(() => {
         dispatch(getStats({ access: user.token }))
+    }, [])
+
+    useEffect(() => {
+        
+        socket.on('user-subcription', (user) => {
+            dispatch(userAdded(user))
+        })
+
+        return () => {
+            socket.off('user-subcription')
+        }
     }, [])
 
     return (
@@ -42,13 +59,11 @@ export default function MainStats() {
                         <CardIcon color="warning">
                             <Icon>content_copy</Icon>
                         </CardIcon>
-                        <p className={classes.cardCategory}>
-                            Ventas
-                        </p>
+                        <p className={classes.cardCategory}>Ventas</p>
                         <h3 className={classes.cardTitle}>{salesStats}</h3>
                     </CardHeader>
                     <CardFooter stats>
-                        <TotalSalesSelect/>
+                        <TotalSalesSelect />
                     </CardFooter>
                 </Card>
             </GridItem>
@@ -98,7 +113,6 @@ export default function MainStats() {
                     <CardFooter stats>
                         <div className={classes.stats}>
                             <Update />
-                            Just Updated
                         </div>
                     </CardFooter>
                 </Card>
