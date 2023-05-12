@@ -26,6 +26,7 @@ import { notificationAdded } from 'store/dashboard'
 import io from 'socket.io-client'
 import { getNotifications } from 'store/dashboard'
 import { setReadednotification } from 'store/dashboard'
+import { setNotificationsPage } from 'store/dashboard'
 
 const socket = io('ws://localhost:5000')
 
@@ -33,7 +34,10 @@ const useStyles = makeStyles(styles)
 
 export default function AdminNavbarLinks() {
     const dispatch = useDispatch()
-    const { notifications } = useSelector((state) => state.dashboard)
+    const { notifications, notificationsPage } = useSelector(
+        (state) => state.dashboard
+    )
+    console.log("notifications", notifications)
     const { user } = useSelector((state) => state.auth)
 
     const classes = useStyles()
@@ -45,7 +49,7 @@ export default function AdminNavbarLinks() {
         } else {
             setOpenNotification(event.currentTarget)
             dispatch(setReadednotification())
-            socket.emit('notification-readed', notifications)
+            socket.emit('notification-readed', notifications.notifications)
         }
     }
     const handleCloseNotification = () => {
@@ -61,12 +65,22 @@ export default function AdminNavbarLinks() {
     const handleCloseProfile = () => {
         setOpenProfile(null)
     }
+    const getMoreNotifications = () => {
+        console.log("load more")
+        dispatch(setNotificationsPage({ page: notificationsPage + 1 }))
+    }
     useEffect(() => {
         socket.on('notification', (user) => {
             dispatch(notificationAdded(user))
         })
-        dispatch(getNotifications({ access: user.token }))
     }, [])
+    useEffect(() => {
+        if(notificationsPage > 0)
+        console.log("get more notifications")
+        dispatch(
+            getNotifications({ access: user.token, page: notificationsPage })
+        )
+    }, [notificationsPage])
     return (
         <div>
             <div className={classes.searchWrapper}>
@@ -110,11 +124,17 @@ export default function AdminNavbarLinks() {
                     className={classes.buttonLink}
                 >
                     <Notifications className={classes.icons} />
-                    {notifications.filter((e) => !e.readed).length > 0 && (
-                        <span className={classes.notifications}>
-                            {notifications.filter((e) => !e.readed).length}
-                        </span>
-                    )}
+                    {notifications &&
+                        notifications.notifications.filter((e) => !e.readed)
+                            .length > 0 && (
+                            <span className={classes.notifications}>
+                                {
+                                    notifications.notifications.filter(
+                                        (e) => !e.readed
+                                    ).length
+                                }
+                            </span>
+                        )}
                     <Hidden mdUp implementation="css">
                         <p
                             onClick={handleCloseNotification}
@@ -153,23 +173,28 @@ export default function AdminNavbarLinks() {
                                     onClickAway={handleCloseNotification}
                                 >
                                     <MenuList role="menu">
-                                        {notifications.map(
+                                        {notifications?.notifications.map(
                                             (notification, i) => {
-                                                console.log("notification", notification)
                                                 return (
-                                                    <MenuItem
-                                                        key={`notification-item-${i}`}
-                                                        onClick={
-                                                            handleCloseNotification
-                                                        }
-                                                        className={
-                                                            classes.dropdownItem
-                                                        }
-                                                    >
-                                                        Notification
-                                                    </MenuItem>
+                                                        <MenuItem
+                                                            key={`notification-item-${i}`}
+                                                            onClick={
+                                                                handleCloseNotification
+                                                            }
+                                                            className={
+                                                                classes.dropdownItem
+                                                            }
+                                                        >
+                                                            {notification.body}
+                                                        </MenuItem>
                                                 )
                                             }
+                                        )}
+                                        {Math.ceil(notifications?.total / 10) >
+                                            1 && (
+                                            <MenuItem role="menu" onClick={getMoreNotifications}>
+                                                <p>Cargar más</p>
+                                            </MenuItem>
                                         )}
                                     </MenuList>
                                 </ClickAwayListener>

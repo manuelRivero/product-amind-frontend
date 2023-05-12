@@ -5,7 +5,8 @@ import { useForm, Controller } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 //components
-import { Button, makeStyles, TextField } from '@material-ui/core'
+import { makeStyles, TextField } from '@material-ui/core'
+import Button from "./../../components/CustomButtons/Button"
 import { useDispatch } from 'react-redux'
 import { login } from 'store/auth'
 import { useHistory } from 'react-router-dom/cjs/react-router-dom.min'
@@ -53,9 +54,11 @@ export default function Login() {
     })
     //states
     const [formAlert, setFormAlert] = useState(null)
+    const [loadingSubmit, setLoadingSubmit] = useState(false)
 
     const submit = async (values) => {
         setFormAlert(null)
+        setLoadingSubmit(true)
         try {
             const response = await dispatch(login({ data: values }))
             if (response.type === 'login/rejected') {
@@ -69,6 +72,8 @@ export default function Login() {
             history.push('/admin')
         } catch (error) {
             setFormAlert(error.message)
+        } finally {
+            setLoadingSubmit(false)
         }
     }
     return (
@@ -128,6 +133,7 @@ export default function Login() {
                     <div>{formAlert && <p>{formAlert}</p>}</div>
                     <div className={classes.submitWrapper}>
                         <Button
+                            isLoading={loadingSubmit}
                             variant="contained"
                             color="primary"
                             type="submit"

@@ -1,14 +1,18 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { getDailySales } from 'api/dashboard'
 import { getUSers } from 'api/dashboard'
-import { getSalesStats, getNotifications as getNotificationsRequest } from 'api/dashboard'
+import {
+    getSalesStats,
+    getNotifications as getNotificationsRequest,
+} from 'api/dashboard'
 
 const initialState = {
     salesStats: null,
     loadingStats: true,
     users: null,
     dailySales: null,
-    notifications:[]
+    notifications: null,
+    notificationsPage: 0,
 }
 
 export const getStats = createAsyncThunk(
@@ -16,9 +20,9 @@ export const getStats = createAsyncThunk(
     async (args, { rejectWithValue }) => {
         try {
             const [salesStats, users, dailySales] = await Promise.all([
-                getSalesStats(args.access, "week"),
+                getSalesStats(args.access, 'week'),
                 getUSers(args.access),
-                getDailySales(args.access)
+                getDailySales(args.access),
             ])
             return [salesStats, users, dailySales]
         } catch (error) {
@@ -31,7 +35,7 @@ export const getSalesByDate = createAsyncThunk(
     async (args, { rejectWithValue }) => {
         try {
             const response = await getSalesStats(args.access, args.from)
-            return response 
+            return response
         } catch (error) {
             return rejectWithValue(error.response.data)
         }
@@ -41,8 +45,11 @@ export const getNotifications = createAsyncThunk(
     '/get/notifications',
     async (args, { rejectWithValue }) => {
         try {
-            const response = await getNotificationsRequest(args.access, args.page)
-            return response 
+            const response = await getNotificationsRequest(
+                args.access,
+                args.page
+            )
+            return response
         } catch (error) {
             return rejectWithValue(error.response.data)
         }
@@ -53,19 +60,28 @@ export const dashboardSlice = createSlice({
     name: 'dashboard',
     initialState,
     reducers: {
-        userAdded : (state, action) =>{
+        userAdded: (state, action) => {
             state.users = [...state.users, action.payload]
         },
-        notificationAdded : (state, action) =>{
-            console.log("notification added action", action)
+        notificationAdded: (state, action) => {
+            console.log('notification added action', action)
 
-            state.notifications = [...state.notifications, action.payload]
+            state.notifications.notifications = [
+                ...state.notifications.notifications,
+                action.payload,
+            ]
         },
-        setReadednotification : (state, action) =>{
-            console.log("notification added action", action)
-            const newNotifications = [...state.notifications].map(e => ({...e, readed: true}))
-            state.notifications = newNotifications
-        } 
+        setReadednotification: (state, action) => {
+            console.log('notification added action', action)
+            const newNotifications = [
+                ...state.notifications.notifications,
+            ].map((e) => ({ ...e, readed: true }))
+            state.notifications.notifications = newNotifications
+        },
+        setNotificationsPage: (state, action) => {
+            console.log('action', action.payload)
+            state.notificationsPage = action.payload.page
+        },
     },
     extraReducers: {
         [getStats.pending]: (state) => {
@@ -73,7 +89,7 @@ export const dashboardSlice = createSlice({
         },
         [getStats.fulfilled]: (state, action) => {
             state.loadingStats = false
-            console.log("getStats action", action)
+            console.log('getStats action', action)
 
             state.salesStats = action.payload[0].data.total
             state.users = action.payload[1].data.users
@@ -97,13 +113,28 @@ export const dashboardSlice = createSlice({
         },
         [getNotifications.fulfilled]: (state, action) => {
             state.loadingNotifications = false
-            state.notifications = action.payload.data.notifications
+            console.log('action.payload.data', action.payload.data)
+            const notifications = state.notifications
+                ? state.notifications.notifications
+                : []
+            state.notifications = {
+                notifications: [
+                    ...notifications,
+                    ...action.payload.data.notifications,
+                ],
+                total: action.payload.data.total,
+            }
         },
         [getNotifications.rejected]: (state) => {
             state.loadingNotifications = false
         },
     },
 })
-export const { userAdded, notificationAdded, setReadednotification } = dashboardSlice.actions
+export const {
+    userAdded,
+    notificationAdded,
+    setReadednotification,
+    setNotificationsPage,
+} = dashboardSlice.actions
 
 export default dashboardSlice.reducer

@@ -13,6 +13,7 @@ const initialState = {
 export const login = createAsyncThunk(
     'login',
     async (args, { rejectWithValue }) => {
+        console.log("login")
         try {
             const response = await loginRequest(args.data)
             return response
