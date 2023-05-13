@@ -4,7 +4,8 @@ import { getUSers } from 'api/dashboard'
 import {
     getSalesStats,
     getNotifications as getNotificationsRequest,
-    getMonthlySales as getMonthlySalesRequest
+    getMonthlySales as getMonthlySalesRequest,
+    getTopProducts as getTopProductsRequest
 } from 'api/dashboard'
 
 const initialState = {
@@ -14,7 +15,9 @@ const initialState = {
     dailySales: null,
     notifications: null,
     notificationsPage: 0,
-    monthlySales:null
+    monthlySales:null,
+    topProductsData:null,
+    loadingTopsProducts:true
 }
 
 export const getStats = createAsyncThunk(
@@ -63,6 +66,19 @@ export const getMonthlySales = createAsyncThunk(
         try {
             const [monthlySales] = await Promise.all([
                 getMonthlySalesRequest(args.access, args.date),
+            ])
+            return monthlySales
+        } catch (error) {
+            return rejectWithValue(error.response.data)
+        }
+    }
+);
+export const getTopProducts = createAsyncThunk(
+    '/get/topProducs',
+    async (args, { rejectWithValue }) => {
+        try {
+            const [monthlySales] = await Promise.all([
+                getTopProductsRequest(args.access, args.page),
             ])
             return monthlySales
         } catch (error) {
@@ -132,6 +148,18 @@ export const dashboardSlice = createSlice({
         },
         [getMonthlySales.rejected]: (state) => {
             state.loadingMonthlySales = false
+        },
+
+        [getTopProducts.pending]: (state) => {
+            state.loadingTopsProducts = true
+        },
+        [getTopProducts.fulfilled]: (state, action) => {
+            console.log("action", action.payload.data.topProducts)
+            state.loadingTopsProducts = false
+            state.topProductsData = {data:action.payload.data.data, metada:action.payload.data.metadata}
+        },
+        [getTopProducts.rejected]: (state) => {
+            state.loadingTopsProducts = false
         },
         [getNotifications.pending]: (state) => {
             state.loadingNotifications = true
