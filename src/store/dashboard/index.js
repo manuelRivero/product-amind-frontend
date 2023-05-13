@@ -4,6 +4,7 @@ import { getUSers } from 'api/dashboard'
 import {
     getSalesStats,
     getNotifications as getNotificationsRequest,
+    getMonthlySales as getMonthlySalesRequest
 } from 'api/dashboard'
 
 const initialState = {
@@ -13,6 +14,7 @@ const initialState = {
     dailySales: null,
     notifications: null,
     notificationsPage: 0,
+    monthlySales:null
 }
 
 export const getStats = createAsyncThunk(
@@ -50,6 +52,19 @@ export const getNotifications = createAsyncThunk(
                 args.page
             )
             return response
+        } catch (error) {
+            return rejectWithValue(error.response.data)
+        }
+    }
+)
+export const getMonthlySales = createAsyncThunk(
+    '/get/getMonthlySales',
+    async (args, { rejectWithValue }) => {
+        try {
+            const [monthlySales] = await Promise.all([
+                getMonthlySalesRequest(args.access, args.date),
+            ])
+            return monthlySales
         } catch (error) {
             return rejectWithValue(error.response.data)
         }
@@ -107,6 +122,16 @@ export const dashboardSlice = createSlice({
         },
         [getSalesByDate.rejected]: (state) => {
             state.loadingStats = false
+        },
+        [getMonthlySales.pending]: (state) => {
+            state.loadingMonthlySales = true
+        },
+        [getMonthlySales.fulfilled]: (state, action) => {
+            state.loadingMonthlySales = false
+            state.monthlySales = action.payload.data.sales
+        },
+        [getMonthlySales.rejected]: (state) => {
+            state.loadingMonthlySales = false
         },
         [getNotifications.pending]: (state) => {
             state.loadingNotifications = true

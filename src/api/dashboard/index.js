@@ -29,6 +29,13 @@ export const getDailySales = (access) => {
         },
     })
 }
+export const getMonthlySales = (access, date) => {
+    return client.get(`api/sale/monthlySales?date=${date}`, {
+        headers: {
+            'x-token': access,
+        },
+    })
+}
 
 export const getNotifications = (access, page) => {
     return client.get(`api/notifications`, {

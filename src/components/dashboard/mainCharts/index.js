@@ -9,69 +9,158 @@ import GridItem from 'components/Grid/GridItem'
 import { makeStyles } from '@material-ui/core/styles'
 
 import styles from 'assets/jss/material-dashboard-react/views/dashboardStyle.js'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import ChartistGraph from 'react-chartist'
 import CardBody from 'components/Card/CardBody'
 import { dailySalesChart } from 'variables/charts'
+import { DatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers'
+import MomentUtils from '@date-io/moment'
+import moment from 'moment'
+import { getMonthlySales } from 'store/dashboard'
+// import { getMonthlySales } from 'store/dashboard'
+import 'moment/locale/es'  // without this line it didn't work
+
+moment.locale('es')
+console.log('dailySalesChart', dailySalesChart)
 const useStyles = makeStyles(styles)
 
 export default function MainCharts() {
     const classes = useStyles()
     //redux
-    const { dailySales } = useSelector((state) => state.dashboard)
+    const dispatch = useDispatch()
+    const { user } = useSelector((state) => state.auth)
+
     //states
-    const [dailyChartData, setDailyChartData] = useState(null)
+    const [chartData, setChartData] = useState(null)
+    const [chartLabels, setChartLabels] = useState(null)
+    const [sales, setSales] = useState([])
+    const [selectedDate, setSelectedDate] = useState(
+        moment(new Date()).format('DD-MM-YYYY')
+    )
+
+    const dateChangeHandler = async (e) => {
+        const response = await dispatch(
+            getMonthlySales({
+                access: user.token,
+                date: moment(e).format('DD-MM-YYYY'),
+            })
+        )
+        setSelectedDate(moment(e).format('DD-MM-YYYY'))
+        setSales(response.payload.data.sales)
+    }
+    useEffect(() => {
+        const getData = async () => {
+            const response = await dispatch(
+                getMonthlySales({
+                    access: user.token,
+                    date: selectedDate,
+                })
+            )
+            console.log('response', response)
+            setSales(response.payload.data.sales)
+        }
+        getData()
+    }, [])
 
     useEffect(() => {
-        if (dailySales) {
-            const series = dailySalesChart.data.labels.map((e, i) => {
-                return dailySales[i] ? dailySales[i].total : 0
-            })
-            setDailyChartData(series)
-        }
-    }, [dailySales])
+        const getData = async () => {
+            if (sales) {
+                console.log('sales')
+                const labels = new Array(
+                    moment(selectedDate, 'DD-MM-YYYY').daysInMonth()
+                )
+                    .fill(0)
+                    .map((day, i) => i + 1)
+                console.log('labels', labels)
+                const series = labels.map((e) => {
+                    let saleValue = 0
+                    sales.forEach((sale) => {
+                        if (
+                            moment(sale._id).format('DD-MM-YYYY') ===
+                                moment([
+                                    moment(selectedDate, 'DD-MM-YYYY').year(),
+                                    moment(selectedDate, 'DD-MM-YYYY').month(),
+                                    e,
+                                ]).format('DD-MM-YYYY')
+                            
+                        ) {
+                            saleValue = sale.total
+                        } else {
+                            saleValue = 0
+                        }
+                    })
 
+                    return saleValue
+                })
+                console.log('series', series)
+                setChartData(series)
+
+                setChartLabels(labels)
+            }
+        }
+        getData()
+    }, [sales])
+    console.log('sales', sales)
     return (
-        <GridContainer>
-            <GridItem xs={12} sm={12} md={4}>
-                {dailyChartData && (
+        <MuiPickersUtilsProvider locale={'es'} utils={MomentUtils}>
+            <GridContainer>
+                <GridItem xs={12} sm={12} md={4}>
+                    {chartData && (
+                        <Card chart>
+                            <CardHeader color="success">
+                                <ChartistGraph
+                                    className="ct-chart"
+                                    data={{
+                                        labels: chartLabels,
+                                        series: [chartData],
+                                    }}
+                                    type="Line"
+                                    options={{
+                                        ...dailySalesChart.options,
+                                        high: Math.max(chartData),
+                                    }}
+                                    listener={dailySalesChart.animation}
+                                />
+                            </CardHeader>
+                            <CardBody>
+                                <h4 className={classes.cardTitle}>
+                                    Ventas mensuales
+                                </h4>
+                                {console.log("selected date",new Date(moment(selectedDate, "DD-MM-YYYY")))}
+                                <DatePicker
+                                    lang="es"
+                                    onChange={(e) => dateChangeHandler(e)}
+                                    value={new Date(moment(selectedDate, "DD-MM-YYYY"))}
+                                    variant="inline"
+                                    openTo="year"
+                                    views={['year', 'month']}
+                                    label="Mes y año"
+                                    helperText="Seleccione el mes y el año"
+                                />
+                                <p className={classes.cardCategory}>
+                                    <span className={classes.successText}>
+                                        <ArrowUpward
+                                            className={
+                                                classes.upArrowCardCategory
+                                            }
+                                        />{' '}
+                                        55%
+                                    </span>{' '}
+                                    increase in today sales.
+                                </p>
+                            </CardBody>
+                            <CardFooter chart>
+                                <div className={classes.stats}>
+                                    <AccessTime /> updated 4 minutes ago
+                                </div>
+                            </CardFooter>
+                        </Card>
+                    )}
+                </GridItem>
+                <GridItem xs={12} sm={12} md={4}>
                     <Card chart>
-                        <CardHeader color="success">
-                            <ChartistGraph
-                                className="ct-chart"
-                                data={{
-                                    labels: dailySalesChart.data.labels,
-                                    series: [dailyChartData],
-                                }}
-                                type="Line"
-                                options={{...dailySalesChart.options, high: Math.max(dailyChartData) }}
-                                listener={dailySalesChart.animation}
-                            />
-                        </CardHeader>
-                        <CardBody>
-                            <h4 className={classes.cardTitle}>Daily Sales</h4>
-                            <p className={classes.cardCategory}>
-                                <span className={classes.successText}>
-                                    <ArrowUpward
-                                        className={classes.upArrowCardCategory}
-                                    />{' '}
-                                    55%
-                                </span>{' '}
-                                increase in today sales.
-                            </p>
-                        </CardBody>
-                        <CardFooter chart>
-                            <div className={classes.stats}>
-                                <AccessTime /> updated 4 minutes ago
-                            </div>
-                        </CardFooter>
-                    </Card>
-                )}
-            </GridItem>
-            <GridItem xs={12} sm={12} md={4}>
-                <Card chart>
-                    <CardHeader color="warning">
-                        {/* <ChartistGraph
+                        <CardHeader color="warning">
+                            {/* <ChartistGraph
                     className="ct-chart"
                     data={emailsSubscriptionChart.data}
                     type="Bar"
@@ -81,46 +170,49 @@ export default function MainCharts() {
                     }
                     listener={emailsSubscriptionChart.animation}
                 /> */}
-                    </CardHeader>
-                    <CardBody>
-                        <h4 className={classes.cardTitle}>
-                            Email Subscriptions
-                        </h4>
-                        <p className={classes.cardCategory}>
-                            Last Campaign Performance
-                        </p>
-                    </CardBody>
-                    <CardFooter chart>
-                        <div className={classes.stats}>
-                            <AccessTime /> campaign sent 2 days ago
-                        </div>
-                    </CardFooter>
-                </Card>
-            </GridItem>
-            <GridItem xs={12} sm={12} md={4}>
-                <Card chart>
-                    <CardHeader color="danger">
-                        {/* <ChartistGraph
+                        </CardHeader>
+                        <CardBody>
+                            <h4 className={classes.cardTitle}>
+                                Email Subscriptions
+                            </h4>
+                            <p className={classes.cardCategory}>
+                                Last Campaign Performance
+                            </p>
+                        </CardBody>
+                        <CardFooter chart>
+                            <div className={classes.stats}>
+                                <AccessTime /> campaign sent 2 days ago
+                            </div>
+                        </CardFooter>
+                    </Card>
+                </GridItem>
+                <GridItem xs={12} sm={12} md={4}>
+                    <Card chart>
+                        <CardHeader color="danger">
+                            {/* <ChartistGraph
                     className="ct-chart"
                     data={completedTasksChart.data}
                     type="Line"
                     options={completedTasksChart.options}
                     listener={completedTasksChart.animation}
                 /> */}
-                    </CardHeader>
-                    <CardBody>
-                        <h4 className={classes.cardTitle}>Completed Tasks</h4>
-                        <p className={classes.cardCategory}>
-                            Last Campaign Performance
-                        </p>
-                    </CardBody>
-                    <CardFooter chart>
-                        <div className={classes.stats}>
-                            <AccessTime /> campaign sent 2 days ago
-                        </div>
-                    </CardFooter>
-                </Card>
-            </GridItem>
-        </GridContainer>
+                        </CardHeader>
+                        <CardBody>
+                            <h4 className={classes.cardTitle}>
+                                Completed Tasks
+                            </h4>
+                            <p className={classes.cardCategory}>
+                                Last Campaign Performance
+                            </p>
+                        </CardBody>
+                        <CardFooter chart>
+                            <div className={classes.stats}>
+                                <AccessTime /> campaign sent 2 days ago
+                            </div>
+                        </CardFooter>
+                    </Card>
+                </GridItem>
+            </GridContainer>
+        </MuiPickersUtilsProvider>
     )
 }
