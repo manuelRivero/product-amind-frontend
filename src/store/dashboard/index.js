@@ -154,7 +154,7 @@ export const dashboardSlice = createSlice({
             state.loadingTopsProducts = true
         },
         [getTopProducts.fulfilled]: (state, action) => {
-            console.log("action", action.payload.data.topProducts)
+            // console.log("action", action.payload.data.topProducts)
             state.loadingTopsProducts = false
             state.topProductsData = {data:action.payload.data.data, metada:action.payload.data.metadata}
         },
@@ -166,7 +166,7 @@ export const dashboardSlice = createSlice({
         },
         [getNotifications.fulfilled]: (state, action) => {
             state.loadingNotifications = false
-            console.log('action.payload.data', action.payload.data)
+            // console.log('action.payload.data', action.payload.data)
             const notifications = state.notifications
                 ? state.notifications.notifications
                 : []
