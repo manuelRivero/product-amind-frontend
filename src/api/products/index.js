@@ -18,3 +18,19 @@ export const getProducts = (access, filters) => {
         },
     })
 }
+
+export const uploadExcel = (access, form) => {
+    return client.post(`api/products/productsExcel`, form, {
+        headers: {
+            'x-token': access,
+        },
+    })
+}
+export const uploadZip = (access, form) => {
+    return client.post(`api/products/productsImages`, form, {
+        headers: {
+            'x-token': access,
+        },
+    })
+}
+

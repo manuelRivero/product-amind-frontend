@@ -1,10 +1,12 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
-
-import { getProducts as getProductsRequest } from 'api/products'
+import { uploadZip } from 'api/products'
+import { getProducts as getProductsRequest, uploadExcel  } from 'api/products'
 
 const initialState = {
     productsData: null,
     loadingProductsData: true,
+    loadingExcel: false,
+    loadingZip:false
 }
 
 export const getProducts = createAsyncThunk('/get/products', async (args) => {
@@ -12,6 +14,20 @@ export const getProducts = createAsyncThunk('/get/products', async (args) => {
         getProductsRequest(args.access, args.filters),
     ])
     return products
+})
+
+export const postProductsExcel = createAsyncThunk('/post/productsExcel', async (args) => {
+    const [response] = await Promise.all([
+        uploadExcel(args.access, args.form),
+    ])
+    return response
+})
+
+export const postImagesFromZip = createAsyncThunk('/post/productsImages', async (args) => {
+    const [response] = await Promise.all([
+        uploadZip(args.access, args.form),
+    ])
+    return response
 })
 
 export const productsSlice = createSlice({
@@ -30,8 +46,25 @@ export const productsSlice = createSlice({
             }
         },
         [getProducts.rejected]: (state) => {
-            console.log(' get products rejected')
             state.loadingProductsData = false
+        },
+        [postProductsExcel.pending]: (state) => {
+            state.loadingExcel = true
+        },
+        [postProductsExcel.fulfilled]: (state) => {
+            state.loadingExcel = false
+        },
+        [postProductsExcel.rejected]: (state) => {
+            state.loadingExcel = false
+        },
+        [postImagesFromZip.pending]: (state) => {
+            state.loadingZip = true
+        },
+        [postImagesFromZip.fulfilled]: (state) => {
+            state.loadingZip = false
+        },
+        [postImagesFromZip.rejected]: (state) => {
+            state.loadingZip = false
         },
     },
 })

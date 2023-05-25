@@ -15,6 +15,8 @@ import EditIcon from '@material-ui/icons/Edit'
 import DeleteIcon from '@material-ui/icons/Delete'
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
 import ChevronRightIcon from '@material-ui/icons/ChevronRight'
+import AddIcon from '@material-ui/icons/Add';
+
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useEffect } from 'react'
@@ -34,21 +36,32 @@ const useStyles = makeStyles({
         gap: '1rem',
         marginTop: '1rem',
         justifyContent: 'center',
-        alignItems:'center'
+        alignItems: 'center',
     },
-    page:{
+    page: {
         padding: '.5rem',
         borderRadius: '4px',
-        border: "solid 1px transparent",
-        display:"flex",
-        justifyContent:"center",
-        alignItems:"center",
-        width:'25px',
-        height:'25px'
+        border: 'solid 1px transparent',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: '25px',
+        height: '25px',
     },
-    activePage:{
-        border: "solid 1px #9c27b0"
-    }
+    activePage: {
+        border: 'solid 1px #9c27b0',
+    },
+    addProductWrapper: {
+        display: 'flex',
+        justifyContent: 'flex-end',
+        alignItems: 'flex-end',
+        height: '100%',
+    },
+    addProductContainer: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '.5rem'
+    },
 })
 
 export default function Products() {
@@ -78,15 +91,88 @@ export default function Products() {
     console.log('productsData', productsData)
     return (
         <GridContainer>
-            <GridItem xs={12} sm={12} md={12}>
+            <GridItem xs={12} sm={12} md={6}>
                 <Card>
                     <CardHeader color="primary">
                         <h4 className={classes.cardTitleWhite}>
-                            Productos en la tienda
+                            Carga masiva de productos
                         </h4>
-                        <p className={classes.cardCategoryWhite}>
-                            Aquí puedes visualizar tu listado de productos
+                    </CardHeader>
+                    <CardBody>
+                        <p>Sube tus productos masivamente desde un excel</p>
+                        <Button
+                            isLoading={false}
+                            variant="contained"
+                            color="primary"
+                            type="button"
+                        >
+                            Ir a carga masiva
+                        </Button>
+                    </CardBody>
+                </Card>
+            </GridItem>
+            <GridItem xs={12} sm={12} md={6}>
+                <Card>
+                    <CardHeader color="primary">
+                        <h4 className={classes.cardTitleWhite}>
+                            Carga masiva de imágenes
+                        </h4>
+                    </CardHeader>
+                    <CardBody>
+                        <p>
+                            Sube las imágenes de tus productos desde un archivo
+                            zip
                         </p>
+                        <Button
+                            isLoading={false}
+                            variant="contained"
+                            color="primary"
+                            type="button"
+                        >
+                            Ir a subir fotos
+                        </Button>
+                    </CardBody>
+                </Card>
+            </GridItem>
+            <GridItem xs={12} sm={12} md={12}>
+                <Card>
+                    <CardHeader color="primary">
+                        <GridContainer>
+                            <GridItem xs={12} sm={12} md={6}>
+                                <h4 className={classes.cardTitleWhite}>
+                                    Productos en la tienda
+                                </h4>
+                                <p className={classes.cardCategoryWhite}>
+                                    Aquí puedes visualizar tu listado de
+                                    productos
+                                </p>
+                            </GridItem>
+                            <GridItem xs={12} sm={12} md={6}>
+                                <Box className={classes.addProductWrapper}>
+                                    <Box
+                                        className={classes.addProductContainer}
+                                    >
+                                        <p
+                                            className={
+                                                classes.cardCategoryWhite
+                                            }
+                                        >
+                                            Agrega un nuevo producto
+                                        </p>
+                                        <Button
+                                            isLoading={false}
+                                            variant="contained"
+                                            color="white"
+                                            type="button"
+                                            size="sm"
+                                            justIcon
+                                        >
+                                            <AddIcon />
+                                        </Button>
+                                    </Box>
+                                </Box>
+                            </GridItem>
+                        </GridContainer>
                     </CardHeader>
                     <CardBody>
                         {loadingProductsData ? (
@@ -139,20 +225,22 @@ export default function Products() {
                                             <ChevronRightIcon />
                                         </Button>
                                     }
-                                    onPageChange={()=>handlePageClick()}
+                                    onPageChange={() => handlePageClick()}
                                     pageRangeDisplayed={5}
                                     pageCount={Math.ceil(
                                         productsData.pageInfo / 10
                                     )}
-                                    previousLabel={<Button
-                                        isLoading={false}
-                                        variant="contained"
-                                        color="primary"
-                                        type="button"
-                                        justIcon
-                                    >
-                                        <ChevronLeftIcon />
-                                    </Button>}
+                                    previousLabel={
+                                        <Button
+                                            isLoading={false}
+                                            variant="contained"
+                                            color="primary"
+                                            type="button"
+                                            justIcon
+                                        >
+                                            <ChevronLeftIcon />
+                                        </Button>
+                                    }
                                     renderOnZeroPageCount={null}
                                 />
                             </>

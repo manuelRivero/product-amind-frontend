@@ -13,7 +13,7 @@ export const setUpInterceptor = (store) => {
         console.log("error on interceptor", error);
         if (error.response?.status === 401) {
             store.dispatch(logout())
-            history.push("/auth")
+            history.push("/auth/login")
         }
         return Promise.reject(error);
       }

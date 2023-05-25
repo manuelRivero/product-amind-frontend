@@ -22,32 +22,42 @@ import { useHistory } from 'react-router-dom/cjs/react-router-dom.min'
 
 let ps
 
-const switchRoutes = (
-    <Switch>
-        {dashboardRoutes.map((prop, key) => {
-            if (prop.layout === '/admin') {
-                return (
-                    <Route
-                        path={prop.layout + prop.path}
-                        component={prop.component}
-                        key={key}
-                    />
-                )
-            }
-            return null
-        })}
-        <Redirect from="/admin" to="/admin/dashboard" />
-    </Switch>
-)
+const mainRoutes = dashboardRoutes.map((prop, key) => {
+    if (prop.layout === '/admin') {
+        return (
+            <Route
+            exact
+                path={prop.layout + prop.path}
+                component={prop.component}
+                key={key}
+            ></Route>
+        )
+    }
+    return null
+})
+
+const childRoutes = dashboardRoutes.map((prop) => {
+    return (prop.childrens
+        ? prop.childrens.map((e, i) => {
+            console.log("e", prop.layout + prop.path + e.path)
+              return (
+                  <Route
+                      path={prop.layout + prop.path + e.path}
+                      component={e.component}
+                      key={`child-${e.path}-${i}`}
+                  />
+              )
+          })
+        : null)
+})
 
 const useStyles = makeStyles(styles)
 
 export default function Admin({ ...rest }) {
-
     //router
     const history = useHistory()
     //redux
-    const {user} = useSelector(state => state.auth)
+    const { user } = useSelector((state) => state.auth)
 
     // styles
     const classes = useStyles()
@@ -100,8 +110,8 @@ export default function Admin({ ...rest }) {
             window.removeEventListener('resize', resizeFunction)
         }
     }, [mainPanel])
-    if(!user){
-        history.push("/auth/login")
+    if (!user) {
+        history.push('/auth/login')
     }
     return (
         <div className={classes.wrapper}>
@@ -122,13 +132,19 @@ export default function Admin({ ...rest }) {
                     {...rest}
                 />
                 {/* On the /maps route we want the map to be on full screen - this is not possible if the content and conatiner classes are present because they have some paddings which would make the map smaller */}
-                {getRoute() ? (
-                    <div className={classes.content}>
-                        <div className={classes.container}>{switchRoutes}</div>
+                <div className={classes.content}>
+                    <div className={classes.container}>
+                        {console.log("childRoutes", childRoutes)}
+                        {
+                            <Switch>
+                                {mainRoutes}
+                                {childRoutes}
+                                <Redirect from="/admin" to="/admin/dashboard" /> 
+                            </Switch>
+                        }
                     </div>
-                ) : (
-                    <div className={classes.map}>{switchRoutes}</div>
-                )}
+                </div>
+
                 {getRoute() ? <Footer /> : null}
                 {/* <FixedPlugin
                     handleImageClick={handleImageClick}
