@@ -1,23 +1,22 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
-import { getDailySales } from 'api/dashboard'
 import { getUSers } from 'api/dashboard'
 import {
     getSalesStats,
     getNotifications as getNotificationsRequest,
     getMonthlySales as getMonthlySalesRequest,
-    getTopProducts as getTopProductsRequest
+    getTopProducts as getTopProductsRequest,
 } from 'api/dashboard'
+import moment from 'moment'
 
 const initialState = {
     salesStats: null,
     loadingStats: true,
     users: null,
-    dailySales: null,
     notifications: null,
     notificationsPage: 0,
-    monthlySales:null,
-    topProductsData:null,
-    loadingTopsProducts:true
+    monthlySales: null,
+    topProductsData: null,
+    loadingTopsProducts: true,
 }
 
 export const getStats = createAsyncThunk(
@@ -25,9 +24,8 @@ export const getStats = createAsyncThunk(
     async (args, { rejectWithValue }) => {
         try {
             const [salesStats, users, dailySales] = await Promise.all([
-                getSalesStats(args.access, 'week'),
+                getSalesStats(args.access, args.from | moment().toDate()),
                 getUSers(args.access),
-                getDailySales(args.access),
             ])
             return [salesStats, users, dailySales]
         } catch (error) {
@@ -72,7 +70,7 @@ export const getMonthlySales = createAsyncThunk(
             return rejectWithValue(error.response.data)
         }
     }
-);
+)
 export const getTopProducts = createAsyncThunk(
     '/get/topProducs',
     async (args, { rejectWithValue }) => {
@@ -124,7 +122,6 @@ export const dashboardSlice = createSlice({
 
             state.salesStats = action.payload[0].data.total
             state.users = action.payload[1].data.users
-            state.dailySales = action.payload[2].data.sales
         },
         [getStats.rejected]: (state) => {
             state.loadingStats = false
@@ -154,9 +151,12 @@ export const dashboardSlice = createSlice({
             state.loadingTopsProducts = true
         },
         [getTopProducts.fulfilled]: (state, action) => {
-            // console.log("action", action.payload.data.topProducts)
+             console.log("action top products", action.payload.data.topProducts)
             state.loadingTopsProducts = false
-            state.topProductsData = {data:action.payload.data.data, metada:action.payload.data.metadata}
+            state.topProductsData = {
+                data: action.payload.data.data,
+                metada: action.payload.data.metadata,
+            }
         },
         [getTopProducts.rejected]: (state) => {
             state.loadingTopsProducts = false

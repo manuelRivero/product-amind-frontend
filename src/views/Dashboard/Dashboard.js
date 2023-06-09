@@ -40,7 +40,8 @@ export default function Dashboard() {
         }
         getData()
     }, [])
-    console.log("data", topProductsData);
+    console.log("top products data", topProductsData);
+    console.log("top products isLoading", loadingTopsProducts);
     return (
         <div>
             <MainStats />
@@ -108,8 +109,7 @@ export default function Dashboard() {
                                     ]}
                                     tableData={
                                         topProductsData.data.map(product =>{
-                                            const productData = product.product_data[0]
-                                            console.log("productData", productData)
+                                            const productData = product.productData
                                                 return [productData._id, productData.name, productData.price, product.count]
                                         })
                                     }

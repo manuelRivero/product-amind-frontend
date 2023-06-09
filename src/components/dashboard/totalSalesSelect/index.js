@@ -1,117 +1,49 @@
 import React, { useState } from 'react'
 import Box from '@material-ui/core/Box'
-import SettingsIcon from '@material-ui/icons/Settings'
 import { makeStyles } from '@material-ui/core/styles'
 import { useDispatch, useSelector } from 'react-redux'
 import { getSalesByDate } from 'store/dashboard'
+import {
+    MuiPickersUtilsProvider,
+    KeyboardDatePicker,
+} from '@material-ui/pickers'
+import MomentUtils from '@date-io/moment'
 
 const useStyles = makeStyles({
     root: {
         position: 'relative',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
         width: '100%',
-    },
-    settingButton: {
-        cursor: 'pointer',
-    },
-    menu: {
-        right: 0,
-        position: 'absolute',
-        bottom: 0,
-        backgroundColor: 'white',
-        padding: '1rem',
-        width: 120,
-        zIndex: 50,
-        transform: 'translateY(100%)',
-        boxShadow: '0 0 10px -3px rgba(0,0,0,.5)',
-        borderRadius: '.5rem',
-    },
-    menuOption: {
-        marginBottom: '1rem',
-        cursor: 'pointer',
-        padding: '.25rem',
-        borderRadius: '.25rem',
-        '& > p': {
-            margin: 0,
-        },
-        '&:hover': {
-            backgroundColor: '#c2c2c2',
-        },
-    },
-    active: {
-        backgroundColor: '#c2c2c2',
-    },
-    range: {
-        '& > p': {
-            margin: 0,
-        },
+        justifyContent: 'flex-end',
     },
 })
 
-const ranges = {
-    week: 'Ultimos 7 dias',
-    month: 'Ultimos 30 días',
-    year: 'Ultimo año',
-}
 export default function TotalSalesSelect() {
     const classes = useStyles()
     //redux
     const dispatch = useDispatch()
     const { user } = useSelector((state) => state.auth)
     //states
-    const [isOpen, setIsOpen] = useState(false)
-    const [selectedRange, setSelectedRange] = useState('Ultimos 7 dias')
-    const [selectedValue, setSelectedValue] = useState('week')
+
+    const [selectedValue, setSelectedValue] = useState(new Date())
 
     const onChange = (value) => {
-        dispatch(getSalesByDate({ access: user.token, from: value }))
-        setSelectedRange(ranges[value])
+        console.log('date value', value)
         setSelectedValue(value)
+        dispatch(getSalesByDate({ access: user.token, from: value.toDate() }))
+
+        return
     }
     return (
-        <Box className={classes.root}>
-            <Box className={classes.range}>
-                <p>{selectedRange}</p>
+        <MuiPickersUtilsProvider utils={MomentUtils}>
+            <Box className={classes.root}>
+                <KeyboardDatePicker
+                    maxDate={new Date()}
+                    onChange={onChange}
+                    value={selectedValue}
+                />
             </Box>
-            <Box
-                className={classes.settingButton}
-                onClick={() => setIsOpen(!isOpen)}
-            >
-                <SettingsIcon />
-            </Box>
-            {isOpen && (
-                <Box className={classes.menu}>
-                    <Box
-                        onClick={() => onChange('week')}
-                        className={[
-                            classes.menuOption,
-                            selectedValue === 'week' ? classes.active : '',
-                        ].join(' ')}
-                    >
-                        <p>Ultimos 7 días</p>
-                    </Box>
-                    <Box
-                        onClick={() => onChange('month')}
-                        className={[
-                            classes.menuOption,
-                            selectedValue === 'month' ? classes.active : '',
-                        ].join(' ')}
-                    >
-                        <p>Ultimos 30 días</p>
-                    </Box>
-                    <Box
-                        onClick={() => onChange('year')}
-                        className={[
-                            classes.menuOption,
-                            selectedValue === 'year' ? classes.active : '',
-                        ].join(' ')}
-                    >
-                        <p>Ultimo año</p>
-                    </Box>
-                </Box>
-            )}
-        </Box>
+        </MuiPickersUtilsProvider>
     )
 }

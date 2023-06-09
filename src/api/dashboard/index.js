@@ -1,10 +1,8 @@
 import client from 'api/client'
 
 export const getSalesStats = (access, from) => {
-    return client.get(`api/sale/byDate`, {
-        params: {
-            from,
-        },
+    console.log("from", from)
+    return client.get(`api/sale/dailySales?from=${from}`, {
         headers: {
             'x-token': access,
         },
@@ -22,13 +20,6 @@ export const getUSers = (access) => {
     })
 }
 
-export const getDailySales = (access) => {
-    return client.get(`api/sale/dailySales`, {
-        headers: {
-            'x-token': access,
-        },
-    })
-}
 export const getMonthlySales = (access, date) => {
     return client.get(`api/sale/monthlySales?date=${date}`, {
         headers: {
