@@ -34,3 +34,11 @@ export const uploadZip = (access, form) => {
     })
 }
 
+export const uploadProduct = (access, data) => {
+    return client.post(`api/products`, data, {
+        headers: {
+            'x-token': access,
+        },
+    })
+}
+

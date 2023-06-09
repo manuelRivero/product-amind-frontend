@@ -1,17 +1,27 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { uploadZip } from 'api/products'
-import { getProducts as getProductsRequest, uploadExcel  } from 'api/products'
+import { getProducts as getProductsRequest, uploadExcel, uploadProduct  } from 'api/products'
 
 const initialState = {
     productsData: null,
     loadingProductsData: true,
     loadingExcel: false,
-    loadingZip:false
+    loadingZip:false,
+    loadingProduct:false,
+    productSuccess:false,
+    productError:false
 }
 
 export const getProducts = createAsyncThunk('/get/products', async (args) => {
     const [products] = await Promise.all([
         getProductsRequest(args.access, args.filters),
+    ])
+    return products
+})
+
+export const postProducts = createAsyncThunk('/post/products', async (args) => {
+    const [products] = await Promise.all([
+        uploadProduct(args.access, args.data),
     ])
     return products
 })
@@ -33,7 +43,12 @@ export const postImagesFromZip = createAsyncThunk('/post/productsImages', async 
 export const productsSlice = createSlice({
     name: 'products',
     initialState,
-    reducers: {},
+    reducers: {
+        resetProductSuccess: (state) => {
+            console.log("resetProductSuccess")
+            state.productSuccess = false;
+          },
+    },
     extraReducers: {
         [getProducts.pending]: (state) => {
             state.loadingProductsData = true
@@ -66,13 +81,21 @@ export const productsSlice = createSlice({
         [postImagesFromZip.rejected]: (state) => {
             state.loadingZip = false
         },
+        [postProducts.pending]: (state) => {
+            state.loadingProduct = true
+        },
+        [postProducts.fulfilled]: (state) => {
+            state.loadingProduct = false
+            state.productSuccess = true
+        },
+        [postProducts.rejected]: (state) => {
+            state.loadingProduct = false;
+            state.productError = true
+        },
     },
 })
-// export const {
-//     userAdded,
-//     notificationAdded,
-//     setReadednotification,
-//     setNotificationsPage,
-// } = dashboardSlice.actions
+export const {
+    resetProductSuccess
+} = productsSlice.actions
 
 export default productsSlice.reducer
