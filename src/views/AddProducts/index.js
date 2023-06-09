@@ -150,7 +150,10 @@ export default function AddProducts() {
         values.images.forEach((image) => {
             data.append('productImage', image.file)
         })
-        data.append('status', values.status)
+        data.append(
+            'status',
+            JSON.stringify({ available: values.status === "0" ? true : false })
+        )
         try {
             await dispatch(postProducts({ access: user.token, data }))
         } catch (error) {
@@ -229,7 +232,11 @@ export default function AddProducts() {
                                 icon={null}
                                 label={'Stock del producto'}
                                 value={field.value}
-                                onChange={(e) => field.onChange(e.target.value.replace(/[^\d]/g, ''))}
+                                onChange={(e) =>
+                                    field.onChange(
+                                        e.target.value.replace(/[^\d]/g, '')
+                                    )
+                                }
                             />
                         )}
                     />
@@ -244,7 +251,11 @@ export default function AddProducts() {
                                 icon={null}
                                 label={'Precio'}
                                 value={field.value}
-                                onChange={(e) => field.onChange(e.target.value.replace(/[^\d]/g, ''))}
+                                onChange={(e) =>
+                                    field.onChange(
+                                        e.target.value.replace(/[^\d]/g, '')
+                                    )
+                                }
                             />
                         )}
                     />
