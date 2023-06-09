@@ -8,6 +8,7 @@ import GridItem from 'components/Grid/GridItem'
 import Table from 'components/Table/Table.js'
 import Button from 'components/CustomButtons/Button.js'
 import PropTypes from 'prop-types'
+import { Link } from 'react-router-dom'
 
 //icons
 import VisibilityIcon from '@material-ui/icons/Visibility'
@@ -49,7 +50,7 @@ const useStyles = makeStyles({
         height: '25px',
     },
     activePage: {
-        border: 'solid 1px #9c27b0',
+        border: 'solid 1px #9c27b0 !important',
     },
     addProductWrapper: {
         display: 'flex',
@@ -73,22 +74,22 @@ export default function Products() {
     // styles
     const classes = useStyles()
     // states
-    const [page] = useState(0)
+    const [page, setPage] = useState(0)
 
-    const handlePageClick = (e) => {
-        console.log('handlePageClick', e)
+    const handlePageClick = ({selected}) => {
+        console.log("selected", selected)
+        setPage(selected)
+        const element = document.getElementById("table-header");
+        element.scrollIntoView()
     }
 
     useEffect(() => {
-        dispatch(getProducts({ access: user.access, filters: { page: 0 } }))
-    }, [])
-    useEffect(() => {
-        if (page > 0) {
-            dispatch(getProducts({ access: user.access, filters: { page } }))
-        }
+        dispatch(getProducts({ access: user.access, filters: { page } }))
+       
     }, [page])
-    console.log('loadingProductsData', loadingProductsData)
-    console.log('productsData', productsData)
+    
+    // console.log('loadingProductsData', loadingProductsData)
+    // console.log('productsData', productsData)
     return (
         <GridContainer>
             <GridItem xs={12} sm={12} md={6}>
@@ -100,6 +101,8 @@ export default function Products() {
                     </CardHeader>
                     <CardBody>
                         <p>Sube tus productos masivamente desde un excel</p>
+                        <Link to="/admin/products/upload-from-excel">
+
                         <Button
                             isLoading={false}
                             variant="contained"
@@ -108,6 +111,7 @@ export default function Products() {
                         >
                             Ir a carga masiva
                         </Button>
+                        </Link>
                     </CardBody>
                 </Card>
             </GridItem>
@@ -123,6 +127,8 @@ export default function Products() {
                             Sube las imágenes de tus productos desde un archivo
                             zip
                         </p>
+                        <Link to="/admin/products/upload-images-from-zip">
+
                         <Button
                             isLoading={false}
                             variant="contained"
@@ -131,12 +137,13 @@ export default function Products() {
                         >
                             Ir a subir fotos
                         </Button>
+                        </Link>
                     </CardBody>
                 </Card>
             </GridItem>
             <GridItem xs={12} sm={12} md={12}>
                 <Card>
-                    <CardHeader color="primary">
+                    <CardHeader id="table-header" color="primary">
                         <GridContainer>
                             <GridItem xs={12} sm={12} md={6}>
                                 <h4 className={classes.cardTitleWhite}>
@@ -159,6 +166,8 @@ export default function Products() {
                                         >
                                             Agrega un nuevo producto
                                         </p>
+                                        <Link to="/admin/products/add-product">
+
                                         <Button
                                             isLoading={false}
                                             variant="contained"
@@ -169,6 +178,7 @@ export default function Products() {
                                         >
                                             <AddIcon />
                                         </Button>
+                                        </Link>
                                     </Box>
                                 </Box>
                             </GridItem>
@@ -210,6 +220,7 @@ export default function Products() {
                                 />
 
                                 <ReactPaginate
+                                    forcePage={page}
                                     pageClassName={classes.page}
                                     containerClassName={classes.pagination}
                                     activeClassName={classes.activePage}
@@ -225,7 +236,7 @@ export default function Products() {
                                             <ChevronRightIcon />
                                         </Button>
                                     }
-                                    onPageChange={() => handlePageClick()}
+                                    onPageChange={(e) => handlePageClick(e)}
                                     pageRangeDisplayed={5}
                                     pageCount={Math.ceil(
                                         productsData.pageInfo / 10
