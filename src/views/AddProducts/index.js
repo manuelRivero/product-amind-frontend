@@ -229,7 +229,7 @@ export default function AddProducts() {
                                 icon={null}
                                 label={'Stock del producto'}
                                 value={field.value}
-                                onChange={field.onChange}
+                                onChange={(e) => field.onChange(e.target.value.replace(/[^\d]/g, ''))}
                             />
                         )}
                     />
@@ -244,7 +244,7 @@ export default function AddProducts() {
                                 icon={null}
                                 label={'Precio'}
                                 value={field.value}
-                                onChange={field.onChange}
+                                onChange={(e) => field.onChange(e.target.value.replace(/[^\d]/g, ''))}
                             />
                         )}
                     />
