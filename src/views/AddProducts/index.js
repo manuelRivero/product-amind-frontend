@@ -1,8 +1,9 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 
 import { makeStyles } from '@material-ui/core/styles'
 import { useDropzone } from 'react-dropzone'
 import uploadImage from 'assets/img/upload-cloud.png'
+import trashIcon from 'assets/img/trash-icon.png'
 import { Box, Checkbox } from '@material-ui/core'
 import TextInput from 'components/TextInput/Index'
 import { useForm, Controller, useFieldArray } from 'react-hook-form'
@@ -11,11 +12,17 @@ import * as yup from 'yup'
 import Button from 'components/CustomButtons/Button'
 import TextDanger from 'components/Typography/Danger'
 
+import { useParams, useHistory } from 'react-router-dom'
+
 import { primaryColor } from 'assets/jss/material-dashboard-react.js'
 import { useDispatch, useSelector } from 'react-redux'
 import { postProducts } from 'store/products'
 import CustomModal from 'components/CustomModal'
 import { resetProductSuccess } from 'store/products'
+import LoadinScreen from 'components/LoadingScreen'
+import { getProductDetail } from 'store/products'
+import { resetEditProductSuccess } from 'store/products'
+import { editProduct } from 'store/products'
 
 // schema
 const schema = yup.object({
@@ -51,11 +58,6 @@ const useStyles = makeStyles({
     imagesRow: {
         display: 'flex',
         gap: '1.5rem',
-        '& > img': {
-            borderRadius: '16px',
-            maxWidth: '166px',
-            objectFit: 'cover',
-        },
     },
     inputRow: {
         margin: '1rem 0',
@@ -89,21 +91,54 @@ const useStyles = makeStyles({
         marginBottom: 0,
         marginTop: '5px',
     },
+    imagesWrapper: {
+        position: 'relative',
+        maxWidth: '166px',
+        height: '262px'
+    },
+    productImage: {
+        borderRadius: '16px',
+        width:'100%',
+        height: '100%',
+        objectFit: 'cover',
+    },
+    trashICon: {
+        position: 'absolute',
+        top: '5px',
+        right: '5px',
+        '& img': {
+            width: '24px',
+        },
+    },
 })
 
 export default function AddProducts() {
+    const history = useHistory()
+
+    const params = useParams()
+    console.log('params', params)
     const { user } = useSelector((state) => state.auth)
-    const { loadingProduct, productSuccess, productError } = useSelector(
-        (state) => state.products
-    )
+    const {
+        loadingProduct,
+        productSuccess,
+        productError,
+        loadingProductDetail,
+        productDetail,
+        productDetailError,
+        loadingEditProduct,
+        editProductError,
+        editProductSuccess,
+    } = useSelector((state) => state.products)
     const dispatch = useDispatch()
     const classes = useStyles()
+    const [deleteImages, setDeleteImages] = useState([])
     //form
     const {
         control,
         handleSubmit,
         reset,
         formState: { errors },
+        watch,
     } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
@@ -117,7 +152,10 @@ export default function AddProducts() {
         },
     })
 
-    const { fields, append } = useFieldArray({ control, name: 'images' })
+    const { fields, append, remove} = useFieldArray({
+        control,
+        name: 'images',
+    })
     const onDrop = useCallback((acceptedFiles) => {
         // Do something with the files
         acceptedFiles.forEach((e) => {
@@ -148,18 +186,52 @@ export default function AddProducts() {
         data.append('description', values.description)
 
         values.images.forEach((image) => {
-            data.append('productImage', image.file)
+            if (image.file) {
+                data.append('productImage', image.file)
+            }
         })
         data.append(
             'status',
-            JSON.stringify({ available: values.status === "0" ? true : false })
+            JSON.stringify({ available: values.status === '0' ? true : false })
         )
-        try {
-            await dispatch(postProducts({ access: user.token, data }))
-        } catch (error) {
-            console.log(error)
+
+        if (params.id) {
+            if (deleteImages.length > 0) {
+                data.append('deletedImages', JSON.stringify(deleteImages))
+            }
+            dispatch(editProduct({ access: user.token, data, id: params.id }))
+        } else {
+            dispatch(postProducts({ access: user.token, data }))
         }
     }
+
+    const handleDeleteImage = (index) => {
+        setDeleteImages([...deleteImages, index])
+        remove(index)
+
+    }
+    useEffect(async () => {
+        if (params.id) {
+            dispatch(getProductDetail({ access: user.token, id: params.id }))
+        }
+    }, [])
+    useEffect(async () => {
+        if (productDetail) {
+            reset({
+                images: productDetail.images.map((e) => ({ preview: e.url })),
+                name: productDetail.name,
+                tags: productDetail.tags.map((e) => e.name).join(','),
+                price: productDetail.price,
+                stock: productDetail.stock,
+                description: productDetail.description,
+                status: productDetail.status.available ? 0 : 1,
+            })
+        }
+    }, [productDetail])
+    if (loadingProductDetail) {
+        return <LoadinScreen />
+    }
+    console.log('values', watch())
     return (
         <section>
             <form onSubmit={handleSubmit(submit)}>
@@ -168,12 +240,24 @@ export default function AddProducts() {
                 </Box>
                 <div className={classes.imagesRow}>
                     {fields.map((file, index) => {
+                        console.log('file', file)
                         return (
-                            <img
+                            <div
+                                className={classes.imagesWrapper}
                                 key={`file-${index}`}
-                                src={file.preview}
-                                alt="product-image"
-                            />
+                            >
+                                <div
+                                    className={classes.trashICon}
+                                    onClick={() => handleDeleteImage(index)}
+                                >
+                                    <img src={trashIcon} alt="delete-image" />
+                                </div>
+                                <img
+                                    className={classes.productImage}
+                                    src={file.preview}
+                                    alt="product-image"
+                                />
+                            </div>
                         )
                     })}
                     <div {...getRootProps()} className={classes.dropZone}>
@@ -354,10 +438,13 @@ export default function AddProducts() {
                         )}
                     />
                 </Box>
-                {productError && <p>Hubo un error al guardar el producto</p>}
+                {productError ||
+                    (editProductError && (
+                        <p>Hubo un error al guardar el producto</p>
+                    ))}
                 <Box className={classes.buttonsRow}>
                     <Button
-                        isLoading={loadingProduct}
+                        isLoading={loadingProduct | loadingEditProduct}
                         variant="contained"
                         color="primary"
                         type="submit"
@@ -368,10 +455,14 @@ export default function AddProducts() {
             </form>
 
             <CustomModal
-                open={productSuccess}
+                open={params.id ? editProductSuccess : productSuccess}
                 handleClose={() => {
-                    reset()
-                    dispatch(resetProductSuccess())
+                    if (params.id) {
+                        dispatch(resetEditProductSuccess())
+                    } else {
+                        reset()
+                        dispatch(resetProductSuccess())
+                    }
                 }}
                 icon={'success'}
                 title="¡Listo!"
@@ -380,8 +471,27 @@ export default function AddProducts() {
                 hasConfirm={true}
                 cancelCb={() => {}}
                 confirmCb={() => {
-                    reset()
-                    dispatch(resetProductSuccess())
+                    if (params.id) {
+                        dispatch(resetEditProductSuccess())
+                    } else {
+                        reset()
+                        dispatch(resetProductSuccess())
+                    }
+                }}
+            />
+            <CustomModal
+                open={productDetailError}
+                handleClose={() => {
+                    history.push('/admin/products')
+                }}
+                icon={'error'}
+                title="¡Error!"
+                subTitle="has navegado a una pagina invalida"
+                hasCancel={false}
+                hasConfirm={true}
+                cancelCb={() => {}}
+                confirmCb={() => {
+                    history.push('/admin/products')
                 }}
             />
         </section>

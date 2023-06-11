@@ -106,6 +106,7 @@ export default function Sidebar(props) {
                             activeChildRoute(prop.childrens)) && (
                             <Box className={classes.childrensContainer}>
                                 {prop.childrens?.map((e, i) => {
+                                    if(e.noshow) return
                                     return (
                                         <NavLink
                                             to={

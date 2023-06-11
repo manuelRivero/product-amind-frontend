@@ -1,15 +1,26 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { uploadZip } from 'api/products'
-import { getProducts as getProductsRequest, uploadExcel, uploadProduct  } from 'api/products'
+import {
+    getProducts as getProductsRequest,
+    uploadExcel,
+    uploadProduct,
+    getProductDetail as getProductsDetailRequest,
+    editProduct as editProductRequest
+} from 'api/products'
 
 const initialState = {
     productsData: null,
     loadingProductsData: true,
     loadingExcel: false,
-    loadingZip:false,
-    loadingProduct:false,
-    productSuccess:false,
-    productError:false
+    loadingZip: false,
+    loadingProduct: false,
+    productSuccess: false,
+    productError: false,
+    productDetailError:false,
+    productDetail:null,
+    loadingEditProduct:false,
+    editProductError:false,
+    editProductSuccess:false
 }
 
 export const getProducts = createAsyncThunk('/get/products', async (args) => {
@@ -19,6 +30,26 @@ export const getProducts = createAsyncThunk('/get/products', async (args) => {
     return products
 })
 
+export const getProductDetail = createAsyncThunk(
+    '/get/products-detail',
+    async (args) => {
+        const [products] = await Promise.all([
+            getProductsDetailRequest(args.access, args.id),
+        ])
+        return products
+    }
+)
+
+export const editProduct = createAsyncThunk(
+    '/put/products',
+    async (args) => {
+        const [products] = await Promise.all([
+            editProductRequest(args.access, args.data, args.id),
+        ])
+        return products
+    }
+)
+
 export const postProducts = createAsyncThunk('/post/products', async (args) => {
     const [products] = await Promise.all([
         uploadProduct(args.access, args.data),
@@ -26,28 +57,36 @@ export const postProducts = createAsyncThunk('/post/products', async (args) => {
     return products
 })
 
-export const postProductsExcel = createAsyncThunk('/post/productsExcel', async (args) => {
-    const [response] = await Promise.all([
-        uploadExcel(args.access, args.form),
-    ])
-    return response
-})
+export const postProductsExcel = createAsyncThunk(
+    '/post/productsExcel',
+    async (args) => {
+        const [response] = await Promise.all([
+            uploadExcel(args.access, args.form),
+        ])
+        return response
+    }
+)
 
-export const postImagesFromZip = createAsyncThunk('/post/productsImages', async (args) => {
-    const [response] = await Promise.all([
-        uploadZip(args.access, args.form),
-    ])
-    return response
-})
+export const postImagesFromZip = createAsyncThunk(
+    '/post/productsImages',
+    async (args) => {
+        const [response] = await Promise.all([
+            uploadZip(args.access, args.form),
+        ])
+        return response
+    }
+)
 
 export const productsSlice = createSlice({
     name: 'products',
     initialState,
     reducers: {
         resetProductSuccess: (state) => {
-            console.log("resetProductSuccess")
-            state.productSuccess = false;
-          },
+            state.productSuccess = false
+        },
+        resetEditProductSuccess: (state) => {
+            state.editProductSuccess = false
+        },
     },
     extraReducers: {
         [getProducts.pending]: (state) => {
@@ -89,13 +128,34 @@ export const productsSlice = createSlice({
             state.productSuccess = true
         },
         [postProducts.rejected]: (state) => {
-            state.loadingProduct = false;
+            state.loadingProduct = false
             state.productError = true
+        },
+        [getProductDetail.pending]: (state) => {
+            state.loadingProductDetail = true
+        },
+        [getProductDetail.fulfilled]: (state, action) => {
+            state.loadingProductDetail = false
+            state.productDetail = action.payload.data.product
+        },
+        [getProductDetail.rejected]: (state) => {
+            state.loadingProductDetail = false
+            state.productDetailError = true
+        },
+        [editProduct.pending]: (state) => {
+            state.loadingEditProduct = true
+        },
+        [editProduct.fulfilled]: (state) => {
+            state.loadingEditProduct = false
+            state.editProductSuccess = true
+            state.editProductError = false
+        },
+        [editProduct.rejected]: (state) => {
+            state.loadingEditProduct = false
+            state.editProductError = true
         },
     },
 })
-export const {
-    resetProductSuccess
-} = productsSlice.actions
+export const { resetProductSuccess, resetEditProductSuccess } = productsSlice.actions
 
 export default productsSlice.reducer

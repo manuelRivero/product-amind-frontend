@@ -56,6 +56,13 @@ const dashboardRoutes = [
                 component: AddProducts,
             },
             {
+                noshow:true,
+                path: '/edit-product/:id',
+                name: 'Editar Producto',
+                rtlName: 'لوحة القيادة',
+                component: AddProducts,
+            },
+            {
                 path: '/upload-from-excel',
                 name: 'Carga masiva de excel',
                 rtlName: 'لوحة القيادة',

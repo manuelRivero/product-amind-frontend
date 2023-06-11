@@ -11,12 +11,11 @@ import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 
 //icons
-import VisibilityIcon from '@material-ui/icons/Visibility'
 import EditIcon from '@material-ui/icons/Edit'
 import DeleteIcon from '@material-ui/icons/Delete'
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
 import ChevronRightIcon from '@material-ui/icons/ChevronRight'
-import AddIcon from '@material-ui/icons/Add';
+import AddIcon from '@material-ui/icons/Add'
 
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -61,7 +60,11 @@ const useStyles = makeStyles({
     addProductContainer: {
         display: 'flex',
         alignItems: 'center',
-        gap: '.5rem'
+        gap: '.5rem',
+    },
+    actionWrapper: {
+        display: 'flex',
+        gap: '1rem',
     },
 })
 
@@ -76,18 +79,17 @@ export default function Products() {
     // states
     const [page, setPage] = useState(0)
 
-    const handlePageClick = ({selected}) => {
-        console.log("selected", selected)
+    const handlePageClick = ({ selected }) => {
+        console.log('selected', selected)
         setPage(selected)
-        const element = document.getElementById("table-header");
+        const element = document.getElementById('table-header')
         element.scrollIntoView()
     }
 
     useEffect(() => {
         dispatch(getProducts({ access: user.access, filters: { page } }))
-       
     }, [page])
-    
+
     // console.log('loadingProductsData', loadingProductsData)
     // console.log('productsData', productsData)
     return (
@@ -102,15 +104,14 @@ export default function Products() {
                     <CardBody>
                         <p>Sube tus productos masivamente desde un excel</p>
                         <Link to="/admin/products/upload-from-excel">
-
-                        <Button
-                            isLoading={false}
-                            variant="contained"
-                            color="primary"
-                            type="button"
-                        >
-                            Ir a carga masiva
-                        </Button>
+                            <Button
+                                isLoading={false}
+                                variant="contained"
+                                color="primary"
+                                type="button"
+                            >
+                                Ir a carga masiva
+                            </Button>
                         </Link>
                     </CardBody>
                 </Card>
@@ -128,15 +129,14 @@ export default function Products() {
                             zip
                         </p>
                         <Link to="/admin/products/upload-images-from-zip">
-
-                        <Button
-                            isLoading={false}
-                            variant="contained"
-                            color="primary"
-                            type="button"
-                        >
-                            Ir a subir fotos
-                        </Button>
+                            <Button
+                                isLoading={false}
+                                variant="contained"
+                                color="primary"
+                                type="button"
+                            >
+                                Ir a subir fotos
+                            </Button>
                         </Link>
                     </CardBody>
                 </Card>
@@ -167,17 +167,16 @@ export default function Products() {
                                             Agrega un nuevo producto
                                         </p>
                                         <Link to="/admin/products/add-product">
-
-                                        <Button
-                                            isLoading={false}
-                                            variant="contained"
-                                            color="white"
-                                            type="button"
-                                            size="sm"
-                                            justIcon
-                                        >
-                                            <AddIcon />
-                                        </Button>
+                                            <Button
+                                                isLoading={false}
+                                                variant="contained"
+                                                color="white"
+                                                type="button"
+                                                size="sm"
+                                                justIcon
+                                            >
+                                                <AddIcon />
+                                            </Button>
                                         </Link>
                                     </Box>
                                 </Box>
@@ -199,6 +198,7 @@ export default function Products() {
                                         'Descuento',
                                         'Etiquetas',
                                         'Estatus',
+                                        'Acciones',
                                     ]}
                                     tableData={productsData.data.map((e) => {
                                         return [
@@ -215,6 +215,10 @@ export default function Products() {
                                                     ? 'Disponible'
                                                     : 'No disponible'
                                                 : 'Sin información',
+                                            <ActionGroup
+                                                product={e}
+                                                key={`action-group-${e._d}`}
+                                            />,
                                         ]
                                     })}
                                 />
@@ -264,6 +268,7 @@ export default function Products() {
 }
 
 const ActionGroup = ({ product }) => {
+    const classes = useStyles()
     const [isLoading, setIsLoading] = useState(false)
     const deleteHandler = () => {
         try {
@@ -276,25 +281,18 @@ const ActionGroup = ({ product }) => {
         }
     }
     return (
-        <Box>
-            <Button
-                isLoading={false}
-                variant="contained"
-                color="primary"
-                type="submit"
-                justIcon
-            >
-                <VisibilityIcon />
-            </Button>
-            <Button
-                isLoading={false}
-                variant="contained"
-                color="primary"
-                type="submit"
-                justIcon
-            >
-                <EditIcon />
-            </Button>
+        <Box className={classes.actionWrapper}>
+            <Link to={`/admin/products/edit-product/${product._id}`}>
+                <Button
+                    isLoading={false}
+                    variant="contained"
+                    color="primary"
+                    type="submit"
+                    justIcon
+                >
+                    <EditIcon />
+                </Button>
+            </Link>
             <Button
                 isLoading={isLoading}
                 variant="contained"
