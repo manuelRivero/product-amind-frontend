@@ -37,6 +37,8 @@ import { createBrowserHistory } from "history";
 
 export const history = createBrowserHistory();
 
+window.process = {}
+
 ReactDOM.render(
     <Provider store={store}>
         <ThemeProvider theme={theme}>

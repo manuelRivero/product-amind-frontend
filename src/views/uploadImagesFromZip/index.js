@@ -7,6 +7,11 @@ import Button from 'components/CustomButtons/Button'
 import { makeStyles } from '@material-ui/core/styles'
 
 import { Link } from 'react-router-dom'
+import ReactPaginate from 'react-paginate'
+
+import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
+import ChevronRightIcon from '@material-ui/icons/ChevronRight'
+
 
 //form
 
@@ -38,11 +43,44 @@ const useStyles = makeStyles({
         background: '#fff',
         padding: '.5rem',
         borderRadius: '8px',
+        marginBottom:'1rem',
         '& > p': {
             margin: 0,
             marginBottom: '5px',
             color: '#d32f2f',
         },
+    },
+    pagination: {
+        display: 'flex',
+        margin: 0,
+        padding: 0,
+        listStyle: 'none',
+        gap: '1rem',
+        marginTop: '1rem',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    page: {
+        padding: '.5rem',
+        borderRadius: '4px',
+        border: 'solid 1px transparent',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: '25px',
+        height: '25px',
+        cursor:'pointer',
+        "& > a":{
+            color:'#3c4858'
+
+        }
+    },
+    activePage: {
+        border: 'solid 1px #00ACC1 !important',
+        "& > a":{
+            color:'#00ACC1'
+
+        }
     },
 })
 
@@ -52,6 +90,8 @@ export default function UploadImagesFromZip() {
     const dispatch = useDispatch()
     const { user } = useSelector((state) => state.auth)
     const { loadingZip, zipErrors } = useSelector((state) => state.products)
+    const [page, setPage] = useState(0)
+
 
     //states
     const [file, setFile] = useState(null)
@@ -94,6 +134,9 @@ export default function UploadImagesFromZip() {
     const onCancel = () => {
         setFile(null)
     }
+    const handlePageClick = ({ selected }) => {
+        setPage(selected)
+    }
     return (
         <>
             <div>
@@ -102,14 +145,14 @@ export default function UploadImagesFromZip() {
             {zipErrors && (
                 <Box>
                     <h4>Los siguientes archivos no se hán podido cargar:</h4>
-                    {zipErrors.map((error, index) => {
+                    {zipErrors.slice(page, page + 1 * 10).map((error, index) => {
                         return (
                             <Box
                                 key={`error-element-${index}`}
                                 className={classes.errorWrapper}
                             >
                                 <p>
-                                    <strong>Error #{index + 1}</strong>
+                                    <strong>Error #{index + 1 + page * 10}</strong>
                                 </p>
                                 <p>
                                     Id del archivo: <strong>{error._id}</strong>
@@ -121,6 +164,42 @@ export default function UploadImagesFromZip() {
                             </Box>
                         )
                     })}
+                    
+                    <ReactPaginate
+                                    forcePage={page}
+                                    pageClassName={classes.page}
+                                    containerClassName={classes.pagination}
+                                    activeClassName={classes.activePage}
+                                    breakLabel="..."
+                                    nextLabel={
+                                        <Button
+                                            isLoading={false}
+                                            variant="contained"
+                                            color="primary"
+                                            type="button"
+                                            justIcon
+                                        >
+                                            <ChevronRightIcon />
+                                        </Button>
+                                    }
+                                    onPageChange={(e) => handlePageClick(e)}
+                                    pageRangeDisplayed={5}
+                                    pageCount={Math.ceil(
+                                        zipErrors.length / 10
+                                    )}
+                                    previousLabel={
+                                        <Button
+                                            isLoading={false}
+                                            variant="contained"
+                                            color="primary"
+                                            type="button"
+                                            justIcon
+                                        >
+                                            <ChevronLeftIcon />
+                                        </Button>
+                                    }
+                                    renderOnZeroPageCount={null}
+                                />
                 </Box>
             )}
             <form>

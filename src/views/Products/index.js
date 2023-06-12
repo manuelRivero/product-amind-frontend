@@ -57,9 +57,17 @@ const useStyles = makeStyles({
         alignItems: 'center',
         width: '25px',
         height: '25px',
+        "& > a":{
+            color:'#3c4858'
+
+        }
     },
     activePage: {
-        border: 'solid 1px #9c27b0 !important',
+        border: 'solid 1px #00ACC1 !important',
+        "& > a":{
+            color:'#00ACC1'
+
+        }
     },
     addProductWrapper: {
         display: 'flex',
