@@ -117,7 +117,7 @@ export default function Sidebar(props) {
                                                 classes.childrenActive
                                             }
                                             style={{color: location.pathname === prop.layout + prop.path + e.path ? "#fff" : "#00ACC1" }}
-                                            key={key}
+                                            key={`child-route-${i}`}
                                         >
                                             {e.name}
                                         </NavLink>
