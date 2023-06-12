@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom'
 import { Box } from '@material-ui/core'
 import { useDispatch, useSelector } from 'react-redux'
 import { postImagesFromZip } from 'store/products'
+import { resetZipErrors } from 'store/products'
 
 const useStyles = makeStyles({
     uploadImage: {
@@ -33,6 +34,16 @@ const useStyles = makeStyles({
         gap: '1rem',
         marginTop: '1rem',
     },
+    errorWrapper: {
+        background: '#fff',
+        padding: '.5rem',
+        borderRadius: '8px',
+        '& > p': {
+            margin: 0,
+            marginBottom: '5px',
+            color: '#d32f2f',
+        },
+    },
 })
 
 export default function UploadImagesFromZip() {
@@ -40,7 +51,7 @@ export default function UploadImagesFromZip() {
     const classes = useStyles()
     const dispatch = useDispatch()
     const { user } = useSelector((state) => state.auth)
-    const { loadingExcel } = useSelector((state) => state.products)
+    const { loadingZip, zipErrors } = useSelector((state) => state.products)
 
     //states
     const [file, setFile] = useState(null)
@@ -75,6 +86,11 @@ export default function UploadImagesFromZip() {
             setSuccess(false)
         }
     }
+    const onReset = async ()=>{
+        setFile(null);
+        setSuccess(null);
+        dispatch(resetZipErrors())
+    }
     const onCancel = () => {
         setFile(null)
     }
@@ -83,6 +99,30 @@ export default function UploadImagesFromZip() {
             <div>
                 <h3>Subida masiva de imágenes desde archivo zip</h3>
             </div>
+            {zipErrors && (
+                <Box>
+                    <h4>Los siguientes archivos no se hán podido cargar:</h4>
+                    {zipErrors.map((error, index) => {
+                        return (
+                            <Box
+                                key={`error-element-${index}`}
+                                className={classes.errorWrapper}
+                            >
+                                <p>
+                                    <strong>Error #{index + 1}</strong>
+                                </p>
+                                <p>
+                                    Id del archivo: <strong>{error._id}</strong>
+                                </p>
+                                <p>
+                                    Error relacionado:{' '}
+                                    <strong>{error.error}</strong>
+                                </p>
+                            </Box>
+                        )
+                    })}
+                </Box>
+            )}
             <form>
                 {!file & (success === null) ? (
                     <div {...getRootProps()} className={classes.dropZone}>
@@ -115,6 +155,22 @@ export default function UploadImagesFromZip() {
                 {success && (
                     <div>
                         <p>Tu archivo ha sido subido</p>
+                        {zipErrors && (<p>Pero contiene errores, errores : {zipErrors.length}</p>)}
+                        <Box className={classes.buttonsRow}>
+                        {zipErrors && (
+                            <>
+                                
+                                <Button
+                                    isLoading={false}
+                                    variant="contained"
+                                    color="primary"
+                                    type="button"
+                                    onClick={onReset}
+                                >
+                                    Intentar de nuevo
+                                </Button>
+                            </>
+                        )}
                         <Link to="/dashboard/products">
                             <Button
                                 isLoading={false}
@@ -126,6 +182,7 @@ export default function UploadImagesFromZip() {
                                 Ir a productos
                             </Button>
                         </Link>
+                        </Box>
                     </div>
                 )}
                 {success === false && (
@@ -145,7 +202,7 @@ export default function UploadImagesFromZip() {
                             Cancelar
                         </Button>
                         <Button
-                            isLoading={loadingExcel}
+                            isLoading={loadingZip}
                             variant="contained"
                             color="primary"
                             type="button"

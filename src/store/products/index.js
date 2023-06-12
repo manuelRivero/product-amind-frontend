@@ -13,6 +13,8 @@ const initialState = {
     loadingProductsData: true,
     loadingExcel: false,
     loadingZip: false,
+    uploadZipError: false,
+    zipErrors: null,
     loadingProduct: false,
     productSuccess: false,
     productError: false,
@@ -87,6 +89,9 @@ export const productsSlice = createSlice({
         resetEditProductSuccess: (state) => {
             state.editProductSuccess = false
         },
+        resetZipErrors: (state) => {
+            state.zipErrors = null
+        }
     },
     extraReducers: {
         [getProducts.pending]: (state) => {
@@ -114,8 +119,9 @@ export const productsSlice = createSlice({
         [postImagesFromZip.pending]: (state) => {
             state.loadingZip = true
         },
-        [postImagesFromZip.fulfilled]: (state) => {
-            state.loadingZip = false
+        [postImagesFromZip.fulfilled]: (state, action) => {
+            state.loadingZip = false;
+            state.zipErrors = action.payload.data.productWithErrors
         },
         [postImagesFromZip.rejected]: (state) => {
             state.loadingZip = false
@@ -156,6 +162,6 @@ export const productsSlice = createSlice({
         },
     },
 })
-export const { resetProductSuccess, resetEditProductSuccess } = productsSlice.actions
+export const { resetProductSuccess, resetEditProductSuccess, resetZipErrors } = productsSlice.actions
 
 export default productsSlice.reducer
