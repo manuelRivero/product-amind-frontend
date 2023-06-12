@@ -22,6 +22,16 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useEffect } from 'react'
 import { getProducts } from 'store/products'
 import ReactPaginate from 'react-paginate'
+import TextInput from 'components/TextInput/Index'
+
+import { useForm, Controller } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
+
+const schema = yup.object({
+    search: yup.string().nullable(),
+    tags: yup.string(),
+})
 
 const useStyles = makeStyles({
     cardCategory: {
@@ -66,6 +76,12 @@ const useStyles = makeStyles({
         display: 'flex',
         gap: '1rem',
     },
+    filterWrapper:{
+        marginTop: '1rem',
+        display:'flex',
+        gap: '1rem',
+        flexWrap:'wrap'
+    }
 })
 
 export default function Products() {
@@ -79,6 +95,15 @@ export default function Products() {
     // states
     const [page, setPage] = useState(0)
 
+    //form
+    const { control, handleSubmit, watch } = useForm({
+        resolver: yupResolver(schema),
+        defaultValues: {
+            search: null,
+            tags: null,
+        },
+    })
+
     const handlePageClick = ({ selected }) => {
         console.log('selected', selected)
         setPage(selected)
@@ -86,8 +111,42 @@ export default function Products() {
         element.scrollIntoView()
     }
 
+    const handleFilters = () => {
+        const filters = watch()
+        let activefilters = {}
+        Object.keys(filters).forEach((key) => {
+            if (filters[key] !== null) {
+                switch (key) {
+                    case 'tags':
+                        activefilters[key] = filters[key].replace(/\s/g, "").toLowerCase()
+                        break
+
+                    default:
+                        activefilters[key] = filters[key]
+
+                        break
+                }
+            }
+        })
+        return activefilters
+    }
+
+    const submit = () => {
+        dispatch(
+            getProducts({
+                access: user.token,
+                filters: { ...handleFilters(), page },
+            })
+        )
+    }
+
     useEffect(() => {
-        dispatch(getProducts({ access: user.access, filters: { page } }))
+        dispatch(
+            getProducts({
+                access: user.token,
+                filters: { ...handleFilters(), page },
+            })
+        )
     }, [page])
 
     // console.log('loadingProductsData', loadingProductsData)
@@ -184,6 +243,63 @@ export default function Products() {
                         </GridContainer>
                     </CardHeader>
                     <CardBody>
+                        <form onSubmit={handleSubmit(submit)}>
+                            <Box className={classes.filterWrapper}>
+                                <Box>
+                                    <Controller
+                                        name="search"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <TextInput
+                                                error={
+                                                    fieldState.error
+                                                        ? true
+                                                        : false
+                                                }
+                                                errorMessage={fieldState.error}
+                                                icon={null}
+                                                label={'Nombre del producto'}
+                                                value={field.value}
+                                                onChange={({ target }) => {
+                                                    field.onChange(target.value)
+                                                }}
+                                            />
+                                        )}
+                                    />
+                                </Box>
+                                <Box>
+                                    <Controller
+                                        name="tags"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <TextInput
+                                                helperText="Busca por una etiqueta o varias separadas por comas"
+                                                error={
+                                                    fieldState.error
+                                                        ? true
+                                                        : false
+                                                }
+                                                errorMessage={fieldState.error}
+                                                icon={null}
+                                                label={'Etiquetas del producto'}
+                                                value={field.value}
+                                                onChange={({ target }) => {
+                                                    field.onChange(target.value)
+                                                }}
+                                            />
+                                        )}
+                                    />
+                                </Box>
+                            </Box>
+                            <Button
+                                isLoading={false}
+                                variant="contained"
+                                color="primary"
+                                type="Submit"
+                            >
+                                Buscar
+                            </Button>
+                        </form>
                         {loadingProductsData ? (
                             <p>Cargando datos ...</p>
                         ) : (
