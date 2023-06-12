@@ -120,7 +120,7 @@ export default function AdminNavbarLinks() {
                             onClick={handleCloseNotification}
                             className={classes.linkText}
                         >
-                            Notification
+                            Notificaciones
                         </p>
                     </Hidden>
                 </Button>
@@ -195,7 +195,7 @@ export default function AdminNavbarLinks() {
                 >
                     <Person className={classes.icons} />
                     <Hidden mdUp implementation="css">
-                        <p className={classes.linkText}>Profile</p>
+                        <p className={classes.linkText}>Perfil</p>
                     </Hidden>
                 </Button>
                 <Poppers

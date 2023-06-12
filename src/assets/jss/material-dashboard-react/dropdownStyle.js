@@ -51,6 +51,7 @@ const dropdownStyle = (theme) => ({
     },
   },
   popperNav: {
+    zIndex:100,
     [theme.breakpoints.down("sm")]: {
       position: "static !important",
       left: "unset !important",
