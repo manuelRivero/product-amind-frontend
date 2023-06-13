@@ -25,7 +25,7 @@ export default function Sidebar(props) {
     let location = useLocation()
     // verifies if routeName is the one active (in browser input)
     function activeRoute(routeName) {
-        return location.pathname.includes(routeName) 
+        return location.pathname.includes(routeName)
     }
     function activeChildRoute(childRoutes) {
         return childRoutes
@@ -102,11 +102,12 @@ export default function Sidebar(props) {
                                 disableTypography={true}
                             />
                         </ListItem>
-                        {(prop.childrens && activeRoute(prop.layout + prop.path) ||
+                        {((prop.childrens &&
+                            activeRoute(prop.layout + prop.path)) ||
                             activeChildRoute(prop.childrens)) && (
                             <Box className={classes.childrensContainer}>
                                 {prop.childrens?.map((e, i) => {
-                                    if(e.noshow) return
+                                    if (e.noshow) return
                                     return (
                                         <NavLink
                                             to={
@@ -116,7 +117,15 @@ export default function Sidebar(props) {
                                             activeClassName={
                                                 classes.childrenActive
                                             }
-                                            style={{color: location.pathname === prop.layout + prop.path + e.path ? "#fff" : "#00ACC1" }}
+                                            style={{
+                                                color:
+                                                    location.pathname ===
+                                                    prop.layout +
+                                                        prop.path +
+                                                        e.path
+                                                        ? '#fff'
+                                                        : '#00ACC1',
+                                            }}
                                             key={`child-route-${i}`}
                                         >
                                             {e.name}
@@ -165,11 +174,6 @@ export default function Sidebar(props) {
                 >
                     {brand}
                     <div className={classes.sidebarWrapper}>
-                        {props.rtlActive ? (
-                            <RTLNavbarLinks />
-                        ) : (
-                            <AdminNavbarLinks />
-                        )}
                         {links}
                     </div>
                     {image !== undefined ? (

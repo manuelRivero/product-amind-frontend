@@ -111,6 +111,11 @@ export const dashboardSlice = createSlice({
             console.log('action', action.payload)
             state.notificationsPage = action.payload.page
         },
+        resetNotifications:(state) => {
+            console.log("reset notifications")
+            state.notifications = null
+            state.notificationsPage = 0
+        }
     },
     extraReducers: {
         [getStats.pending]: (state) => {
@@ -184,6 +189,7 @@ export const dashboardSlice = createSlice({
     },
 })
 export const {
+    resetNotifications,
     userAdded,
     notificationAdded,
     setReadednotification,

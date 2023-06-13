@@ -39,7 +39,7 @@ const mainRoutes = dashboardRoutes.map((prop, key) => {
 const childRoutes = dashboardRoutes.map((prop) => {
     return (prop.childrens
         ? prop.childrens.map((e, i) => {
-            console.log("e", prop.layout + prop.path + e.path)
+            // console.log("e", prop.layout + prop.path + e.path)
               return (
                   <Route
                       path={prop.layout + prop.path + e.path}
@@ -134,7 +134,7 @@ export default function Admin({ ...rest }) {
                 {/* On the /maps route we want the map to be on full screen - this is not possible if the content and conatiner classes are present because they have some paddings which would make the map smaller */}
                 <div className={classes.content}>
                     <div className={classes.container}>
-                        {console.log("childRoutes", childRoutes)}
+                        {/* {console.log("childRoutes", childRoutes)} */}
                         {
                             <Switch>
                                 {mainRoutes}

@@ -1,7 +1,7 @@
 import client from 'api/client'
 
 export const getSalesStats = (access, from) => {
-    console.log("from", from)
+    // console.log("from", from)
     return client.get(`api/sale/dailySales?from=${from}`, {
         headers: {
             'x-token': access,

@@ -21,7 +21,7 @@ import { getMonthlySales } from 'store/dashboard'
 import 'moment/locale/es'  // without this line it didn't work
 
 moment.locale('es')
-console.log('dailySalesChart', dailySalesChart)
+// console.log('dailySalesChart', dailySalesChart)
 const useStyles = makeStyles(styles)
 
 export default function MainCharts() {
@@ -56,7 +56,7 @@ export default function MainCharts() {
                     date: selectedDate,
                 })
             )
-            console.log('response', response)
+            // console.log('response', response)
             setSales(response.payload.data.sales)
         }
         getData()
@@ -65,13 +65,13 @@ export default function MainCharts() {
     useEffect(() => {
         const getData = async () => {
             if (sales) {
-                console.log('sales')
+                // console.log('sales')
                 const labels = new Array(
                     moment(selectedDate, 'DD-MM-YYYY').daysInMonth()
                 )
                     .fill(0)
                     .map((day, i) => i + 1)
-                console.log('labels', labels)
+                // console.log('labels', labels)
                 const series = labels.map((e) => {
                     let saleValue = 0
                     sales.forEach((sale) => {
@@ -92,7 +92,7 @@ export default function MainCharts() {
 
                     return saleValue
                 })
-                console.log('series', series)
+                // console.log('series', series)
                 setChartData(series)
 
                 setChartLabels(labels)
@@ -100,7 +100,7 @@ export default function MainCharts() {
         }
         getData()
     }, [sales])
-    console.log('sales', sales)
+    // console.log('sales', sales)
     return (
         <MuiPickersUtilsProvider locale={'es'} utils={MomentUtils}>
             <GridContainer>
@@ -126,7 +126,7 @@ export default function MainCharts() {
                                 <h4 className={classes.cardTitle}>
                                     Ventas mensuales
                                 </h4>
-                                {console.log("selected date",new Date(moment(selectedDate, "DD-MM-YYYY")))}
+                                {/* {console.log("selected date",new Date(moment(selectedDate, "DD-MM-YYYY")))} */}
                                 <DatePicker
                                     lang="es"
                                     onChange={(e) => dateChangeHandler(e)}

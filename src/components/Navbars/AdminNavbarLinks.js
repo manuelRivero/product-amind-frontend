@@ -7,7 +7,6 @@ import MenuList from '@material-ui/core/MenuList'
 import Grow from '@material-ui/core/Grow'
 import Paper from '@material-ui/core/Paper'
 import ClickAwayListener from '@material-ui/core/ClickAwayListener'
-import Hidden from '@material-ui/core/Hidden'
 import Poppers from '@material-ui/core/Popper'
 import Divider from '@material-ui/core/Divider'
 // @material-ui/icons
@@ -34,7 +33,7 @@ export default function AdminNavbarLinks() {
     const { notifications, notificationsPage } = useSelector(
         (state) => state.dashboard
     )
-    console.log("notifications", notifications)
+
     const { user } = useSelector((state) => state.auth)
 
     const classes = useStyles()
@@ -63,7 +62,7 @@ export default function AdminNavbarLinks() {
         setOpenProfile(null)
     }
     const getMoreNotifications = () => {
-        console.log("load more")
+        console.log('load more')
         dispatch(setNotificationsPage({ page: notificationsPage + 1 }))
     }
     useEffect(() => {
@@ -72,25 +71,13 @@ export default function AdminNavbarLinks() {
         })
     }, [])
     useEffect(() => {
-        if(notificationsPage > 0)
-        console.log("get more notifications")
         dispatch(
             getNotifications({ access: user.token, page: notificationsPage })
         )
     }, [notificationsPage])
+
     return (
-        <div>
-            <Button
-                color={window.innerWidth > 959 ? 'transparent' : 'white'}
-                justIcon={window.innerWidth > 959}
-                simple={!(window.innerWidth > 959)}
-                aria-label="Dashboard"
-                className={classes.buttonLink}
-            >
-                <Hidden mdUp implementation="css">
-                    <p className={classes.linkText}>Dashboard</p>
-                </Hidden>
-            </Button>
+        <div className={classes.managerWrapper}>
             <div className={classes.manager}>
                 <Button
                     color={window.innerWidth > 959 ? 'transparent' : 'white'}
@@ -115,14 +102,6 @@ export default function AdminNavbarLinks() {
                                 }
                             </span>
                         )}
-                    <Hidden mdUp implementation="css">
-                        <p
-                            onClick={handleCloseNotification}
-                            className={classes.linkText}
-                        >
-                            Notificaciones
-                        </p>
-                    </Hidden>
                 </Button>
                 <Poppers
                     open={Boolean(openNotification)}
@@ -156,23 +135,29 @@ export default function AdminNavbarLinks() {
                                         {notifications?.notifications.map(
                                             (notification, i) => {
                                                 return (
-                                                        <MenuItem
-                                                            key={`notification-item-${i}`}
-                                                            onClick={
-                                                                handleCloseNotification
-                                                            }
-                                                            className={
-                                                                classes.dropdownItem
-                                                            }
-                                                        >
-                                                            {notification.body}
-                                                        </MenuItem>
+                                                    <MenuItem
+                                                        key={`notification-item-${i}`}
+                                                        onClick={
+                                                            handleCloseNotification
+                                                        }
+                                                        className={
+                                                            classes.dropdownItem
+                                                        }
+                                                    >
+                                                        {notification.body}
+                                                    </MenuItem>
                                                 )
                                             }
                                         )}
+                                       {console.log("math", Math.ceil(notifications?.total / 10))}
                                         {Math.ceil(notifications?.total / 10) >
-                                            1 && (
-                                            <MenuItem role="menu" onClick={getMoreNotifications}>
+                                            notificationsPage + 1 && (
+                                            <MenuItem
+                                                role="menu"
+                                                onClick={() =>
+                                                    getMoreNotifications()
+                                                }
+                                            >
                                                 <p>Cargar más</p>
                                             </MenuItem>
                                         )}
@@ -194,9 +179,6 @@ export default function AdminNavbarLinks() {
                     className={classes.buttonLink}
                 >
                     <Person className={classes.icons} />
-                    <Hidden mdUp implementation="css">
-                        <p className={classes.linkText}>Perfil</p>
-                    </Hidden>
                 </Button>
                 <Poppers
                     open={Boolean(openProfile)}
