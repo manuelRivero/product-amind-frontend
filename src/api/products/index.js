@@ -27,6 +27,16 @@ export const getProductDetail = (access,id)=>{
     })
 }
 
+export const getProductsTemplateExcel = (access)=>{
+    console.log("getProductsTemplateExcel")
+    return client.get(`api/products/get-excel-template`, {
+        responseType: 'blob',
+        headers: {
+            'x-token': access,
+        },
+    })
+}
+
 export const uploadExcel = (access, form) => {
     return client.post(`api/products/productsExcel`, form, {
         headers: {

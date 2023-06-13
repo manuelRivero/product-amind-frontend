@@ -5,7 +5,8 @@ import {
     uploadExcel,
     uploadProduct,
     getProductDetail as getProductsDetailRequest,
-    editProduct as editProductRequest
+    editProduct as editProductRequest,
+    getProductsTemplateExcel as getProductsTemplateExcelRequest
 } from 'api/products'
 
 const initialState = {
@@ -23,8 +24,17 @@ const initialState = {
     productDetail:null,
     loadingEditProduct:false,
     editProductError:false,
-    editProductSuccess:false
+    editProductSuccess:false,
+    loadingTemplateExcel:false,
+    templateExcelResult:null
 }
+
+export const getProductsTemplateExcel = createAsyncThunk('/get/excel-template', async (args) => {
+    const [response] = await Promise.all([
+        getProductsTemplateExcelRequest(args.access),
+    ])
+    return response
+})
 
 export const getProducts = createAsyncThunk('/get/products', async (args) => {
     const [products] = await Promise.all([
@@ -166,6 +176,16 @@ export const productsSlice = createSlice({
         [editProduct.rejected]: (state) => {
             state.loadingEditProduct = false
             state.editProductError = true
+        },
+        [getProductsTemplateExcel.pending]: (state) => {
+            state.loadingTemplateExcel = true
+        },
+        [getProductsTemplateExcel.fulfilled]: (state, action) => {
+            state.loadingTemplateExcel = false;
+            state.templateExcelResult = action.payload.data
+        },
+        [getProductsTemplateExcel.rejected]: (state) => {
+            state.loadingTemplateExcel = false
         },
     },
 })
