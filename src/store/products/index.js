@@ -12,6 +12,7 @@ const initialState = {
     productsData: null,
     loadingProductsData: true,
     loadingExcel: false,
+    uploadExcelErrors:null,
     loadingZip: false,
     uploadZipError: false,
     zipErrors: null,
@@ -91,6 +92,9 @@ export const productsSlice = createSlice({
         },
         resetZipErrors: (state) => {
             state.zipErrors = null
+        },
+        resetExcelErrors: (state) => {
+            state.uploadExcelErrors = null
         }
     },
     extraReducers: {
@@ -110,8 +114,11 @@ export const productsSlice = createSlice({
         [postProductsExcel.pending]: (state) => {
             state.loadingExcel = true
         },
-        [postProductsExcel.fulfilled]: (state) => {
+        [postProductsExcel.fulfilled]: (state, action) => {
+            console.log("postProductsExcel", action.payload.data)
             state.loadingExcel = false
+            state.uploadExcelErrors = action.payload.data.productWithErrors
+
         },
         [postProductsExcel.rejected]: (state) => {
             state.loadingExcel = false
@@ -162,6 +169,6 @@ export const productsSlice = createSlice({
         },
     },
 })
-export const { resetProductSuccess, resetEditProductSuccess, resetZipErrors } = productsSlice.actions
+export const { resetExcelErrors, resetProductSuccess, resetEditProductSuccess, resetZipErrors } = productsSlice.actions
 
 export default productsSlice.reducer

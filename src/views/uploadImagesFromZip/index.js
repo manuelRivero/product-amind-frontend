@@ -250,7 +250,7 @@ export default function UploadImagesFromZip() {
                                 </Button>
                             </>
                         )}
-                        <Link to="/dashboard/products">
+                        <Link to="/admin/products">
                             <Button
                                 isLoading={false}
                                 variant="contained"
