@@ -6,7 +6,6 @@ import {
     getMonthlySales as getMonthlySalesRequest,
     getTopProducts as getTopProductsRequest,
 } from 'api/dashboard'
-import moment from 'moment'
 
 const initialState = {
     salesStats: null,
@@ -22,9 +21,11 @@ const initialState = {
 export const getStats = createAsyncThunk(
     '/get/stats',
     async (args, { rejectWithValue }) => {
+        console.log("store date", new Date() )
+        console.log("store from", args.from )
         try {
             const [salesStats, users, dailySales] = await Promise.all([
-                getSalesStats(args.access, args.from | moment().toDate()),
+                getSalesStats(args.access, args.from ? args.from : new Date()),
                 getUSers(args.access),
             ])
             return [salesStats, users, dailySales]

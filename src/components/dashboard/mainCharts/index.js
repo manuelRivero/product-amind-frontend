@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { AccessTime, ArrowUpward } from '@material-ui/icons'
 import Card from 'components/Card/Card'
-import CardFooter from 'components/Card/CardFooter'
 import CardHeader from 'components/Card/CardHeader'
 import GridContainer from 'components/Grid/GridContainer'
 import GridItem from 'components/Grid/GridItem'
@@ -18,7 +16,7 @@ import MomentUtils from '@date-io/moment'
 import moment from 'moment'
 import { getMonthlySales } from 'store/dashboard'
 // import { getMonthlySales } from 'store/dashboard'
-import 'moment/locale/es'  // without this line it didn't work
+import 'moment/locale/es' // without this line it didn't work
 
 moment.locale('es')
 // console.log('dailySalesChart', dailySalesChart)
@@ -56,7 +54,7 @@ export default function MainCharts() {
                     date: selectedDate,
                 })
             )
-            // console.log('response', response)
+            console.log('monthly sales response', response)
             setSales(response.payload.data.sales)
         }
         getData()
@@ -71,28 +69,25 @@ export default function MainCharts() {
                 )
                     .fill(0)
                     .map((day, i) => i + 1)
-                // console.log('labels', labels)
+
                 const series = labels.map((e) => {
                     let saleValue = 0
                     sales.forEach((sale) => {
                         if (
                             moment(sale._id).format('DD-MM-YYYY') ===
-                                moment([
-                                    moment(selectedDate, 'DD-MM-YYYY').year(),
-                                    moment(selectedDate, 'DD-MM-YYYY').month(),
-                                    e,
-                                ]).format('DD-MM-YYYY')
-                            
+                            moment([
+                                moment(selectedDate, 'DD-MM-YYYY').year(),
+                                moment(selectedDate, 'DD-MM-YYYY').month(),
+                                e,
+                            ]).format('DD-MM-YYYY')
                         ) {
-                            saleValue = sale.total
-                        } else {
-                            saleValue = 0
+                            saleValue = saleValue + sale.total
                         }
                     })
-
+                    console.log('saleValue', saleValue)
                     return saleValue
                 })
-                // console.log('series', series)
+                console.log('series', series)
                 setChartData(series)
 
                 setChartLabels(labels)
@@ -117,7 +112,7 @@ export default function MainCharts() {
                                     type="Line"
                                     options={{
                                         ...dailySalesChart.options,
-                                        high: Math.max(chartData),
+                                        high: Math.max.apply(Math, chartData) + 100,
                                     }}
                                     listener={dailySalesChart.animation}
                                 />
@@ -130,30 +125,20 @@ export default function MainCharts() {
                                 <DatePicker
                                     lang="es"
                                     onChange={(e) => dateChangeHandler(e)}
-                                    value={new Date(moment(selectedDate, "DD-MM-YYYY"))}
+                                    value={
+                                        new Date(
+                                            moment(selectedDate, 'DD-MM-YYYY')
+                                        )
+                                    }
                                     variant="inline"
                                     openTo="year"
                                     views={['year', 'month']}
                                     label="Mes y año"
                                     helperText="Seleccione el mes y el año"
+                                    autoOk={true}
                                 />
-                                <p className={classes.cardCategory}>
-                                    <span className={classes.successText}>
-                                        <ArrowUpward
-                                            className={
-                                                classes.upArrowCardCategory
-                                            }
-                                        />{' '}
-                                        55%
-                                    </span>{' '}
-                                    increase in today sales.
-                                </p>
+                               
                             </CardBody>
-                            <CardFooter chart>
-                                <div className={classes.stats}>
-                                    <AccessTime /> updated 4 minutes ago
-                                </div>
-                            </CardFooter>
                         </Card>
                     )}
                 </GridItem>

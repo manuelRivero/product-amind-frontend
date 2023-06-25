@@ -29,7 +29,7 @@ export default function TotalSalesSelect() {
     const [selectedValue, setSelectedValue] = useState(new Date())
 
     const onChange = (value) => {
-        // console.log('date value', value)
+        console.log('date value', value.toDate())
         setSelectedValue(value)
         dispatch(getSalesByDate({ access: user.token, from: value.toDate() }))
 
