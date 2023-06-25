@@ -22,15 +22,15 @@ import StorefrontIcon from '@material-ui/icons/Storefront'
 import ListAltIcon from '@material-ui/icons/ListAlt';
 // core components/views for Admin layout
 import DashboardPage from 'views/Dashboard/Dashboard.js'
-// import UserProfile from "views/UserProfile/UserProfile.js";
-import TableList from 'views/TableList/TableList.js'
-// core components/views for RTL layout
+
 
 import Products from 'views/Products'
 import Login from 'views/Login'
 import UploadProductsFromExcel from 'views/UploadProductsFromExcel'
 import UploadImagesFromZip from 'views/uploadImagesFromZip'
 import AddProducts from 'views/AddProducts'
+import Sales from 'views/Sales';
+import CreateSale from 'views/CreateSale';
 
 const dashboardRoutes = [
     {
@@ -76,20 +76,20 @@ const dashboardRoutes = [
             },
         ],
     },
-    // {
-    //   path: "/user",
-    //   name: "User Profile",
-    //   rtlName: "ملف تعريفي للمستخدم",
-    //   icon: Person,
-    //   component: UserProfile,
-    //   layout: "/admin",
-    // },
+    {
+        path: '/create-sale',
+        name: 'Crear orden',
+        rtlName: 'لوحة القيادة',
+        icon: Dashboard,
+        component: CreateSale,
+        layout: '/admin',
+    },
     {
         path: '/orders',
         name: 'Ordenes',
         rtlName: 'قائمة الجدول',
         icon: ListAltIcon,
-        component: TableList,
+        component: Sales,
         layout: '/admin',
     },
 ];

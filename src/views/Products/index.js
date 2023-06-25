@@ -30,7 +30,7 @@ import * as yup from 'yup'
 
 const schema = yup.object({
     search: yup.string().nullable(),
-    tags: yup.string(),
+    tags: yup.string().nullable(),
 })
 
 const useStyles = makeStyles({

@@ -40,6 +40,7 @@ const tableStyle = (theme) => ({
     borderCollapse: "collapse",
   },
   tableHeadCell: {
+    whiteSpace:"nowrap",
     color: "inherit",
     ...defaultFont,
     "&, &$tableCell": {

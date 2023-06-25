@@ -19,11 +19,13 @@ export default function TextInput({
     multiline = false,
     rows = 1,
     errorMessage,
+    name= 'input'
 }) {
     const classes = useStyles();
     return (
         <div>
             <TextField
+                name={name}
                 rows={rows}
                 multiline={multiline}
                 label={label}
@@ -48,6 +50,7 @@ export default function TextInput({
 }
 
 TextInput.propTypes = {
+    name: PropTypes.string,
     errorMessage: PropTypes.object,
     error: PropTypes.bool,
     label: PropTypes.string,
