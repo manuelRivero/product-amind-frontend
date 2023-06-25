@@ -2,12 +2,15 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import {
     getSales as getSalesRequest,
     changeSaleStatus as changeSaleStatusRequest,
+    createSale as createSaleRequest
 } from 'api/sales'
 
 const initialState = {
     salesData: null,
     loadingSalesData: true,
     loadingChangeStatus: null,
+    loadingCreateSale: false,
+    createSaleSuccess: false
 }
 
 export const getSales = createAsyncThunk(
@@ -41,10 +44,29 @@ export const changeSalesStatus = createAsyncThunk(
     }
 )
 
+export const createSale = createAsyncThunk(
+    'post/sales',
+    async (args, { rejectWithValue }) => {
+        try {
+            const response = await createSaleRequest(
+                args.access,
+                args.saleData
+            )
+            return response
+        } catch (error) {
+            return rejectWithValue(error.response.data)
+        }
+    }
+)
+
 export const salesSlice = createSlice({
     name: 'auth',
     initialState,
-    reducers: {},
+    reducers: {
+        resetCreateSaleSuccess : (state)=>{
+            state.createSaleSuccess = false
+        }
+    },
     extraReducers: {
         [getSales.pending]: (state) => {
             state.loadingSalesData = true
@@ -72,8 +94,18 @@ export const salesSlice = createSlice({
         [changeSalesStatus.rejected]: (state) => {
             state.loadingChangeStatus = null
         },
+        [createSale.pending]: (state) => {
+            state.loadingCreateSale = true
+        },
+        [createSale.fulfilled]: (state) => {
+            state.loadingCreateSale = false
+            state.createSaleSuccess = true
+        },
+        [createSale.rejected]: (state) => {
+            state.loadingCreateSale = false
+        },
     },
 })
-export const { logout } = salesSlice.actions
+export const { resetCreateSaleSuccess } = salesSlice.actions
 
 export default salesSlice.reducer

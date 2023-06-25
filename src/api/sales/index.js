@@ -32,3 +32,15 @@ export const changeSaleStatus = (access, id, status, paymentMethod) =>{
         },
     })
 }
+
+export const createSale = (access, saleData) => {
+
+    return client.post(`api/sale/from-admin`, {
+        ...saleData
+    },{
+        headers: {
+            'x-token': access,
+        },
+    })
+
+}
