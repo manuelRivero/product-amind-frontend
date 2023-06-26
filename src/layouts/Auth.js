@@ -5,8 +5,6 @@ import 'perfect-scrollbar/css/perfect-scrollbar.css'
 import { makeStyles } from '@material-ui/core/styles'
 
 import { authRoutes } from 'routes.js'
-import { useSelector } from 'react-redux'
-import { useHistory } from 'react-router-dom'
 
 const switchRoutes = (
     <Switch>
@@ -22,8 +20,7 @@ const switchRoutes = (
             }
             return null
         })}
-        <Redirect from="/auth" to="/auth/login" />
-        <Redirect from="/admin" to="/admin/dashboard" />
+        <Redirect from="/" to="/auth/login" />
     </Switch>
 )
 
@@ -37,15 +34,9 @@ const useStyles = makeStyles({
 })
 
 export default function Auth() {
-    //router
-    const history = useHistory();
+    console.log("auth routes")
     // styles
     const classes = useStyles()
-    // redux 
-    const {user} = useSelector(state => state.auth)
 
-if(user){
-    history.push('/admin/')
-}
     return <div className={classes.wrapper}>{switchRoutes}</div>
 }

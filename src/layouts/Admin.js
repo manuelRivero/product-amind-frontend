@@ -7,7 +7,6 @@ import 'perfect-scrollbar/css/perfect-scrollbar.css'
 import { makeStyles } from '@material-ui/core/styles'
 // core components
 import Navbar from 'components/Navbars/Navbar.js'
-import Footer from 'components/Footer/Footer.js'
 import Sidebar from 'components/Sidebar/Sidebar.js'
 // import FixedPlugin from 'components/FixedPlugin/FixedPlugin.js'
 
@@ -17,8 +16,6 @@ import styles from 'assets/jss/material-dashboard-react/layouts/adminStyle.js'
 
 import bgImage from 'assets/img/sidebar-2.jpg'
 import logo from 'assets/img/reactlogo.png'
-import { useSelector } from 'react-redux'
-import { useHistory } from 'react-router-dom/cjs/react-router-dom.min'
 
 let ps
 
@@ -54,11 +51,7 @@ const childRoutes = dashboardRoutes.map((prop) => {
 const useStyles = makeStyles(styles)
 
 export default function Admin({ ...rest }) {
-    //router
-    const history = useHistory()
-    //redux
-    const { user } = useSelector((state) => state.auth)
-
+    console.log("admin routes")
     // styles
     const classes = useStyles()
     // ref to help us initialize PerfectScrollbar on windows devices
@@ -66,27 +59,12 @@ export default function Admin({ ...rest }) {
     // states and functions
     const [image] = React.useState(bgImage)
     const [color] = React.useState('blue')
-    // const [fixedClasses, setFixedClasses] = React.useState('dropdown show')
     const [mobileOpen, setMobileOpen] = React.useState(false)
-    // const handleImageClick = (image) => {
-    //     setImage(image)
-    // }
-    // const handleColorClick = (color) => {
-    //     setColor(color)
-    // }
-    // const handleFixedClick = () => {
-    //     if (fixedClasses === 'dropdown') {
-    //         setFixedClasses('dropdown show')
-    //     } else {
-    //         setFixedClasses('dropdown')
-    //     }
-    // }
+
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen)
     }
-    const getRoute = () => {
-        return window.location.pathname !== '/admin/maps'
-    }
+    
     const resizeFunction = () => {
         if (window.innerWidth >= 960) {
             setMobileOpen(false)
@@ -110,9 +88,7 @@ export default function Admin({ ...rest }) {
             window.removeEventListener('resize', resizeFunction)
         }
     }, [mainPanel])
-    if (!user) {
-        history.push('/auth/login')
-    }
+  
     return (
         <div className={classes.wrapper}>
             <Sidebar
@@ -144,16 +120,6 @@ export default function Admin({ ...rest }) {
                         }
                     </div>
                 </div>
-
-                {getRoute() ? <Footer /> : null}
-                {/* <FixedPlugin
-                    handleImageClick={handleImageClick}
-                    handleColorClick={handleColorClick}
-                    bgColor={color}
-                    bgImage={image}
-                    handleFixedClick={handleFixedClick}
-                    fixedClasses={fixedClasses}
-                /> */}
             </div>
         </div>
     )
