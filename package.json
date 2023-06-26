@@ -59,7 +59,7 @@
     "bugs": {
         "url": "https://github.com/creativetimofficial/material-dashboard-react/issues"
     },
-    "homepage": "https://creativetimofficial.github.io/material-dashboard-react/#/dashboard",
+    "homepage": "https://product-admin-frontend.onrender.com",
     "optionalDependencies": {
         "@babel/core": "7.14.0",
         "typescript": "4.2.4"
