@@ -1,10 +1,10 @@
-import {
-    Accessibility,
-    DateRange,
-    LocalOffer,
-    Store,
-    Update,
-} from '@material-ui/icons'
+// import {
+//     Accessibility,
+//     DateRange,
+//     LocalOffer,
+//     Store,
+//     Update,
+// } from '@material-ui/icons'
 import Icon from '@material-ui/core/Icon'
 import Card from 'components/Card/Card'
 import CardFooter from 'components/Card/CardFooter'
@@ -31,7 +31,7 @@ export default function MainStats() {
     //redux
     const dispatch = useDispatch()
     const { user } = useSelector((state) => state.auth)
-    const { salesStats, users } = useSelector((state) => state.dashboard)
+    const { salesStats } = useSelector((state) => state.dashboard)
     //clasess
     const classes = useStyles()
     //states
@@ -53,7 +53,7 @@ export default function MainStats() {
 
     return (
         <GridContainer>
-            <GridItem xs={12} sm={6} lg={3}>
+            <GridItem xs={12}>
                 <Card>
                     <CardHeader color="warning" stats icon>
                         <CardIcon color="warning">
@@ -67,7 +67,7 @@ export default function MainStats() {
                     </CardFooter>
                 </Card>
             </GridItem>
-            <GridItem xs={12} sm={6} lg={3}>
+            {/* <GridItem xs={12} sm={6} lg={3}>
                 <Card>
                     <CardHeader color="success" stats icon>
                         <CardIcon color="success">
@@ -116,7 +116,7 @@ export default function MainStats() {
                         </div>
                     </CardFooter>
                 </Card>
-            </GridItem>
+            </GridItem> */}
         </GridContainer>
     )
 }

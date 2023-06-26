@@ -8,7 +8,7 @@ import Grow from '@material-ui/core/Grow'
 import Paper from '@material-ui/core/Paper'
 import ClickAwayListener from '@material-ui/core/ClickAwayListener'
 import Poppers from '@material-ui/core/Popper'
-import Divider from '@material-ui/core/Divider'
+// import Divider from '@material-ui/core/Divider'
 // @material-ui/icons
 import Person from '@material-ui/icons/Person'
 // import Notifications from '@material-ui/icons/Notifications'
@@ -208,26 +208,13 @@ export default function AdminNavbarLinks() {
                                 >
                                     <MenuList role="menu">
                                         <MenuItem
-                                            onClick={handleCloseProfile}
-                                            className={classes.dropdownItem}
-                                        >
-                                            Profile
-                                        </MenuItem>
-                                        <MenuItem
-                                            onClick={handleCloseProfile}
-                                            className={classes.dropdownItem}
-                                        >
-                                            Settings
-                                        </MenuItem>
-                                        <Divider light />
-                                        <MenuItem
                                             onClick={() => {
                                                 handleCloseProfile()
                                                 dispatch(logout())
                                             }}
                                             className={classes.dropdownItem}
                                         >
-                                            Logout
+                                            Cerrar sesión
                                         </MenuItem>
                                     </MenuList>
                                 </ClickAwayListener>

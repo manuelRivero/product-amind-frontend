@@ -12,6 +12,8 @@ import Button from 'components/CustomButtons/Button'
 import { useDispatch, useSelector } from 'react-redux'
 import { getSales, changeSalesStatus } from 'store/sales'
 import PropTypes from 'prop-types'
+import { Link } from 'react-router-dom'
+
 
 // form
 import { useForm, Controller } from 'react-hook-form'
@@ -29,6 +31,7 @@ import {
     MenuList,
     Popper,
 } from '@material-ui/core'
+import moment from 'moment'
 
 const styles = {
     cardCategoryWhite: {
@@ -126,9 +129,12 @@ export default function Sales() {
             <GridItem xs={12} sm={12} md={12}>
                 <Card>
                     <CardHeader color="primary">
-                        <h4 className={classes.cardTitleWhite}>Simple Table</h4>
+                        <h4 className={classes.cardTitleWhite}>
+                            Tabla de ordenes
+                        </h4>
                         <p className={classes.cardCategoryWhite}>
-                            Here is a subtitle for this table
+                            Aquí podras visualizar todas tus ordenes, cambiar su
+                            estatus y acceder al detalle de cada orden
                         </p>
                     </CardHeader>
                     <CardBody>
@@ -204,24 +210,44 @@ export default function Sales() {
                                 tableHeaderColor="primary"
                                 tableHead={[
                                     'Id',
-                                    'Id del roducto',
-                                    'Nombre del producto',
                                     'Total',
+                                    'Fecha',
                                     'Estatus',
                                     'Cambiar estatus',
+                                    'Acciones',
                                 ]}
                                 tableData={salesData.sales.map((e) => {
                                     console.log('e', e)
                                     return [
-                                        e._id,
-                                        e.product.data._id,
-                                        e.product.data.name,
-                                        e.total,
-                                        e.status ? e.status : 'Status',
+                                        <p key={`sale-id-${e._id}`}>{e._id}</p>,
+                                        <p key={`sale-total-${e._id}`}>
+                                            {e.total}
+                                        </p>,
+                                        <p key={`sale-date-${e._id}`}>{moment(e.createdAt).format("DD-MM-YYYY HH:mm:ss")}</p>,
+                                        <p key={`sale-status-${e._id}`}>
+                                            {e.status}
+                                        </p>,
                                         <ChangeStatusDropdown
                                             key={e._id}
                                             sale={e}
                                         />,
+                                        <Link
+                                            key={`detail-button-${e._id}`}
+                                            to={'/admin/sale-detail/' + e._id}
+                                        >
+                                            <Button
+                                                isLoading={false}
+                                                variant="contained"
+                                                color="primary"
+                                                type="button"
+                                                onClick={() =>
+                                                    handleFilter(null)
+                                                }
+                                            >
+                                                Ver detalle
+                                            </Button>
+                                            ,
+                                        </Link>,
                                     ]
                                 })}
                             />
