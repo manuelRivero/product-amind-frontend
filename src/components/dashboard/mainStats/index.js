@@ -20,10 +20,10 @@ import styles from 'assets/jss/material-dashboard-react/views/dashboardStyle.js'
 import { useDispatch, useSelector } from 'react-redux'
 import { getStats } from 'store/dashboard'
 import TotalSalesSelect from '../totalSalesSelect'
-import io from 'socket.io-client'
-import { userAdded } from 'store/dashboard'
+// import io from 'socket.io-client'
+// import { userAdded } from 'store/dashboard'
 
-const socket = io('ws://localhost:5000')
+// const socket = io('ws://localhost:5000')
 
 const useStyles = makeStyles(styles)
 
@@ -40,16 +40,16 @@ export default function MainStats() {
         dispatch(getStats({ access: user.token }))
     }, [])
 
-    useEffect(() => {
+    // useEffect(() => {
         
-        socket.on('user-subcription', (user) => {
-            dispatch(userAdded(user))
-        })
+    //     socket.on('user-subcription', (user) => {
+    //         dispatch(userAdded(user))
+    //     })
 
-        return () => {
-            socket.off('user-subcription')
-        }
-    }, [])
+    //     return () => {
+    //         socket.off('user-subcription')
+    //     }
+    // }, [])
 
     return (
         <GridContainer>

@@ -109,8 +109,8 @@ export default function Dashboard() {
                                     ]}
                                     tableData={
                                         topProductsData.data.map(product =>{
-                                            const productData = product.productData
-                                                return [productData._id, productData.name, productData.price, product.count]
+                                            const productData = product
+                                                return [productData.data._id, productData.data.name, productData.data.price, product.count]
                                         })
                                     }
                                 />
