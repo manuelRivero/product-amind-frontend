@@ -31,6 +31,7 @@ import UploadImagesFromZip from 'views/uploadImagesFromZip'
 import AddProducts from 'views/AddProducts'
 import Sales from 'views/Sales';
 import CreateSale from 'views/CreateSale';
+import SaleDetail from 'views/SaleDetail';
 
 const dashboardRoutes = [
     {
@@ -44,7 +45,6 @@ const dashboardRoutes = [
     {
         path: '/products',
         name: 'Productos',
-        rtlName: 'لوحة القيادة',
         icon: StorefrontIcon,
         component: Products,
         layout: '/admin',
@@ -59,19 +59,16 @@ const dashboardRoutes = [
                 noshow:true,
                 path: '/edit-product/:id',
                 name: 'Editar Producto',
-                rtlName: 'لوحة القيادة',
                 component: AddProducts,
             },
             {
                 path: '/upload-from-excel',
                 name: 'Carga masiva de excel',
-                rtlName: 'لوحة القيادة',
                 component: UploadProductsFromExcel,
             },
             {
                 path: '/upload-images-from-zip',
                 name: 'Carga masiva de imágenes',
-                rtlName: 'لوحة القيادة',
                 component: UploadImagesFromZip,
             },
         ],
@@ -87,10 +84,16 @@ const dashboardRoutes = [
     {
         path: '/orders',
         name: 'Ordenes',
-        rtlName: 'قائمة الجدول',
         icon: ListAltIcon,
         component: Sales,
         layout: '/admin',
+        childrens: [
+            {
+                noshow:true,
+                path: '/detail/:id',
+                name: 'Detalle de la orden',
+                component: SaleDetail,
+            },]
     },
 ];
 const authRoutes = [

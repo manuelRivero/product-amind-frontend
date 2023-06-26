@@ -233,16 +233,13 @@ export default function Sales() {
                                         />,
                                         <Link
                                             key={`detail-button-${e._id}`}
-                                            to={'/admin/sale-detail/' + e._id}
+                                            to={`/admin/orders/detail/${e._id}`}
                                         >
                                             <Button
                                                 isLoading={false}
                                                 variant="contained"
                                                 color="primary"
                                                 type="button"
-                                                onClick={() =>
-                                                    handleFilter(null)
-                                                }
                                             >
                                                 Ver detalle
                                             </Button>

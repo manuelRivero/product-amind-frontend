@@ -1,0 +1,159 @@
+import React, { useEffect } from 'react'
+// @material-ui/core components
+import { makeStyles } from '@material-ui/core/styles'
+// core components
+import GridItem from 'components/Grid/GridItem.js'
+import GridContainer from 'components/Grid/GridContainer.js'
+import Table from 'components/Table/Table.js'
+import Card from 'components/Card/Card.js'
+import CardHeader from 'components/Card/CardHeader.js'
+import CardBody from 'components/Card/CardBody.js'
+import { useDispatch, useSelector } from 'react-redux'
+import { getSale } from 'store/sales'
+
+import { useParams } from 'react-router-dom'
+import { Box } from '@material-ui/core'
+import moment from 'moment'
+
+const styles = {
+    cardCategoryWhite: {
+        '&,& a,& a:hover,& a:focus': {
+            color: 'rgba(255,255,255,.62)',
+            margin: '0',
+            fontSize: '14px',
+            marginTop: '0',
+            marginBottom: '0',
+        },
+        '& a,& a:hover,& a:focus': {
+            color: '#FFFFFF',
+        },
+    },
+    cardTitleWhite: {
+        color: '#FFFFFF',
+        marginTop: '0px',
+        minHeight: 'auto',
+        fontWeight: '300',
+        fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
+        marginBottom: '3px',
+        textDecoration: 'none',
+        '& small': {
+            color: '#777',
+            fontSize: '65%',
+            fontWeight: '400',
+            lineHeight: '1',
+        },
+    },
+    filtersWrapper: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '1rem',
+    },
+    dropdown: {
+        backgroundColor: '#fff',
+        padding: '1rem',
+        borderRadius: '8px',
+        zIndex: 100,
+        position: 'relative',
+    },
+    activeStatus: {
+        backgroundColor: '#c2c2c2',
+    },
+    modalBody: {
+        padding: '1rem',
+    },
+    paymentImageRow: {
+        display: 'flex',
+        justifyContent: 'center',
+    },
+    paymentImage: {
+        maxWidth: '166px',
+    },
+    dropZone: {
+        borderRadius: '16px',
+        border: 'solid 1px #c2c2c2',
+        display: 'flex',
+        justifyContent: 'center',
+        padding: '1rem',
+        flexDirection: 'column',
+        alignItems: 'center',
+    },
+    modalButtonRow: {
+        display: 'flex',
+        justifyContent: 'center',
+    },
+}
+
+const useStyles = makeStyles(styles)
+
+export default function SaleDetail() {
+    const { id } = useParams()
+    console.log('id', id)
+    const classes = useStyles()
+    const dispatch = useDispatch()
+    const { user } = useSelector((state) => state.auth)
+    const { saleData, loadingSaleData } = useSelector((state) => state.sales)
+
+    useEffect(() => {
+        dispatch(getSale({ access: user.token, id }))
+    }, [])
+    return (
+        <GridContainer>
+            <GridItem xs={12} sm={12} md={12}>
+                <Card>
+                    <CardHeader color="primary">
+                        <h4 className={classes.cardTitleWhite}>
+                            Detalle de la orden {id}
+                        </h4>
+                        <p className={classes.cardCategoryWhite}>
+                            Visualiza los productos y todo el detalle de la
+                            orden
+                        </p>
+                    </CardHeader>
+                    <CardBody>
+                        {loadingSaleData ? (
+                            <p>Cargando datos...</p>
+                        ) : (
+                            <Box>
+                                <p>
+                                    Status: <strong>{saleData.status}</strong>
+                                </p>
+                                <p>
+                                    Fecha:{' '}
+                                    <strong>
+                                        {' '}
+                                        {moment(saleData.createdAt).format(
+                                            'DD-MM-YYYY HH:mm:ss'
+                                        )}{' '}
+                                    </strong>
+                                </p>
+                                <p>
+                                    Total de la orden:{' '}
+                                    <strong> {saleData.total} </strong>
+                                </p>
+                                <Table
+                                    tableHeaderColor="primary"
+                                    tableHead={[
+                                        'Id del producto',
+                                        'Nombre del producto',
+                                        'Cantidad',
+                                        'Precio',
+                                    ]}
+                                    tableData={saleData.products.map(
+                                        (product) => {
+                                            return [
+                                                product.data._id,
+                                                product.data.name,
+                                                product.quantity,
+                                                product.data.price,
+                                            ]
+                                        }
+                                    )}
+                                />
+                            </Box>
+                        )}
+                    </CardBody>
+                </Card>
+            </GridItem>
+        </GridContainer>
+    )
+}

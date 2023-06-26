@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import {
     getSales as getSalesRequest,
+    getSale as getSaleRequest,
     changeSaleStatus as changeSaleStatusRequest,
     createSale as createSaleRequest
 } from 'api/sales'
@@ -10,7 +11,9 @@ const initialState = {
     loadingSalesData: true,
     loadingChangeStatus: null,
     loadingCreateSale: false,
-    createSaleSuccess: false
+    createSaleSuccess: false,
+    saleData:null,
+    loadingSaleData:true
 }
 
 export const getSales = createAsyncThunk(
@@ -18,6 +21,19 @@ export const getSales = createAsyncThunk(
     async (args, { rejectWithValue }) => {
         try {
             const response = await getSalesRequest(args.access, args.filters)
+            return response
+        } catch (error) {
+            console.log('error', error)
+            return rejectWithValue(error.response.data)
+        }
+    }
+)
+
+export const getSale = createAsyncThunk(
+    'get/sale-detail',
+    async (args, { rejectWithValue }) => {
+        try {
+            const response = await getSaleRequest(args.access, args.id)
             return response
         } catch (error) {
             console.log('error', error)
@@ -77,6 +93,16 @@ export const salesSlice = createSlice({
         },
         [getSales.rejected]: (state) => {
             state.loadingSalesData = false
+        },
+        [getSale.pending]: (state) => {
+            state.loadingSaleData = true
+        },
+        [getSale.fulfilled]: (state, action) => {
+            state.loadingSaleData = false
+            state.saleData = action.payload.data.data
+        },
+        [getSale.rejected]: (state) => {
+            state.loadingSaleData = false
         },
         [changeSalesStatus.pending]: (state, action) => {
             console.log("action", action)

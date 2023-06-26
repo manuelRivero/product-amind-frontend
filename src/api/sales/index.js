@@ -1,7 +1,6 @@
 import client from 'api/client'
 
 export const getSales = (access, filters) => {
-    console.log("access", access)
     const handleFilters = () => {
         let filterQuery = ''
         Object.keys(filters).map( (key, index) => {
@@ -14,6 +13,17 @@ export const getSales = (access, filters) => {
         return filterQuery
     }
     return client.get(`api/sale${handleFilters()}`, {
+        headers: {
+            'x-token': access,
+        },
+    })
+}
+
+export const getSale = (access, id) => {
+    return client.get(`api/sale/detail`, {
+        params:{
+            id
+        },
         headers: {
             'x-token': access,
         },
