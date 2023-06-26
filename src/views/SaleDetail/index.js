@@ -15,6 +15,9 @@ import { useParams } from 'react-router-dom'
 import { Box } from '@material-ui/core'
 import moment from 'moment'
 
+import ArrowBackIcon from '@material-ui/icons/ArrowBack';
+import { useHistory } from 'react-router-dom/cjs/react-router-dom.min'
+
 const styles = {
     cardCategoryWhite: {
         '&,& a,& a:hover,& a:focus': {
@@ -43,49 +46,18 @@ const styles = {
             lineHeight: '1',
         },
     },
-    filtersWrapper: {
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '1rem',
-    },
-    dropdown: {
-        backgroundColor: '#fff',
-        padding: '1rem',
-        borderRadius: '8px',
-        zIndex: 100,
-        position: 'relative',
-    },
-    activeStatus: {
-        backgroundColor: '#c2c2c2',
-    },
-    modalBody: {
-        padding: '1rem',
-    },
-    paymentImageRow: {
-        display: 'flex',
-        justifyContent: 'center',
-    },
-    paymentImage: {
-        maxWidth: '166px',
-    },
-    dropZone: {
-        borderRadius: '16px',
-        border: 'solid 1px #c2c2c2',
-        display: 'flex',
-        justifyContent: 'center',
-        padding: '1rem',
-        flexDirection: 'column',
-        alignItems: 'center',
-    },
-    modalButtonRow: {
-        display: 'flex',
-        justifyContent: 'center',
-    },
+    backButton:{
+        display:'flex',
+        gap:'1rem',
+        alignItems:'center',
+        cursor:'pointer'
+    }
 }
 
 const useStyles = makeStyles(styles)
 
 export default function SaleDetail() {
+    const history = useHistory()
     const { id } = useParams()
     console.log('id', id)
     const classes = useStyles()
@@ -97,6 +69,11 @@ export default function SaleDetail() {
         dispatch(getSale({ access: user.token, id }))
     }, [])
     return (
+        <>
+        <Box className={classes.backButton} onClick={()=> history.push('/admin/orders')}>
+            <ArrowBackIcon />
+            <p>Volver a ordenes</p>
+        </Box>
         <GridContainer>
             <GridItem xs={12} sm={12} md={12}>
                 <Card>
@@ -155,5 +132,6 @@ export default function SaleDetail() {
                 </Card>
             </GridItem>
         </GridContainer>
+        </>
     )
 }

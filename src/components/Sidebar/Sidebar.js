@@ -1,5 +1,5 @@
 /*eslint-disable*/
-import React from 'react'
+import React, { useState } from 'react'
 import classNames from 'classnames'
 import PropTypes from 'prop-types'
 import { NavLink, useLocation } from 'react-router-dom'
@@ -23,17 +23,21 @@ const useStyles = makeStyles(styles)
 export default function Sidebar(props) {
     const classes = useStyles()
     let location = useLocation()
+    const [activeTab, setActiveTab] = useState(null)
     // verifies if routeName is the one active (in browser input)
     function activeRoute(routeName) {
         return location.pathname.includes(routeName)
     }
-    function activeChildRoute(childRoutes) {
-        return childRoutes
-            ? childRoutes?.some((e) => location.pathname.includes(e.path))
-                ? true
-                : false
-            : false
+    const hasVisibleRoutes = (route) => {
+        console.log("route", route)
+        let visibleRoutes = false;
+        const childrenRoutes = route.childrens.filter(e => !e.noshow)
+        if (childrenRoutes.length > 0){
+            visibleRoutes = true;
+        }
+        return visibleRoutes
     }
+    
     const { color, logo, image, logoText, routes } = props
     var links = (
         <List className={classes.list}>
@@ -58,10 +62,12 @@ export default function Sidebar(props) {
                         className={classes.item}
                         activeClassName="active"
                         key={key}
+                        
                     >
                         <ListItem
                             button
                             className={classes.itemLink + listItemClasses}
+                            onClick={()=>setActiveTab(key)}
                         >
                             {typeof prop.icon === 'string' ? (
                                 <Icon
@@ -102,10 +108,9 @@ export default function Sidebar(props) {
                                 disableTypography={true}
                             />
                         </ListItem>
-                        {((prop.childrens &&
-                            activeRoute(prop.layout + prop.path)) ||
-                            activeChildRoute(prop.childrens)) && (
-                            <Box className={classes.childrensContainer}>
+                        {prop.childrens && activeTab === key && (
+                            hasVisibleRoutes(prop) &&
+                           ( <Box className={classes.childrensContainer}>
                                 {prop.childrens?.map((e, i) => {
                                     if (e.noshow) return
                                     return (
@@ -132,7 +137,7 @@ export default function Sidebar(props) {
                                         </NavLink>
                                     )
                                 })}
-                            </Box>
+                            </Box>)
                         )}
                     </NavLink>
                 )
