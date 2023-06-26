@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import classNames from 'classnames'
 // @material-ui/core components
 import { makeStyles } from '@material-ui/core/styles'
@@ -11,46 +11,46 @@ import Poppers from '@material-ui/core/Popper'
 import Divider from '@material-ui/core/Divider'
 // @material-ui/icons
 import Person from '@material-ui/icons/Person'
-import Notifications from '@material-ui/icons/Notifications'
+// import Notifications from '@material-ui/icons/Notifications'
 // core components
 import Button from 'components/CustomButtons/Button.js'
 
 import styles from 'assets/jss/material-dashboard-react/components/headerLinksStyle.js'
 import { logout } from 'store/auth'
-import { useDispatch, useSelector } from 'react-redux'
-import { notificationAdded } from 'store/dashboard'
-import io from 'socket.io-client'
-import { getNotifications } from 'store/dashboard'
-import { setReadednotification } from 'store/dashboard'
-import { setNotificationsPage } from 'store/dashboard'
+import { useDispatch } from 'react-redux'
+// import { notificationAdded } from 'store/dashboard'
+// import { getNotifications } from 'store/dashboard'
+// import { setReadednotification } from 'store/dashboard'
+// import { setNotificationsPage } from 'store/dashboard'
+// import io from 'socket.io-client'
 
-const socket = io('ws://localhost:5000')
+// const socket = io('ws://localhost:5000')
 
 const useStyles = makeStyles(styles)
 
 export default function AdminNavbarLinks() {
     const dispatch = useDispatch()
-    const { notifications, notificationsPage } = useSelector(
-        (state) => state.dashboard
-    )
+    // const { notifications, notificationsPage } = useSelector(
+    //     (state) => state.dashboard
+    // )
 
-    const { user } = useSelector((state) => state.auth)
+    // const { user } = useSelector((state) => state.auth)
 
     const classes = useStyles()
-    const [openNotification, setOpenNotification] = React.useState(null)
+    // const [openNotification, setOpenNotification] = React.useState(null)
     const [openProfile, setOpenProfile] = React.useState(null)
-    const handleClickNotification = (event) => {
-        if (openNotification && openNotification.contains(event.target)) {
-            setOpenNotification(null)
-        } else {
-            setOpenNotification(event.currentTarget)
-            dispatch(setReadednotification())
-            socket.emit('notification-readed', notifications.notifications)
-        }
-    }
-    const handleCloseNotification = () => {
-        setOpenNotification(null)
-    }
+    // const handleClickNotification = (event) => {
+    //     if (openNotification && openNotification.contains(event.target)) {
+    //         setOpenNotification(null)
+    //     } else {
+    //         setOpenNotification(event.currentTarget)
+    //         dispatch(setReadednotification())
+    //         socket.emit('notification-readed', notifications.notifications)
+    //     }
+    // }
+    // const handleCloseNotification = () => {
+    //     setOpenNotification(null)
+    // }
     const handleClickProfile = (event) => {
         if (openProfile && openProfile.contains(event.target)) {
             setOpenProfile(null)
@@ -61,24 +61,24 @@ export default function AdminNavbarLinks() {
     const handleCloseProfile = () => {
         setOpenProfile(null)
     }
-    const getMoreNotifications = () => {
-        console.log('load more')
-        dispatch(setNotificationsPage({ page: notificationsPage + 1 }))
-    }
-    useEffect(() => {
-        socket.on('notification', (user) => {
-            dispatch(notificationAdded(user))
-        })
-    }, [])
-    useEffect(() => {
-        dispatch(
-            getNotifications({ access: user.token, page: notificationsPage })
-        )
-    }, [notificationsPage])
+    // const getMoreNotifications = () => {
+    //     console.log('load more')
+    //     dispatch(setNotificationsPage({ page: notificationsPage + 1 }))
+    // }
+    // useEffect(() => {
+    //     socket.on('notification', (user) => {
+    //         dispatch(notificationAdded(user))
+    //     })
+    // }, [])
+    // useEffect(() => {
+    //     dispatch(
+    //         getNotifications({ access: user.token, page: notificationsPage })
+    //     )
+    // }, [notificationsPage])
 
     return (
         <div className={classes.managerWrapper}>
-            <div className={classes.manager}>
+            {/* <div className={classes.manager}>
                 <Button
                     color={window.innerWidth > 959 ? 'transparent' : 'white'}
                     justIcon={window.innerWidth > 959}
@@ -167,7 +167,7 @@ export default function AdminNavbarLinks() {
                         </Grow>
                     )}
                 </Poppers>
-            </div>
+            </div> */}
             <div className={classes.manager}>
                 <Button
                     color={window.innerWidth > 959 ? 'transparent' : 'white'}
