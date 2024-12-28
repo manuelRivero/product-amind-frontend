@@ -1,0 +1,8 @@
+.chartist-tooltip {
+    z-index: 9999; /* Asegura que el tooltip esté sobre todo */
+    position: absolute; /* Asegura el correcto posicionamiento */
+    color: #fff; /* Texto blanco */
+    padding: 5px 10px; /* Espaciado interno */
+    border-radius: 4px; /* Bordes redondeados */
+    pointer-events: none; /* Evita interferir con el cursor */
+  }

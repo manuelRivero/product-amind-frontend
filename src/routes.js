@@ -27,10 +27,10 @@ import DashboardPage from 'views/Dashboard/Dashboard.js'
 import Products from 'views/Products'
 import Login from 'views/Login'
 import UploadProductsFromExcel from 'views/UploadProductsFromExcel'
-import UploadImagesFromZip from 'views/uploadImagesFromZip'
+// import UploadImagesFromZip from 'views/uploadImagesFromZip'
 import AddProducts from 'views/AddProducts'
 import Sales from 'views/Sales';
-import CreateSale from 'views/CreateSale';
+// import CreateSale from 'views/CreateSale';
 import SaleDetail from 'views/SaleDetail';
 
 const dashboardRoutes = [
@@ -52,7 +52,6 @@ const dashboardRoutes = [
             {
                 path: '/add-product',
                 name: 'Agregar Producto',
-                rtlName: 'لوحة القيادة',
                 component: AddProducts,
             },
             {
@@ -66,21 +65,21 @@ const dashboardRoutes = [
                 name: 'Carga masiva de excel',
                 component: UploadProductsFromExcel,
             },
-            {
-                path: '/upload-images-from-zip',
-                name: 'Carga masiva de imágenes',
-                component: UploadImagesFromZip,
-            },
+            // {
+            //     path: '/upload-images-from-zip',
+            //     name: 'Carga masiva de imágenes',
+            //     component: UploadImagesFromZip,
+            // },
         ],
     },
-    {
-        path: '/create-sale',
-        name: 'Crear orden',
-        rtlName: 'لوحة القيادة',
-        icon: Dashboard,
-        component: CreateSale,
-        layout: '/admin',
-    },
+    // {
+    //     path: '/create-sale',
+    //     name: 'Crear orden',
+    //     rtlName: 'لوحة القيادة',
+    //     icon: Dashboard,
+    //     component: CreateSale,
+    //     layout: '/admin',
+    // },
     {
         path: '/orders',
         name: 'Ordenes',

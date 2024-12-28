@@ -30,7 +30,6 @@ import * as yup from 'yup'
 
 const schema = yup.object({
     search: yup.string().nullable(),
-    tags: yup.string().nullable(),
 })
 
 const useStyles = makeStyles({
@@ -108,7 +107,6 @@ export default function Products() {
         resolver: yupResolver(schema),
         defaultValues: {
             search: null,
-            tags: null,
         },
     })
 
@@ -183,7 +181,7 @@ export default function Products() {
                     </CardBody>
                 </Card>
             </GridItem>
-            <GridItem xs={12} sm={12} md={6}>
+            {/* <GridItem xs={12} sm={12} md={6}>
                 <Card>
                     <CardHeader color="primary">
                         <h4 className={classes.cardTitleWhite}>
@@ -207,7 +205,7 @@ export default function Products() {
                         </Link>
                     </CardBody>
                 </Card>
-            </GridItem>
+            </GridItem> */}
             <GridItem xs={12} sm={12} md={12}>
                 <Card>
                     <CardHeader id="table-header" color="primary">
@@ -275,7 +273,7 @@ export default function Products() {
                                         )}
                                     />
                                 </Box>
-                                <Box>
+                                {/* <Box>
                                     <Controller
                                         name="tags"
                                         control={control}
@@ -297,7 +295,7 @@ export default function Products() {
                                             />
                                         )}
                                     />
-                                </Box>
+                                </Box> */}
                             </Box>
                             <Button
                                 isLoading={false}
@@ -320,7 +318,6 @@ export default function Products() {
                                         'Precio',
                                         'Stock',
                                         'Descuento',
-                                        'Etiquetas',
                                         'Estatus',
                                         'Acciones',
                                     ]}
@@ -328,12 +325,9 @@ export default function Products() {
                                         return [
                                             e._id,
                                             e.name,
-                                            e.price,
+                                            `$${e.price.toFixed(1)}`,
                                             e.stock,
-                                            e.discount ? e.discount : 0,
-                                            e.tags
-                                                .map((tag) => tag.name)
-                                                .join(','),
+                                            e.discount ? `${e.discount}%` : 0,
                                             e.status
                                                 ? e.status.available
                                                     ? 'Disponible'

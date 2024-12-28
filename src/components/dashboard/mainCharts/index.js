@@ -15,7 +15,8 @@ import { DatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers'
 import MomentUtils from '@date-io/moment'
 import moment from 'moment'
 import { getMonthlySales } from 'store/dashboard'
-// import { getMonthlySales } from 'store/dashboard'
+import ChartistTooltip from 'chartist-plugin-tooltips-updated';
+import 'chartist-plugin-tooltips-updated/dist/chartist-plugin-tooltip.css';
 import 'moment/locale/es' // without this line it didn't work
 
 moment.locale('es')
@@ -112,7 +113,14 @@ export default function MainCharts() {
                                     type="Line"
                                     options={{
                                         ...dailySalesChart.options,
-                                        high: Math.max.apply(Math, chartData) + 100,
+                                        high: Math.max.apply(Math, chartData) + 5,
+                                        plugins: [
+                                            ChartistTooltip({
+                                              transformTooltipTextFnc: (value) => `$${Number(value).toFixed(1)}`, // Agrega el prefijo $
+                                              appendToBody: true, // Adjuntar el tooltip al body para evitar problemas de posicionamiento
+                                              anchorToPoint: true, // Mostrar el tooltip en el punto exacto
+                                            }),
+                                          ],
                                     }}
                                     listener={dailySalesChart.animation}
                                 />

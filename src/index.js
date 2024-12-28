@@ -28,10 +28,9 @@ import theme from 'theme'
 //redux
 import { store } from './store'
 import { Provider } from 'react-redux'
-
-//
 import { createBrowserHistory } from "history";
 import Router from 'router'
+import "./styles.css"
 
 export const history = createBrowserHistory();
 

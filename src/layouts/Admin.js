@@ -23,7 +23,7 @@ const mainRoutes = dashboardRoutes.map((prop, key) => {
     if (prop.layout === '/admin') {
         return (
             <Route
-            exact
+                exact
                 path={prop.layout + prop.path}
                 component={prop.component}
                 key={key}
@@ -34,9 +34,9 @@ const mainRoutes = dashboardRoutes.map((prop, key) => {
 })
 
 const childRoutes = dashboardRoutes.map((prop) => {
-    return (prop.childrens
+    return prop.childrens
         ? prop.childrens.map((e, i) => {
-            // console.log("e", prop.layout + prop.path + e.path)
+              // console.log("e", prop.layout + prop.path + e.path)
               return (
                   <Route
                       path={prop.layout + prop.path + e.path}
@@ -45,18 +45,19 @@ const childRoutes = dashboardRoutes.map((prop) => {
                   />
               )
           })
-        : null)
+        : null
 })
 
 const useStyles = makeStyles(styles)
 
 export default function Admin({ ...rest }) {
-    console.log("admin routes")
+    console.log('admin routes')
     // styles
     const classes = useStyles()
     // ref to help us initialize PerfectScrollbar on windows devices
     const mainPanel = React.createRef()
     // states and functions
+    const [tenant, setTenant] = React.useState(null)
     const [image] = React.useState(bgImage)
     const [color] = React.useState('blue')
     const [mobileOpen, setMobileOpen] = React.useState(false)
@@ -64,7 +65,7 @@ export default function Admin({ ...rest }) {
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen)
     }
-    
+
     const resizeFunction = () => {
         if (window.innerWidth >= 960) {
             setMobileOpen(false)
@@ -88,7 +89,29 @@ export default function Admin({ ...rest }) {
             window.removeEventListener('resize', resizeFunction)
         }
     }, [mainPanel])
-  
+
+    React.useEffect(() => {
+        const verifyTenant = async ()=>{
+            try {
+                // Use fetch to verify if the subdomain exists
+                const response = await fetch(`/tenant/verify-tenant?subdomain=${subdomain}`);
+                console.log('parseResponse', response)
+                if (response.ok) {
+                  console.log('valid subdomain');
+                  setTenant(subdomain)
+                }
+              } catch (error) {
+                console.error('Error fetching tenant:', error);
+              }
+        }
+        const subdomain = window.location.hostname.split('.')[0]
+        if (subdomain) {
+            verifyTenant(subdomain)
+        } else {
+            console.error('Tenant not found')
+        }
+    }, [])
+
     return (
         <div className={classes.wrapper}>
             <Sidebar
@@ -111,13 +134,13 @@ export default function Admin({ ...rest }) {
                 <div className={classes.content}>
                     <div className={classes.container}>
                         {/* {console.log("childRoutes", childRoutes)} */}
-                        {
+                        {tenant && (
                             <Switch>
                                 {mainRoutes}
                                 {childRoutes}
-                                <Redirect from="/admin" to="/admin/dashboard" /> 
+                                <Redirect from="/admin" to="/admin/dashboard" />
                             </Switch>
-                        }
+                        )}
                     </div>
                 </div>
             </div>

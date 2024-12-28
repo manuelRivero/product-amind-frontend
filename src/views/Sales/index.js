@@ -153,24 +153,6 @@ export default function Sales() {
                                 variant="contained"
                                 color="primary"
                                 type="button"
-                                onClick={() => handleFilter(0)}
-                            >
-                                Pendiente
-                            </Button>
-                            <Button
-                                isLoading={false}
-                                variant="contained"
-                                color="primary"
-                                type="button"
-                                onClick={() => handleFilter(1)}
-                            >
-                                Aceptado
-                            </Button>
-                            <Button
-                                isLoading={false}
-                                variant="contained"
-                                color="primary"
-                                type="button"
                                 onClick={() => handleFilter(2)}
                             >
                                 Pagado
@@ -182,16 +164,7 @@ export default function Sales() {
                                 type="button"
                                 onClick={() => handleFilter(3)}
                             >
-                                En ruta
-                            </Button>
-                            <Button
-                                isLoading={false}
-                                variant="contained"
-                                color="primary"
-                                type="button"
-                                onClick={() => handleFilter(4)}
-                            >
-                                Entregado
+                                Enviado
                             </Button>
                             <Button
                                 isLoading={false}
@@ -357,27 +330,6 @@ const ChangeStatusDropdown = ({ sale }) => {
                             <div className={classes.dropdown}>
                                 <MenuList role="menu">
                                     <MenuItem
-                                        onClick={() => onStatusChange(0)}
-                                        className={
-                                            sale.status === 'PENDIENTE'
-                                                ? classes.activeStatus
-                                                : ''
-                                        }
-                                    >
-                                        Pendiente
-                                    </MenuItem>
-                                    <MenuItem
-                                        onClick={() => onStatusChange(1)}
-                                        className={
-                                            sale.status === 'ACEPTADO'
-                                                ? classes.activeStatus
-                                                : ''
-                                        }
-                                    >
-                                        Aceptado
-                                    </MenuItem>
-
-                                    <MenuItem
                                         onClick={() => onStatusChange(2)}
                                         className={
                                             sale.status === 'PAGADO'
@@ -390,22 +342,12 @@ const ChangeStatusDropdown = ({ sale }) => {
                                     <MenuItem
                                         onClick={() => onStatusChange(3)}
                                         className={
-                                            sale.status === 'EN RUTA'
+                                            sale.status === 'ENVIADO'
                                                 ? classes.activeStatus
                                                 : ''
                                         }
                                     >
-                                        En ruta
-                                    </MenuItem>
-                                    <MenuItem
-                                        onClick={() => onStatusChange(5)}
-                                        className={
-                                            sale.status === 'ENTREGADO'
-                                                ? classes.activeStatus
-                                                : ''
-                                        }
-                                    >
-                                        Entregado
+                                        Enviado
                                     </MenuItem>
                                     <MenuItem
                                         onClick={() => onStatusChange(4)}
@@ -416,16 +358,6 @@ const ChangeStatusDropdown = ({ sale }) => {
                                         }
                                     >
                                         Cancelado
-                                    </MenuItem>
-                                    <MenuItem
-                                        onClick={() => onStatusChange(5)}
-                                        className={
-                                            sale.status === 'ENTREGADO'
-                                                ? classes.activeStatus
-                                                : ''
-                                        }
-                                    >
-                                        Entregado
                                     </MenuItem>
                                 </MenuList>
                             </div>

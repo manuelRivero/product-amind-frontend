@@ -7,6 +7,11 @@ const useStyles = makeStyles({
     errorText:{
         marginTop: '5px',
         marginBottom: '0px'
+    },
+    input:{
+        "& .MuiInputBase-input": {
+      background: "#fff !important"
+    }
     }
 })
 export default function TextInput({
@@ -25,6 +30,7 @@ export default function TextInput({
     return (
         <div>
             <TextField
+            className={classes.input}
                 name={name}
                 rows={rows}
                 multiline={multiline}

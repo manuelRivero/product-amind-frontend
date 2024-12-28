@@ -4,7 +4,7 @@ import { makeStyles } from '@material-ui/core/styles'
 import { useDropzone } from 'react-dropzone'
 import uploadImage from 'assets/img/upload-cloud.png'
 import trashIcon from 'assets/img/trash-icon.png'
-import { Box, Checkbox } from '@material-ui/core'
+import { Box, Checkbox, Divider, IconButton, Switch } from '@material-ui/core'
 import TextInput from 'components/TextInput/Index'
 import { useForm, Controller, useFieldArray } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -23,17 +23,46 @@ import LoadinScreen from 'components/LoadingScreen'
 import { getProductDetail } from 'store/products'
 import { resetEditProductSuccess } from 'store/products'
 import { editProduct } from 'store/products'
+import { Delete } from '@material-ui/icons'
 
 // schema
+const featureSchema = yup.object({
+    color: yup
+        .string()
+        .nullable()
+        .matches(/^[a-zA-Z]+$/, 'El color solo puede contener letras'), // Validación de letras
+    size: yup
+        .string()
+        .nullable()
+        .oneOf(
+            ['S', 'M', 'L', 'XL'],
+            'La talla debe ser una de las siguientes: S, M, L, XL'
+        ), // Validación de tallas específicas
+    stock: yup
+        .number()
+        .required('El stock es obligatorio')
+        .min(0, 'El stock no puede ser negativo')
+        .integer('El stock debe ser un número entero'),
+    hasColor: yup.boolean().nullable(),
+    hasSize: yup.boolean().nullable(), // Validación para que el stock sea un número entero
+})
 const schema = yup.object({
+    hasFeatures: yup.boolean(),
+    features: yup.array().of(featureSchema),
     images: yup
         .array()
         .min(1, 'Campo obligatorio')
         .required('Campo obligatorio'),
     name: yup.string().required('Campo obligatorio'),
-    tags: yup.string().required('Campo obligatorio'),
     price: yup.string().required('Campo obligatorio'),
-    stock: yup.string().required('Campo obligatorio'),
+    stock:  yup
+        .string()
+        .nullable()
+        .when('hasFeatures', {
+            is: false,
+            then: yup.string().required('Campo obligatorio'),
+            otherwise: yup.string().nullable(), // No es obligatorio si hasFeatures es true
+        }),
     description: yup.string().required('Campo obligatorio'),
     status: yup
         .string()
@@ -94,11 +123,11 @@ const useStyles = makeStyles({
     imagesWrapper: {
         position: 'relative',
         maxWidth: '166px',
-        height: '262px'
+        height: '262px',
     },
     productImage: {
         borderRadius: '16px',
-        width:'100%',
+        width: '100%',
         height: '100%',
         objectFit: 'cover',
     },
@@ -139,6 +168,7 @@ export default function AddProducts() {
         reset,
         formState: { errors },
         watch,
+        setValue,
     } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
@@ -149,10 +179,16 @@ export default function AddProducts() {
             stock: '',
             description: '',
             status: '',
+            hasFeatures: false,
+            featuresArray: []
         },
     })
-
-    const { fields, append, remove} = useFieldArray({
+    const featuresArray = useFieldArray({
+        control,
+        name: 'featuresArray', // Nombre del campo repetible
+    })
+    const watchHasFeatures = watch('hasFeatures')
+    const { fields, append, remove } = useFieldArray({
         control,
         name: 'images',
     })
@@ -173,42 +209,56 @@ export default function AddProducts() {
         },
     })
 
-    const submit = async (values) => {
-        const data = new FormData()
+  const submit = async (values) => {
+    const data = new FormData();
 
-        data.append('name', values.name)
-        data.append('price', values.price)
-        data.append(
-            'tags',
-            JSON.stringify(values.tags.split(',').map((e) => ({ name: e })))
-        )
-        data.append('stock', values.stock)
-        data.append('description', values.description)
+    // Agregar datos básicos del producto
+    data.append('name', values.name || '');
+    data.append('price', values.price || 0);
+    data.append('stock', values.stock || 0);
+    data.append('description', values.description || '');
+    data.append('discount', values.discount || '');
 
+    // Agregar imágenes del producto
+    if (Array.isArray(values.images)) {
         values.images.forEach((image) => {
             if (image.file) {
-                data.append('productImage', image.file)
+                data.append('productImage', image.file);
             }
-        })
-        data.append(
-            'status',
-            JSON.stringify({ available: values.status === '0' ? true : false })
-        )
-
-        if (params.id) {
-            if (deleteImages.length > 0) {
-                data.append('deletedImages', JSON.stringify(deleteImages))
-            }
-            dispatch(editProduct({ access: user.token, data, id: params.id }))
-        } else {
-            dispatch(postProducts({ access: user.token, data }))
-        }
+        });
     }
+
+    // Agregar características (features)
+    if (values.featuresArray.length > 0) {
+         data.append(
+        'features',
+        JSON.stringify(values.featuresArray)
+    );
+    }
+
+    // Agregar estado del producto
+    data.append(
+        'status',
+        JSON.stringify({ available: values.status })
+    );
+
+    // Si es edición, manejar imágenes eliminadas
+    if (params.id) {
+        if (deleteImages && deleteImages.length > 0) {
+            data.append('deletedImages', JSON.stringify(deleteImages));
+        }
+        // Despachar acción de edición
+        dispatch(editProduct({ access: user.token, data, id: params.id }));
+    } else {
+        // Despachar acción de creación
+        dispatch(postProducts({ access: user.token, data }));
+    }
+};
+
 
     const handleDeleteImage = (index) => {
         setDeleteImages([...deleteImages, index])
         remove(index)
-
     }
     useEffect(async () => {
         if (params.id) {
@@ -216,22 +266,36 @@ export default function AddProducts() {
         }
     }, [])
     useEffect(async () => {
+        if (watchHasFeatures) {
+            setValue('stock', undefined) 
+            featuresArray.append({})
+        } else {
+            featuresArray.replace([])
+        }
+    }, [watchHasFeatures])
+
+    useEffect(async () => {
         if (productDetail) {
+            console.log('productDetail', productDetail)
             reset({
                 images: productDetail.images.map((e) => ({ preview: e.url })),
                 name: productDetail.name,
-                tags: productDetail.tags.map((e) => e.name).join(','),
                 price: productDetail.price,
                 stock: productDetail.stock,
                 description: productDetail.description,
                 status: productDetail.status.available ? 0 : 1,
+                discount: productDetail.discount,
+                hasFeatures: productDetail.features.length > 0,
             })
+            if(productDetail.features.length > 0){
+                setValue('featuresArray', productDetail.features.map((feature) => ({...feature, hasColor: feature.color, hasSize: feature.size})))
+            }
         }
     }, [productDetail])
     if (loadingProductDetail) {
         return <LoadinScreen />
     }
-    console.log('values', watch())
+    console.log('values ', watch())
     return (
         <section>
             <form onSubmit={handleSubmit(submit)}>
@@ -306,24 +370,26 @@ export default function AddProducts() {
                         )}
                     />
 
-                    <Controller
-                        name="stock"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <TextInput
-                                error={fieldState.error ? true : false}
-                                errorMessage={fieldState.error}
-                                icon={null}
-                                label={'Stock del producto'}
-                                value={field.value}
-                                onChange={(e) =>
-                                    field.onChange(
-                                        e.target.value.replace(/[^\d]/g, '')
-                                    )
-                                }
-                            />
-                        )}
-                    />
+                    {!watchHasFeatures && (
+                        <Controller
+                            name="stock"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <TextInput
+                                    error={fieldState.error ? true : false}
+                                    errorMessage={fieldState.error}
+                                    icon={null}
+                                    label={'Stock del producto'}
+                                    value={field.value}
+                                    onChange={(e) =>
+                                        field.onChange(
+                                            e.target.value.replace(/[^\d]/g, '')
+                                        )
+                                    }
+                                />
+                            )}
+                        />
+                    )}
 
                     <Controller
                         name="price"
@@ -333,7 +399,7 @@ export default function AddProducts() {
                                 error={fieldState.error ? true : false}
                                 errorMessage={fieldState.error}
                                 icon={null}
-                                label={'Precio'}
+                                label={'Precio en Pesos'}
                                 value={field.value}
                                 onChange={(e) =>
                                     field.onChange(
@@ -343,20 +409,21 @@ export default function AddProducts() {
                             />
                         )}
                     />
-                </Box>
-                <Box className={classes.inputRow}>
                     <Controller
-                        name="tags"
+                        name="discount"
                         control={control}
                         render={({ field, fieldState }) => (
                             <TextInput
                                 error={fieldState.error ? true : false}
                                 errorMessage={fieldState.error}
                                 icon={null}
-                                label={'Etiquetas'}
+                                label={'Descuento en %'}
                                 value={field.value}
-                                helperText=" texto simple separado por comas cada etiqueta"
-                                onChange={field.onChange}
+                                onChange={(e) =>
+                                    field.onChange(
+                                        e.target.value.replace(/[^\d]/g, '')
+                                    )
+                                }
                             />
                         )}
                     />
@@ -420,6 +487,262 @@ export default function AddProducts() {
                         </Box>
                     </Box>
                 </Box>
+
+                <p style={{ margin: 0 }}>
+                    ¿El producto tiene variantes? (Colores, tallas)
+                </p>
+                <small style={{ margin: 0 }}>
+                    Si tú producto es unico y no tiene tallas o colores
+                    desactiva esta opcción y solo agrega el stock
+                </small>
+                <Box>
+                    <Controller
+                        name="hasFeatures"
+                        control={control}
+                        render={({ field }) => (
+                            <label htmlFor="features">
+                                Activar variantes
+                                <Switch
+                                    id="features"
+                                    checked={field.value}
+                                    onChange={field.onChange}
+                                    inputProps={{
+                                        'aria-label': 'primary checkbox',
+                                    }}
+                                />
+                            </label>
+                        )}
+                    />
+                </Box>
+                {watchHasFeatures && (
+                    <>
+                        {featuresArray.fields.map((field, index) => {
+                            const hasColor = watch(
+                                `featuresArray.${index}.hasColor`
+                            )
+                            const hasSize = watch(
+                                `featuresArray.${index}.hasSize`
+                            )
+                            console.log('has color', hasColor)
+                            return (
+                                <Box
+                                    key={field.id}
+                                    style={{ marginBottom: 16 }}
+                                >
+                                    <Divider style={{ marginBottom: 16 }} />
+                                    <Box
+                                        style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                        }}
+                                    >
+                                        <h4 style={{ margin: 0 }}>
+                                            Variante {index + 1}
+                                        </h4>
+                                        <IconButton
+                                            onClick={() =>
+                                                featuresArray.remove(index)
+                                            }
+                                        >
+                                            <Delete />
+                                        </IconButton>
+                                    </Box>
+                                    <p style={{ margin: 0 }}>Color</p>
+                                    <Box>
+                                        <Controller
+                                            name={`featuresArray.${index}.hasColor`}
+                                            control={control}
+                                            render={({ field }) => (
+                                                <label
+                                                    htmlFor={`features-color-${index}`}
+                                                >
+                                                    Activar variante de color
+                                                    <Switch
+                                                        id={`features-color-${index}`}
+                                                        checked={
+                                                            field.value || false
+                                                        }
+                                                        onChange={
+                                                            field.onChange
+                                                        }
+                                                        inputProps={{
+                                                            'aria-label':
+                                                                'primary checkbox',
+                                                        }}
+                                                    />
+                                                </label>
+                                            )}
+                                        />
+                                    </Box>
+                                    {hasColor && (
+                                        <Box style={{ marginBottom: 16 }}>
+                                            <Controller
+                                                name={`featuresArray.${index}.color`}
+                                                control={control}
+                                                render={({
+                                                    field,
+                                                    fieldState,
+                                                }) => (
+                                                    <TextInput
+                                                        error={
+                                                            !!fieldState.error
+                                                        }
+                                                        errorMessage={
+                                                            fieldState.error
+                                                                ?.message || ''
+                                                        }
+                                                        icon={null}
+                                                        label="Color del producto"
+                                                        value={
+                                                            field.value || ''
+                                                        }
+                                                        onChange={
+                                                            field.onChange
+                                                        }
+                                                    />
+                                                )}
+                                            />
+                                        </Box>
+                                    )}
+                                    <p style={{ margin: 0 }}>Talla</p>
+                                    <Box>
+                                        <Controller
+                                            name={`featuresArray.${index}.hasSize`}
+                                            control={control}
+                                            render={({ field }) => (
+                                                <label
+                                                    htmlFor={`features-size-${index}`}
+                                                >
+                                                    Activar variante de talla
+                                                    <Switch
+                                                        id={`features-size-${index}`}
+                                                        checked={
+                                                            field.value || false
+                                                        }
+                                                        onChange={
+                                                            field.onChange
+                                                        }
+                                                        inputProps={{
+                                                            'aria-label':
+                                                                'primary checkbox',
+                                                        }}
+                                                    />
+                                                </label>
+                                            )}
+                                        />
+                                    </Box>
+                                    {hasSize && (
+                                        <Controller
+                                            name={`featuresArray.${index}.size`}
+                                            control={control}
+                                            render={({ field, fieldState }) => (
+                                                <TextInput
+                                                    error={!!fieldState.error}
+                                                    errorMessage={
+                                                        fieldState.error
+                                                            ?.message || ''
+                                                    }
+                                                    icon={null}
+                                                    label="Talla del producto"
+                                                    value={field.value || ''}
+                                                    onChange={field.onChange}
+                                                />
+                                            )}
+                                        />
+                                    )}
+                                    <Box style={{ marginTop: 16 }}>
+                                        <Controller
+                                            name={`featuresArray.${index}.stock`}
+                                            control={control}
+                                            render={({ field, fieldState }) => (
+                                                <TextInput
+                                                    error={!!fieldState.error}
+                                                    errorMessage={
+                                                        fieldState.error
+                                                            ?.message || ''
+                                                    }
+                                                    icon={null}
+                                                    label="Stock del producto"
+                                                    value={field.value || ''}
+                                                    onChange={(e) =>
+                                                        field.onChange(
+                                                            e.target.value.replace(
+                                                                /[^\d]/g,
+                                                                ''
+                                                            )
+                                                        )
+                                                    }
+                                                />
+                                            )}
+                                        />
+                                    </Box>
+
+                                    {/* <Box className={classes.inputRow}>
+                                    <Controller
+                                        name={`featuresArray.${index}.price`}
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <TextInput
+                                                error={!!fieldState.error}
+                                                errorMessage={
+                                                    fieldState.error?.message ||
+                                                    ''
+                                                }
+                                                icon={null}
+                                                label="Precio en Pesos"
+                                                value={field.value || ''}
+                                                onChange={(e) =>
+                                                    field.onChange(
+                                                        e.target.value.replace(
+                                                            /[^\d]/g,
+                                                            ''
+                                                        )
+                                                    )
+                                                }
+                                            />
+                                        )}
+                                    />
+                                    <Controller
+                                        name={`featuresArray.${index}.discount`}
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <TextInput
+                                                error={!!fieldState.error}
+                                                errorMessage={
+                                                    fieldState.error?.message ||
+                                                    ''
+                                                }
+                                                icon={null}
+                                                label="Descuento en %"
+                                                value={field.value || ''}
+                                                onChange={(e) =>
+                                                    field.onChange(
+                                                        e.target.value.replace(
+                                                            /[^\d]/g,
+                                                            ''
+                                                        )
+                                                    )
+                                                }
+                                            />
+                                        )}
+                                    />
+                                </Box> */}
+                                </Box>
+                            )
+                        })}
+                        <Box className={classes.buttonsRow}>
+                            <Button
+                                onClick={() => featuresArray.append({})}
+                                variant="contained"
+                                color="primary"
+                                type="button"
+                            >
+                                Agregar otra variante
+                            </Button>
+                        </Box>
+                    </>
+                )}
+
                 <Box className={classes.descriptionRow}>
                     <Controller
                         name="description"
@@ -471,12 +794,9 @@ export default function AddProducts() {
                 hasConfirm={true}
                 cancelCb={() => {}}
                 confirmCb={() => {
-                    if (params.id) {
-                        dispatch(resetEditProductSuccess())
-                    } else {
-                        reset()
-                        dispatch(resetProductSuccess())
-                    }
+                    dispatch(resetProductSuccess())
+                    dispatch(resetEditProductSuccess())
+                    history.push('/admin/products')
                 }}
             />
             <CustomModal

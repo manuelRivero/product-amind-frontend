@@ -60,7 +60,8 @@ export default function MainStats() {
                             <Icon>content_copy</Icon>
                         </CardIcon>
                         <p className={classes.cardCategory}>Ventas</p>
-                        <h3 className={classes.cardTitle}>{salesStats}</h3>
+                        
+                        <h3 className={classes.cardTitle}>${Number(salesStats).toFixed(1)}</h3>
                     </CardHeader>
                     <CardFooter stats>
                         <TotalSalesSelect />
