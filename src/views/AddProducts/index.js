@@ -1,9 +1,8 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 
 import { makeStyles } from '@material-ui/core/styles'
 import { useDropzone } from 'react-dropzone'
 import uploadImage from 'assets/img/upload-cloud.png'
-import trashIcon from 'assets/img/trash-icon.png'
 import { Box, Checkbox, Divider, IconButton, Switch } from '@material-ui/core'
 import TextInput from 'components/TextInput/Index'
 import { useForm, Controller, useFieldArray } from 'react-hook-form'
