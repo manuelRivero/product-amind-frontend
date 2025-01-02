@@ -113,8 +113,9 @@ export const productsSlice = createSlice({
         },
         [getProducts.fulfilled]: (state, action) => {
             state.loadingProductsData = false
+            console.log('action.payload.data', action.payload.data)
             state.productsData = {
-                data: action.payload.data.data,
+                data: action.payload.data,
                 pageInfo: action.payload.data.pageInfo,
             }
         },

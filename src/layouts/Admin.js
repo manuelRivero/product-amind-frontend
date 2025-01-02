@@ -94,7 +94,7 @@ export default function Admin({ ...rest }) {
         const verifyTenant = async ()=>{
             try {
                 // Use fetch to verify if the subdomain exists
-                const response = await fetch(`/tenant/verify-tenant?subdomain=${subdomain}`);
+                const response = await fetch(`/tenant/verify-tenat-admin?subdomain=${subdomain}`);
                 console.log('parseResponse', response)
                 if (response.ok) {
                   console.log('valid subdomain');
@@ -102,6 +102,8 @@ export default function Admin({ ...rest }) {
                 }
               } catch (error) {
                 console.error('Error fetching tenant:', error);
+                setTenant(null)
+
               }
         }
         const subdomain = window.location.hostname.split('.')[0]

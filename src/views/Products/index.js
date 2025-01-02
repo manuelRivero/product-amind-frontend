@@ -321,7 +321,7 @@ export default function Products() {
                                         'Estatus',
                                         'Acciones',
                                     ]}
-                                    tableData={productsData.data.map((e) => {
+                                    tableData={productsData.data.products.map((e) => {
                                         return [
                                             e._id,
                                             e.name,
@@ -361,7 +361,7 @@ export default function Products() {
                                     onPageChange={(e) => handlePageClick(e)}
                                     pageRangeDisplayed={5}
                                     pageCount={Math.ceil(
-                                        productsData.pageInfo / 10
+                                        productsData.data.total / 10
                                     )}
                                     previousLabel={
                                         <Button
