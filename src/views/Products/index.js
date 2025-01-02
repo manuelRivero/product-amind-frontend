@@ -27,6 +27,7 @@ import TextInput from 'components/TextInput/Index'
 import { useForm, Controller } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
+import { finalPrice } from '../../helpers/product'
 
 const schema = yup.object({
     search: yup.string().nullable(),
@@ -316,8 +317,9 @@ export default function Products() {
                                         'id',
                                         'Nombre',
                                         'Precio',
-                                        'Stock',
                                         'Descuento',
+                                        'Precio final',
+                                        'Stock',
                                         'Estatus',
                                         'Acciones',
                                     ]}
@@ -326,8 +328,9 @@ export default function Products() {
                                             e._id,
                                             e.name,
                                             `$${e.price.toFixed(1)}`,
-                                            e.stock,
                                             e.discount ? `${e.discount}%` : 0,
+                                            `$${finalPrice(e.price, e.discount).toFixed(1)}`,
+                                            e.stock,
                                             e.status
                                                 ? e.status.available
                                                     ? 'Disponible'
