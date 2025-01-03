@@ -23,6 +23,7 @@ import { getProductDetail } from 'store/products'
 import { resetEditProductSuccess } from 'store/products'
 import { editProduct } from 'store/products'
 import { Delete, DeleteForever } from '@material-ui/icons'
+import CurrencyTextField from '@unicef/material-ui-currency-textfield'
 
 // schema
 const featureSchema = yup.object({
@@ -81,7 +82,7 @@ const useStyles = makeStyles({
         alignItems: 'center',
         maxWidth: '220px',
         boxSizing: 'border-box',
-        background: "#fff"
+        background: '#fff',
     },
     imagesRow: {
         display: 'flex',
@@ -138,7 +139,12 @@ const useStyles = makeStyles({
             width: '24px',
         },
     },
+    input:{
+        "& .MuiInputBase-input": {
+      background: "#fff !important"
+    }}
 })
+
 
 export default function AddProducts() {
     const history = useHistory()
@@ -364,17 +370,17 @@ export default function AddProducts() {
                         name="price"
                         control={control}
                         render={({ field, fieldState }) => (
-                            <TextInput
+                            <CurrencyTextField
+                            variant="outlined"
+                            className={classes.input}
+                            inputProps={{background: "#fff"}}
+                                minimumValue="0"
                                 error={fieldState.error ? true : false}
                                 errorMessage={fieldState.error}
                                 icon={null}
                                 label={'Precio en Pesos'}
                                 value={field.value}
-                                onChange={(e) =>
-                                    field.onChange(
-                                        e.target.value.replace(/[^\d]/g, '')
-                                    )
-                                }
+                                onChange={field.onChange}
                             />
                         )}
                     />
