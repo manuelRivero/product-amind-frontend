@@ -234,7 +234,7 @@ export default function AddProducts() {
         }
 
         // Agregar estado del producto
-        data.append('status', JSON.stringify({ available: values.status }))
+        data.append('status', JSON.stringify({ available: values.status === 0 ? true : false }))
 
         // Si es edición, manejar imágenes eliminadas
         if (params.id) {
