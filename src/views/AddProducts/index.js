@@ -265,7 +265,7 @@ export default function AddProducts() {
     }, [])
 
     useEffect(async () => {
-        if (productDetail) {
+        if (productDetail && params.id) {
             console.log('productDetail', productDetail)
             reset({
                 images: productDetail.images.map((e) => ({ preview: e.url })),
@@ -285,6 +285,17 @@ export default function AddProducts() {
                     })
                 )
             }
+        } else {
+            reset({
+                images: [],
+                name: '',
+                tags: '',
+                price: '',
+                stock: '',
+                description: '',
+                status: '',
+                featuresArray: [],
+            })
         }
     }, [productDetail])
 

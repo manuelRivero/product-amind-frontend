@@ -319,7 +319,6 @@ export default function Products() {
                                         'Precio',
                                         'Descuento',
                                         'Precio final',
-                                        'Stock',
                                         'Estatus',
                                         'Acciones',
                                     ]}
@@ -330,7 +329,6 @@ export default function Products() {
                                             `$${e.price.toFixed(1)}`,
                                             e.discount ? `${e.discount}%` : 0,
                                             `$${finalPrice(e.price, e.discount).toFixed(1)}`,
-                                            e.stock,
                                             e.status
                                                 ? e.status.available
                                                     ? 'Disponible'
