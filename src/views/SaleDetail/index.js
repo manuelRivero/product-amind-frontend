@@ -12,7 +12,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { getSale } from 'store/sales'
 
 import { useParams } from 'react-router-dom'
-import { Box } from '@material-ui/core'
+import { Box, IconButton } from '@material-ui/core'
 import moment from 'moment'
 
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
@@ -71,13 +71,12 @@ export default function SaleDetail() {
     }, [])
     return (
         <>
-            <Box
+            <IconButton
                 className={classes.backButton}
                 onClick={() => history.push('/admin/orders')}
             >
                 <ArrowBackIcon />
-                <p>Volver a ordenes</p>
-            </Box>
+            </IconButton>
             <GridContainer>
                 <GridItem xs={12} sm={12} md={12}>
                     <Card>
@@ -129,7 +128,10 @@ export default function SaleDetail() {
                                             'Id del producto',
                                             'Nombre del producto',
                                             'Cantidad',
+                                            'variante',
                                             'Precio',
+                                            'Descuento',
+                                            'Precio final'
                                         ]}
                                         tableData={saleData.products.map(
                                             (product) => {
@@ -137,6 +139,9 @@ export default function SaleDetail() {
                                                     product.data._id,
                                                     product.data.name,
                                                     product.quantity,
+                                                    `Color: ${product.data.color} ${product.data.size ? '- Talle:' + product.data.size : ''}`,
+                                                    "$" + product.data.price,
+                                                    product.data.discount + "%",
                                                     `$${finalPrice(product.data.price, product.data.discount).toFixed(1)}`,
                                                 ]
                                             }

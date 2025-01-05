@@ -24,6 +24,8 @@ import { resetEditProductSuccess } from 'store/products'
 import { editProduct } from 'store/products'
 import { Delete, DeleteForever } from '@material-ui/icons'
 import CurrencyTextField from '@unicef/material-ui-currency-textfield'
+import ArrowBackIcon from '@material-ui/icons/ArrowBack'
+
 
 // schema
 const featureSchema = yup.object({
@@ -305,6 +307,12 @@ export default function AddProducts() {
     console.log('values ', watch())
     return (
         <section>
+            <IconButton
+                className={classes.backButton}
+                onClick={() => history.push('/admin/products')}
+            >
+                <ArrowBackIcon />
+            </IconButton>
             <form onSubmit={handleSubmit(submit)}>
                 <Box>
                     <h3>Imágenes de tu producto</h3>
