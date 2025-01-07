@@ -8,9 +8,10 @@ import {
     Typography,
 } from '@material-ui/core'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
-import { changeBannerStatus, getBanners } from '../../api/banners'
+import { changeBannerStatus, deleteBanner, getBanners } from '../../api/banners'
 import { DeleteForever } from '@material-ui/icons'
 import { useSelector } from 'react-redux'
+import { useHistory } from 'react-router-dom'
 
 const useStyles = makeStyles({
     paper: {
@@ -33,11 +34,12 @@ const useStyles = makeStyles({
 
 export default function AdminBanners() {
     const { user } = useSelector((state) => state.auth)
-
+    const history = useHistory()
     const classes = useStyles()
     const [banners, setBanners] = useState([])
     const [loading, setLoading] = useState(true)
     const [loadingBanner, setLoadingBanner] = useState(undefined)
+    const [loadingDeleteBanner, setLoadingDeleteBanner] = useState(undefined)
 
     const handleChange = async (id) => {
         try {
@@ -59,6 +61,25 @@ export default function AdminBanners() {
             console.log('banner status error', error)
         } finally {
             setLoadingBanner(undefined)
+        }
+    }
+
+    const handleDelete = async (id) => {
+        try {
+            setLoadingDeleteBanner(id)
+
+            // Llamada al backend para cambiar el estado del banner
+            const response = await deleteBanner(id, user.token)
+            console.log('response', response)
+
+            // Actualizar el estado local de banners
+            setBanners((prevBanners) =>
+                prevBanners.filter((banner) => banner._id !== id)
+            )
+        } catch (error) {
+            console.log('banner status error', error)
+        } finally {
+            setLoadingDeleteBanner(undefined)
         }
     }
 
@@ -95,12 +116,18 @@ export default function AdminBanners() {
                             key={banner._id}
                             className={classes.imagesWrapper}
                         >
-                            <IconButton
-                                className={classes.trashIcon}
-                                onClick={() => {}}
-                            >
-                                <DeleteForever />
-                            </IconButton>
+                            {loadingDeleteBanner === banner._id ? (
+                                <CircularProgress
+                                    className={classes.trashIcon}
+                                />
+                            ) : (
+                                <IconButton
+                                    className={classes.trashIcon}
+                                    onClick={() => handleDelete(banner._id)}
+                                >
+                                    <DeleteForever />
+                                </IconButton>
+                            )}
                             <img
                                 src={banner.url}
                                 alt="banner"
@@ -116,19 +143,26 @@ export default function AdminBanners() {
                                     <CircularProgress />
                                 ) : (
                                     <>
-                                    <Typography>
-                                        {banner.active ? "Desactivar banner" : "Activar banner"}
-                                    </Typography>
-                                    <Switch
-                                        id={`banner-${index}`}
-                                        defaultChecked={banner.active}
-                                        onChange={() =>
-                                            handleChange(banner._id)
-                                        }
-                                        inputProps={{
-                                            'aria-label': 'primary checkbox',
-                                        }}
-                                    />
+                                        <Typography>
+                                            {banner.active
+                                                ? 'Desactivar banner'
+                                                : 'Activar banner'}
+                                        </Typography>
+                                        <Switch
+                                            disabled={
+                                                loadingDeleteBanner ===
+                                                banner._id
+                                            }
+                                            id={`banner-${index}`}
+                                            defaultChecked={banner.active}
+                                            onChange={() =>
+                                                handleChange(banner._id)
+                                            }
+                                            inputProps={{
+                                                'aria-label':
+                                                    'primary checkbox',
+                                            }}
+                                        />
                                     </>
                                 )}
                             </Box>

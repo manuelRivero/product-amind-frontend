@@ -27,3 +27,12 @@ export const getBanners = (access) => {
         },
     })
 }
+
+export const deleteBanner = (id, access) => {
+    return client.delete(`api/banners/delete-banner`, {
+        headers: {
+            'x-token': access,
+        },
+        data: { id }, // Coloca el cuerpo aquí
+    });
+};

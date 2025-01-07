@@ -150,7 +150,7 @@ export default function AddBannersPage() {
             setShowModal(true)
         } catch (error) {
             console.log('error al guardar el banner', error)
-            setShowFormAlert('Error al guardar el banner')
+            setShowFormAlert(error.response.data.message ? error.response.data.message : 'Error al guardar el banner')
         } finally {
             setLoading(false)
         }
@@ -252,7 +252,7 @@ export default function AddBannersPage() {
                 cancelCb={() => {}}
                 confirmCb={() => {
                     reset({images:[]})
-                    history.push('/admin/products')
+                    history.push('/admin/banners')
                 }}
             />
         </>
