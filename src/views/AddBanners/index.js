@@ -83,6 +83,8 @@ const useStyles = makeStyles({
 })
 
 export default function AddBannersPage() {
+        const { user } = useSelector((state) => state.auth)
+    
     const history = useHistory()
     const classes = useStyles()
     const {
@@ -143,7 +145,7 @@ export default function AddBannersPage() {
                     }
                 })
             }
-            await createBanner(data)
+            await createBanner(data, user.token)
             setShowModal(true)
         } catch (error) {
             console.log('error al guardar el banner', error)
