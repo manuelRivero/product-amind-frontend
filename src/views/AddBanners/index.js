@@ -13,6 +13,7 @@ import Button from 'components/CustomButtons/Button'
 import CustomModal from '../../components/CustomModal'
 import { useHistory } from 'react-router-dom'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
+import { useSelector } from 'react-redux'
 
 
 const schema = yup.object({
