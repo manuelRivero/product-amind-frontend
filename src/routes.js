@@ -32,6 +32,9 @@ import AddProducts from 'views/AddProducts'
 import Sales from 'views/Sales';
 // import CreateSale from 'views/CreateSale';
 import SaleDetail from 'views/SaleDetail';
+import AddBannersPage from './views/AddBanners';
+import Banners from './views/Banners';
+import AdminBanners from './views/AdminBanners';
 
 const dashboardRoutes = [
     {
@@ -41,6 +44,25 @@ const dashboardRoutes = [
         icon: Dashboard,
         component: DashboardPage,
         layout: '/admin',
+    },
+    {
+        path: '/banners',
+        name: 'Banners',
+        icon: Dashboard,
+        component: Banners,
+        layout: '/admin',
+        childrens: [
+            {
+                path: '/add-banner',
+                name: 'Agregar Banner',
+                component: AddBannersPage,
+            },
+            {
+                path: '/admin-banners',
+                name: 'Administrar Banners',
+                component: AdminBanners,
+            },
+        ],
     },
     {
         path: '/products',

@@ -197,6 +197,7 @@ export default function AddProducts() {
     })
     const onDrop = useCallback((acceptedFiles) => {
         // Do something with the files
+        console.log("ondrop")
         acceptedFiles.forEach((e) => {
             append({
                 file: e,
@@ -318,6 +319,7 @@ export default function AddProducts() {
                     <h3>Imágenes de tu producto</h3>
                 </Box>
                 <div className={classes.imagesRow}>
+                    {console.log('fields', fields)}
                     {fields.map((file, index) => {
                         console.log('file', file)
                         return (
