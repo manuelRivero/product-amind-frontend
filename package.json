@@ -22,6 +22,7 @@
         "history": "^5.0.0",
         "lodash.debounce": "^4.0.8",
         "moment": "^2.29.4",
+        "moment-timezone": "^0.5.46",
         "perfect-scrollbar": "1.5.1",
         "prop-types": "15.7.2",
         "react": "17.0.2",

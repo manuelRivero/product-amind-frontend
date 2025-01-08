@@ -102,8 +102,8 @@ export default function SaleDetail() {
                                         Fecha:{' '}
                                         <strong>
                                             {' '}
-                                            {moment(saleData.createdAt).format(
-                                                'DD-MM-YYYY HH:mm:ss'
+                                            {moment(saleData.createdAt).utc().format(
+                                                'DD-MM-YYYY HH:mm:ss A'
                                             )}{' '}
                                         </strong>
                                     </p>

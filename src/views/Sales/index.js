@@ -13,7 +13,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import { getSales, changeSalesStatus } from 'store/sales'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
-
+import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
+import ChevronRightIcon from '@material-ui/icons/ChevronRight'
 
 // form
 import { useForm, Controller } from 'react-hook-form'
@@ -31,9 +32,39 @@ import {
     MenuList,
     Popper,
 } from '@material-ui/core'
-import moment from 'moment'
+import moment from 'moment-timezone'
+import ReactPaginate from 'react-paginate'
 
 const styles = {
+    pagination: {
+        display: 'flex',
+        margin: 0,
+        padding: 0,
+        listStyle: 'none',
+        gap: '1rem',
+        marginTop: '1rem',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    page: {
+        padding: '.5rem',
+        borderRadius: '4px',
+        border: 'solid 1px transparent',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: '25px',
+        height: '25px',
+        '& > a': {
+            color: '#3c4858',
+        },
+    },
+    activePage: {
+        border: 'solid 1px #00ACC1 !important',
+        '& > a': {
+            color: '#00ACC1',
+        },
+    },
     cardCategoryWhite: {
         '&,& a,& a:hover,& a:focus': {
             color: 'rgba(255,255,255,.62)',
@@ -109,6 +140,7 @@ export default function Sales() {
     const { user } = useSelector((state) => state.auth)
     const { salesData, loadingSalesData } = useSelector((state) => state.sales)
     const [filter, setFilter] = useState(null)
+    const [page, setPage] = useState(0)
 
     const handleFilter = (filter) => {
         setFilter(filter)
@@ -117,13 +149,31 @@ export default function Sales() {
         console.log('use effect filter', filter)
         if (filter !== null) {
             dispatch(
-                getSales({ access: user.token, filters: { status: filter } })
+                getSales({
+                    access: user.token,
+                    filters: { status: filter },
+                    page: 0,
+                })
             )
         } else {
             dispatch(getSales({ access: user.token, filters: {} }))
         }
     }, [filter])
-    console.log('salesData', salesData)
+    useEffect(() => {
+        console.log('use effect filter', filter)
+        if (filter !== null) {
+            dispatch(
+                getSales({
+                    access: user.token,
+                    filters: { status: filter },
+                    page,
+                })
+            )
+        } else {
+            dispatch(getSales({ access: user.token, filters: {}, page }))
+        }
+    }, [page])
+    console.log('page', page)
     return (
         <GridContainer>
             <GridItem xs={12} sm={12} md={12}>
@@ -179,48 +229,95 @@ export default function Sales() {
                         {loadingSalesData ? (
                             <p>Cargando datos...</p>
                         ) : (
-                            <Table
-                                tableHeaderColor="primary"
-                                tableHead={[
-                                    'Id',
-                                    'Total',
-                                    'Fecha',
-                                    'Estatus',
-                                    'Cambiar estatus',
-                                    'Acciones',
-                                ]}
-                                tableData={salesData.sales.map((e) => {
-                                    console.log('e', e)
-                                    return [
-                                        <p key={`sale-id-${e._id}`}>{e._id}</p>,
-                                        <p key={`sale-total-${e._id}`}>
-                                            {e.total}
-                                        </p>,
-                                        <p key={`sale-date-${e._id}`}>{moment(e.createdAt).format("DD-MM-YYYY HH:mm:ss")}</p>,
-                                        <p key={`sale-status-${e._id}`}>
-                                            {e.status}
-                                        </p>,
-                                        <ChangeStatusDropdown
-                                            key={e._id}
-                                            sale={e}
-                                        />,
-                                        <Link
-                                            key={`detail-button-${e._id}`}
-                                            to={`/admin/orders/detail/${e._id}`}
-                                        >
-                                            <Button
-                                                isLoading={false}
-                                                variant="contained"
-                                                color="primary"
-                                                type="button"
+                            <>
+                                <Table
+                                    tableHeaderColor="primary"
+                                    tableHead={[
+                                        'Id',
+                                        'Total',
+                                        'Fecha',
+                                        'Estatus',
+                                        'Cambiar estatus',
+                                        'Acciones',
+                                    ]}
+                                    tableData={salesData.sales.map((e) => {
+                                        console.log('e', e)
+                                        return [
+                                            <p key={`sale-id-${e._id}`}>
+                                                {e._id}
+                                            </p>,
+                                            <p key={`sale-total-${e._id}`}>
+                                                {e.total}
+                                            </p>,
+                                            <p key={`sale-date-${e._id}`}>
+                                                {moment(e.createdAt)
+                                                    .tz(
+                                                        'America/Argentina/Buenos_Aires'
+                                                    )
+                                                    .format(
+                                                        'DD-MM-YYYY HH:mm:ss A'
+                                                    )}
+                                            </p>,
+                                            <p key={`sale-status-${e._id}`}>
+                                                {e.status}
+                                            </p>,
+                                            <ChangeStatusDropdown
+                                                key={e._id}
+                                                sale={e}
+                                            />,
+                                            <Link
+                                                key={`detail-button-${e._id}`}
+                                                to={`/admin/orders/detail/${e._id}`}
                                             >
-                                                Ver detalle
-                                            </Button>
-                                            ,
-                                        </Link>,
-                                    ]
-                                })}
-                            />
+                                                <Button
+                                                    isLoading={false}
+                                                    variant="contained"
+                                                    color="primary"
+                                                    type="button"
+                                                >
+                                                    Ver detalle
+                                                </Button>
+                                                ,
+                                            </Link>,
+                                        ]
+                                    })}
+                                />
+                                <ReactPaginate
+                                    forcePage={page}
+                                    pageClassName={classes.page}
+                                    containerClassName={classes.pagination}
+                                    activeClassName={classes.activePage}
+                                    breakLabel="..."
+                                    nextLabel={
+                                        <Button
+                                            isLoading={false}
+                                            variant="contained"
+                                            color="primary"
+                                            type="button"
+                                            justIcon
+                                        >
+                                            <ChevronRightIcon />
+                                        </Button>
+                                    }
+                                    onPageChange={(e) => {
+                                        setPage(e.selected)
+                                    }}
+                                    pageRangeDisplayed={5}
+                                    pageCount={Math.ceil(salesData.total / 10)}
+                                    previousLabel={
+                                        <Button
+                                            isLoading={false}
+                                            variant="contained"
+                                            color="primary"
+                                            type="button"
+                                            justIcon
+                                        >
+                                            <ChevronLeftIcon />
+                                        </Button>
+                                    }
+                                    renderOnZeroPageCount={null}
+                                />
+                            </>
                         )}
                     </CardBody>
                 </Card>

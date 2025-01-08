@@ -20,7 +20,7 @@ export const getSales = createAsyncThunk(
     'get/sales',
     async (args, { rejectWithValue }) => {
         try {
-            const response = await getSalesRequest(args.access, args.filters)
+            const response = await getSalesRequest(args.access, args.filters, args.page)
             return response
         } catch (error) {
             console.log('error', error)
@@ -89,7 +89,7 @@ export const salesSlice = createSlice({
         },
         [getSales.fulfilled]: (state, action) => {
             state.loadingSalesData = false
-            state.salesData = {sales:action.payload.data.sales}
+            state.salesData = {sales:action.payload.data.sales, total: action.payload.data.total}
         },
         [getSales.rejected]: (state) => {
             state.loadingSalesData = false
