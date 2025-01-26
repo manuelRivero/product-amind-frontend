@@ -12,7 +12,6 @@ import { Link } from 'react-router-dom'
 
 //icons
 import EditIcon from '@material-ui/icons/Edit'
-import DeleteIcon from '@material-ui/icons/Delete'
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
 import ChevronRightIcon from '@material-ui/icons/ChevronRight'
 import AddIcon from '@material-ui/icons/Add'
@@ -20,14 +19,12 @@ import AddIcon from '@material-ui/icons/Add'
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useEffect } from 'react'
-import { getProducts } from 'store/products'
 import ReactPaginate from 'react-paginate'
 import TextInput from 'components/TextInput/Index'
 
 import { useForm, Controller } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
-import { finalPrice } from '../../helpers/product'
 import { getCategories } from 'store/categories'
 
 const schema = yup.object({
@@ -68,13 +65,13 @@ const useStyles = makeStyles({
             color: '#00ACC1',
         },
     },
-    addProductWrapper: {
+    addCategoryWrapper: {
         display: 'flex',
         justifyContent: 'flex-end',
         alignItems: 'flex-end',
         height: '100%',
     },
-    addProductContainer: {
+    addCategoryContainer: {
         display: 'flex',
         alignItems: 'center',
         gap: '.5rem',
@@ -91,19 +88,17 @@ const useStyles = makeStyles({
     },
 })
 
-export default function Products() {
+export default function Categories() {
     const dispatch = useDispatch()
     const { user } = useSelector((state) => state.auth)
-    const { productsData, loadingProductsData } = useSelector(
-        (state) => state.products
-    )
     const { categoriesData, loadingCategoriesData } = useSelector(
         (state) => state.categories
     )
+
     // styles
     const classes = useStyles()
     // states
-    const [page, setPage] = useState(0)
+    const [page, setPage] = useState(1)
 
     //form
     const { control, handleSubmit, watch } = useForm({
@@ -114,7 +109,6 @@ export default function Products() {
     })
 
     const handlePageClick = ({ selected }) => {
-        console.log('selected', selected)
         setPage(selected)
         const element = document.getElementById('table-header')
         element.scrollIntoView()
@@ -142,25 +136,9 @@ export default function Products() {
         return activefilters
     }
 
-    const productCategory = (categoryId) => {
-        if (categoriesData.data) {
-            const hasCategory = categoriesData.data.some(
-                (category) => category._id === categoryId
-            )
-
-            const categoryName = hasCategory
-                ? categoriesData.data.find(
-                      (category) => category._id === categoryId
-                  ).name
-                : 'N/A'
-
-            return categoryName
-        }
-    }
-
     const submit = () => {
         dispatch(
-            getProducts({
+            getCategories({
                 access: user.token,
                 filters: { ...handleFilters(), page },
             })
@@ -169,97 +147,40 @@ export default function Products() {
 
     useEffect(() => {
         dispatch(
-            getProducts({
+            getCategories({
                 access: user.token,
                 filters: { ...handleFilters(), page },
             })
         )
     }, [page])
 
-    useEffect(() => {
-        dispatch(
-            getCategories({
-                access: user.token,
-                filters: { page: 1 },
-            })
-        )
-    }, [])
-
     return (
         <GridContainer>
-            <GridItem xs={12} sm={12} md={6}>
-                <Card>
-                    <CardHeader color="primary">
-                        <h4 className={classes.cardTitleWhite}>
-                            Carga masiva de productos
-                        </h4>
-                    </CardHeader>
-                    <CardBody>
-                        <p>Sube tus productos masivamente desde un excel</p>
-                        <Link to="/admin/products/upload-from-excel">
-                            <Button
-                                isLoading={false}
-                                variant="contained"
-                                color="primary"
-                                type="button"
-                            >
-                                Ir a carga masiva
-                            </Button>
-                        </Link>
-                    </CardBody>
-                </Card>
-            </GridItem>
-            {/* <GridItem xs={12} sm={12} md={6}>
-                <Card>
-                    <CardHeader color="primary">
-                        <h4 className={classes.cardTitleWhite}>
-                            Carga masiva de imágenes
-                        </h4>
-                    </CardHeader>
-                    <CardBody>
-                        <p>
-                            Sube las imágenes de tus productos desde un archivo
-                            zip
-                        </p>
-                        <Link to="/admin/products/upload-images-from-zip">
-                            <Button
-                                isLoading={false}
-                                variant="contained"
-                                color="primary"
-                                type="button"
-                            >
-                                Ir a subir fotos
-                            </Button>
-                        </Link>
-                    </CardBody>
-                </Card>
-            </GridItem> */}
             <GridItem xs={12} sm={12} md={12}>
                 <Card>
                     <CardHeader id="table-header" color="primary">
                         <GridContainer>
                             <GridItem xs={12} sm={12} md={6}>
                                 <h4 className={classes.cardTitleWhite}>
-                                    Productos en la tienda
+                                    Categorías
                                 </h4>
                                 <p className={classes.cardCategoryWhite}>
-                                    Aquí puedes visualizar tu listado de
-                                    productos
+                                    Aquí puedes visualizar todas las categorías
                                 </p>
                             </GridItem>
                             <GridItem xs={12} sm={12} md={6}>
-                                <Box className={classes.addProductWrapper}>
+                                <Box className={classes.addCategoryWrapper}>
                                     <Box
-                                        className={classes.addProductContainer}
+                                        className={classes.addCategoryContainer}
                                     >
                                         <p
                                             className={
                                                 classes.cardCategoryWhite
                                             }
                                         >
-                                            Agrega un nuevo producto
+                                            Agregar nueva categoría
                                         </p>
-                                        <Link to="/admin/products/add-product">
+                                        <Link to="/admin/categories/add-category">
                                             <Button
                                                 isLoading={false}
                                                 variant="contained"
@@ -292,7 +213,7 @@ export default function Products() {
                                                 }
                                                 errorMessage={fieldState.error}
                                                 icon={null}
-                                                label={'Nombre del producto'}
+                                                label={'Nombre de la categoría'}
                                                 value={field.value}
                                                 onChange={({ target }) => {
                                                     field.onChange(target.value)
@@ -334,48 +255,23 @@ export default function Products() {
                                 Buscar
                             </Button>
                         </form>
-                        {loadingProductsData && loadingCategoriesData ? (
+                        {loadingCategoriesData ? (
                             <p>Cargando datos ...</p>
                         ) : (
                             <>
                                 <Table
                                     tableHeaderColor="primary"
-                                    tableHead={[
-                                        'id',
-                                        'Nombre',
-                                        'Categoría',
-                                        'Precio',
-                                        'Descuento',
-                                        'Precio final',
-                                        'Estatus',
-                                        'Acciones',
-                                    ]}
-                                    tableData={productsData.data.products.map(
-                                        (e) => {
-                                            return [
-                                                e._id,
-                                                e.name,
-                                                productCategory(e.category),
-                                                `$${e.price.toFixed(1)}`,
-                                                e.discount
-                                                    ? `${e.discount}%`
-                                                    : 0,
-                                                `$${finalPrice(
-                                                    e.price,
-                                                    e.discount
-                                                ).toFixed(1)}`,
-                                                e.status
-                                                    ? e.status.available
-                                                        ? 'Disponible'
-                                                        : 'No disponible'
-                                                    : 'Sin información',
-                                                <ActionGroup
-                                                    product={e}
-                                                    key={`action-group-${e._d}`}
-                                                />,
-                                            ]
-                                        }
-                                    )}
+                                    tableHead={['id', 'Nombre', 'Acciones']}
+                                    tableData={categoriesData.data.map((e) => {
+                                        return [
+                                            e._id,
+                                            e.name,
+                                            <ActionGroup
+                                                category={e}
+                                                key={`action-group-${e._d}`}
+                                            />,
+                                        ]
+                                    })}
                                 />
 
                                 <ReactPaginate
@@ -398,7 +294,7 @@ export default function Products() {
                                     onPageChange={(e) => handlePageClick(e)}
                                     pageRangeDisplayed={5}
                                     pageCount={Math.ceil(
-                                        productsData.data.total / 10
+                                        categoriesData.data.length / 10
                                     )}
                                     previousLabel={
                                         <Button
@@ -422,22 +318,13 @@ export default function Products() {
     )
 }
 
-const ActionGroup = ({ product }) => {
+const ActionGroup = ({ category }) => {
     const classes = useStyles()
-    const [isLoading, setIsLoading] = useState(false)
-    const deleteHandler = () => {
-        try {
-            console.log('product', product)
-            setIsLoading(true)
-        } catch (error) {
-            console.log('deleteHandler error', error)
-        } finally {
-            setIsLoading(false)
-        }
-    }
     return (
         <Box className={classes.actionWrapper}>
-            <Link to={`/admin/products/edit-product/${product._id}`}>
+            <Link
+                to={`/admin/categories/edit-category/${category.name}/${category._id}`}
+            >
                 <Button
                     isLoading={false}
                     variant="contained"
@@ -448,20 +335,10 @@ const ActionGroup = ({ product }) => {
                     <EditIcon />
                 </Button>
             </Link>
-            <Button
-                isLoading={isLoading}
-                variant="contained"
-                color="primary"
-                type="submit"
-                justIcon
-                onClick={deleteHandler}
-            >
-                <DeleteIcon />
-            </Button>
         </Box>
     )
 }
 
 ActionGroup.propTypes = {
-    product: PropTypes.object,
+    category: PropTypes.object,
 }

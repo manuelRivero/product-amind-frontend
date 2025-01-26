@@ -3,8 +3,8 @@ import client from 'api/client'
 export const getProducts = (access, filters) => {
     const handleFilters = () => {
         let filterQuery = ''
-        Object.keys(filters).map( (key, index) => {
-            if(index === 0){
+        Object.keys(filters).map((key, index) => {
+            if (index === 0) {
                 filterQuery = filterQuery + `?${key}=${filters[key]}`
             } else {
                 filterQuery = filterQuery + `&${key}=${filters[key]}`
@@ -19,7 +19,7 @@ export const getProducts = (access, filters) => {
     })
 }
 
-export const getProductDetail = (access,id)=>{
+export const getProductDetail = (access, id) => {
     return client.get(`api/products/detail?id=${id}`, {
         headers: {
             'x-token': access,
@@ -27,7 +27,7 @@ export const getProductDetail = (access,id)=>{
     })
 }
 
-export const getProductsTemplateExcel = (access)=>{
+export const getProductsTemplateExcel = (access) => {
     // console.log("getProductsTemplateExcel")
     return client.get(`api/products/get-excel-template`, {
         responseType: 'blob',
@@ -53,6 +53,8 @@ export const uploadZip = (access, form) => {
 }
 
 export const uploadProduct = (access, data) => {
+    console.log(data, '.......')
+
     return client.post(`api/products`, data, {
         headers: {
             'x-token': access,
@@ -67,4 +69,3 @@ export const editProduct = (access, data, id) => {
         },
     })
 }
-

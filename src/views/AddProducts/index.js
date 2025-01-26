@@ -3,7 +3,15 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { makeStyles } from '@material-ui/core/styles'
 import { useDropzone } from 'react-dropzone'
 import uploadImage from 'assets/img/upload-cloud.png'
-import { Box, Checkbox, Divider, IconButton, Switch } from '@material-ui/core'
+import {
+    Box,
+    Checkbox,
+    Divider,
+    IconButton,
+    MenuItem,
+    Switch,
+    TextField,
+} from '@material-ui/core'
 import TextInput from 'components/TextInput/Index'
 import { useForm, Controller, useFieldArray } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -25,7 +33,7 @@ import { editProduct } from 'store/products'
 import { Delete, DeleteForever } from '@material-ui/icons'
 import CurrencyTextField from '@unicef/material-ui-currency-textfield'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
-
+import { getCategories } from 'store/categories'
 
 // schema
 const featureSchema = yup.object({
@@ -55,6 +63,7 @@ const schema = yup.object({
         .min(1, 'Campo obligatorio')
         .required('Campo obligatorio'),
     name: yup.string().required('Campo obligatorio'),
+    category: yup.string().required('Campo obligatorio'),
     price: yup.string().required('Campo obligatorio'),
     stock: yup
         .string()
@@ -141,18 +150,21 @@ const useStyles = makeStyles({
             width: '24px',
         },
     },
-    input:{
-        "& .MuiInputBase-input": {
-      background: "#fff !important"
-    }}
+    input: {
+        '& .MuiInputBase-input': {
+            background: '#fff !important',
+        },
+    },
 })
-
 
 export default function AddProducts() {
     const history = useHistory()
     const params = useParams()
     console.log('params', params)
     const { user } = useSelector((state) => state.auth)
+    const { categoriesData, loadingCategoriesData } = useSelector(
+        (state) => state.categories
+    )
     const {
         loadingProduct,
         productSuccess,
@@ -167,6 +179,7 @@ export default function AddProducts() {
     const dispatch = useDispatch()
     const classes = useStyles()
     const [deleteImages, setDeleteImages] = useState([])
+    const [selectedCategory, setSelectedCategory] = useState(null)
     //form
     const {
         control,
@@ -174,11 +187,13 @@ export default function AddProducts() {
         reset,
         formState: { errors },
         watch,
+        setValue,
     } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
             images: [],
             name: '',
+            category: '',
             tags: '',
             price: '',
             stock: '',
@@ -197,7 +212,7 @@ export default function AddProducts() {
     })
     const onDrop = useCallback((acceptedFiles) => {
         // Do something with the files
-        console.log("ondrop")
+        console.log('ondrop')
         acceptedFiles.forEach((e) => {
             append({
                 file: e,
@@ -218,6 +233,7 @@ export default function AddProducts() {
 
         // Agregar datos básicos del producto
         data.append('name', values.name || '')
+        data.append('category', selectedCategory || '')
         data.append('price', values.price || 0)
         data.append('description', values.description || '')
         data.append('discount', values.discount || '')
@@ -237,7 +253,10 @@ export default function AddProducts() {
         }
 
         // Agregar estado del producto
-        data.append('status', JSON.stringify({ available: values.status === '0' ? true : false }))
+        data.append(
+            'status',
+            JSON.stringify({ available: values.status === '0' ? true : false })
+        )
 
         // Si es edición, manejar imágenes eliminadas
         if (params.id) {
@@ -257,6 +276,12 @@ export default function AddProducts() {
         remove(index)
     }
     useEffect(async () => {
+        dispatch(
+            getCategories({
+                access: user.token,
+                filters: { page: 1, limit: 50 },
+            })
+        )
         if (params.id) {
             dispatch(getProductDetail({ access: user.token, id: params.id }))
         }
@@ -268,7 +293,7 @@ export default function AddProducts() {
     }, [])
 
     useEffect(async () => {
-        if (productDetail && params.id) {
+        if (productDetail && params.id && categoriesData) {
             console.log('productDetail', productDetail)
             reset({
                 images: productDetail.images.map((e) => ({ preview: e.url })),
@@ -278,6 +303,13 @@ export default function AddProducts() {
                 status: productDetail.status.available ? 0 : 1,
                 discount: productDetail.discount,
                 hasFeatures: productDetail.features.length > 0,
+                category: categoriesData.data.some(
+                    (category) => category._id === productDetail.category
+                )
+                    ? categoriesData.data.find(
+                          (category) => category._id === productDetail.category
+                      ).name
+                    : '',
             })
             if (productDetail.features.length > 0) {
                 productDetail.features.map((feature) =>
@@ -298,14 +330,16 @@ export default function AddProducts() {
                 description: '',
                 status: '',
                 featuresArray: [],
+                category: '',
             })
         }
     }, [productDetail])
 
-    if (loadingProductDetail) {
+    if (loadingProductDetail && loadingCategoriesData) {
         return <LoadinScreen />
     }
     console.log('values ', watch())
+    console.log('Cat ', categoriesData)
     return (
         <section>
             <IconButton
@@ -392,9 +426,9 @@ export default function AddProducts() {
                         control={control}
                         render={({ field, fieldState }) => (
                             <CurrencyTextField
-                            variant="outlined"
-                            className={classes.input}
-                            inputProps={{background: "#fff"}}
+                                variant="outlined"
+                                className={classes.input}
+                                inputProps={{ background: '#fff' }}
                                 minimumValue="0"
                                 error={fieldState.error ? true : false}
                                 errorMessage={fieldState.error}
@@ -403,6 +437,56 @@ export default function AddProducts() {
                                 value={field.value}
                                 onChange={field.onChange}
                             />
+                        )}
+                    />
+
+                    <Controller
+                        name="category"
+                        control={control}
+                        render={({ field }) => (
+                            <Box>
+                                <TextField
+                                    select
+                                    SelectProps={{
+                                        MenuProps: {
+                                            anchorOrigin: {
+                                                vertical: 'bottom',
+                                                horizontal: 'left',
+                                            },
+                                            transformOrigin: {
+                                                vertical: 'top',
+                                                horizontal: 'left',
+                                            },
+                                            getContentAnchorEl: null, // Esto asegura que el dropdown no se ancle al centro del campo
+                                        },
+                                    }}
+                                    variant="outlined"
+                                    value={field.value}
+                                    label="Categoría"
+                                    style={{
+                                        backgroundColor: '#FFF',
+                                        minWidth: '200px',
+                                    }}
+                                    onChange={(e) => {
+                                        setValue('category', e.target.value)
+                                    }}
+                                >
+                                    {categoriesData &&
+                                        categoriesData.data.map((category) => (
+                                            <MenuItem
+                                                key={category._id}
+                                                value={category.name}
+                                                onClick={() =>
+                                                    setSelectedCategory(
+                                                        category._id
+                                                    )
+                                                }
+                                            >
+                                                {category.name}
+                                            </MenuItem>
+                                        ))}
+                                </TextField>
+                            </Box>
                         )}
                     />
                     <Controller

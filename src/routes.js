@@ -19,22 +19,24 @@
 import Dashboard from '@material-ui/icons/Dashboard'
 // import Person from "@material-ui/icons/Person";
 import StorefrontIcon from '@material-ui/icons/Storefront'
-import ListAltIcon from '@material-ui/icons/ListAlt';
+import CategoryIcon from '@material-ui/icons/Category'
+import ListAltIcon from '@material-ui/icons/ListAlt'
 // core components/views for Admin layout
 import DashboardPage from 'views/Dashboard/Dashboard.js'
-
 
 import Products from 'views/Products'
 import Login from 'views/Login'
 import UploadProductsFromExcel from 'views/UploadProductsFromExcel'
 // import UploadImagesFromZip from 'views/uploadImagesFromZip'
 import AddProducts from 'views/AddProducts'
-import Sales from 'views/Sales';
+import Sales from 'views/Sales'
 // import CreateSale from 'views/CreateSale';
-import SaleDetail from 'views/SaleDetail';
-import AddBannersPage from './views/AddBanners';
-import Banners from './views/Banners';
-import AdminBanners from './views/AdminBanners';
+import SaleDetail from 'views/SaleDetail'
+import AddBannersPage from './views/AddBanners'
+import Banners from './views/Banners'
+import AdminBanners from './views/AdminBanners'
+import Categories from 'views/Categories'
+import AddCategories from 'views/AddCategories'
 
 const dashboardRoutes = [
     {
@@ -65,6 +67,26 @@ const dashboardRoutes = [
         ],
     },
     {
+        path: '/categories',
+        name: 'Categorías',
+        icon: CategoryIcon,
+        component: Categories,
+        layout: '/admin',
+        childrens: [
+            {
+                path: '/add-category',
+                name: 'Agregar Categoría',
+                component: AddCategories,
+            },
+            {
+                noshow: true,
+                path: '/edit-category/:name/:id',
+                name: 'Editar Categoría',
+                component: AddCategories,
+            },
+        ],
+    },
+    {
         path: '/products',
         name: 'Productos',
         icon: StorefrontIcon,
@@ -77,7 +99,7 @@ const dashboardRoutes = [
                 component: AddProducts,
             },
             {
-                noshow:true,
+                noshow: true,
                 path: '/edit-product/:id',
                 name: 'Editar Producto',
                 component: AddProducts,
@@ -110,13 +132,14 @@ const dashboardRoutes = [
         layout: '/admin',
         childrens: [
             {
-                noshow:true,
+                noshow: true,
                 path: '/detail/:id',
                 name: 'Detalle de la orden',
                 component: SaleDetail,
-            },]
+            },
+        ],
     },
-];
+]
 const authRoutes = [
     {
         path: '/login',
