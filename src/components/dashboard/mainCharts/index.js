@@ -15,9 +15,10 @@ import { DatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers'
 import MomentUtils from '@date-io/moment'
 import moment from 'moment'
 import { getMonthlySales } from 'store/dashboard'
-import ChartistTooltip from 'chartist-plugin-tooltips-updated';
-import 'chartist-plugin-tooltips-updated/dist/chartist-plugin-tooltip.css';
+import ChartistTooltip from 'chartist-plugin-tooltips-updated'
+import 'chartist-plugin-tooltips-updated/dist/chartist-plugin-tooltip.css'
 import 'moment/locale/es' // without this line it didn't work
+import { Box } from '@material-ui/core'
 
 moment.locale('es')
 // console.log('dailySalesChart', dailySalesChart)
@@ -99,8 +100,9 @@ export default function MainCharts() {
     // console.log('sales', sales)
     return (
         <MuiPickersUtilsProvider locale={'es'} utils={MomentUtils}>
-            <GridContainer>
-                <GridItem xs={12} sm={12} md={12}>
+            <Box style={{ width: '100%', overflow: 'auto' }}>
+            <GridContainer style={{ minWidth: 1000 }}>
+                <GridItem xs={12} sm={12} md={12} >
                     {chartData && (
                         <Card chart>
                             <CardHeader color="success">
@@ -113,14 +115,20 @@ export default function MainCharts() {
                                     type="Line"
                                     options={{
                                         ...dailySalesChart.options,
-                                        high: Math.max.apply(Math, chartData) + 5,
+                                        high:
+                                            Math.max.apply(Math, chartData) + 5,
                                         plugins: [
                                             ChartistTooltip({
-                                              transformTooltipTextFnc: (value) => `$${Number(value).toFixed(1)}`, // Agrega el prefijo $
-                                              appendToBody: true, // Adjuntar el tooltip al body para evitar problemas de posicionamiento
-                                              anchorToPoint: true, // Mostrar el tooltip en el punto exacto
+                                                transformTooltipTextFnc: (
+                                                    value
+                                                ) =>
+                                                    `$${Number(value).toFixed(
+                                                        1
+                                                    )}`, // Agrega el prefijo $
+                                                appendToBody: true, // Adjuntar el tooltip al body para evitar problemas de posicionamiento
+                                                anchorToPoint: true, // Mostrar el tooltip en el punto exacto
                                             }),
-                                          ],
+                                        ],
                                     }}
                                     listener={dailySalesChart.animation}
                                 />
@@ -145,12 +153,13 @@ export default function MainCharts() {
                                     helperText="Seleccione el mes y el año"
                                     autoOk={true}
                                 />
-                               
                             </CardBody>
                         </Card>
                     )}
                 </GridItem>
             </GridContainer>
+
+            </Box>
         </MuiPickersUtilsProvider>
     )
 }

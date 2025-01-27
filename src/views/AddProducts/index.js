@@ -43,11 +43,7 @@ const featureSchema = yup.object({
         .matches(/^[a-zA-Z]+$/, 'El color solo puede contener letras'), // Validación de letras
     size: yup
         .string()
-        .nullable()
-        .oneOf(
-            ['S', 'M', 'L', 'XL'],
-            'La talla debe ser una de las siguientes: S, M, L, XL'
-        ), // Validación de tallas específicas
+        .nullable(),
     stock: yup
         .number()
         .required('El stock es obligatorio')
@@ -61,7 +57,7 @@ const schema = yup.object({
         .array()
         .of(featureSchema)
         .min(1, 'Necesitas agregar al menos una variante')
-        .required(1, 'Necesitas agregar al menos una variante'),
+        .required('Necesitas agregar al menos una variante'),
     images: yup
         .array()
         .min(1, 'Campo obligatorio')
@@ -102,6 +98,7 @@ const useStyles = makeStyles({
     imagesRow: {
         display: 'flex',
         gap: '1.5rem',
+        flexWrap: 'wrap',
     },
     inputRow: {
         margin: '1rem 0',
@@ -139,6 +136,7 @@ const useStyles = makeStyles({
         position: 'relative',
         maxWidth: '220px',
         height: '220px',
+        width: '100%',
     },
     productImage: {
         borderRadius: '16px',
