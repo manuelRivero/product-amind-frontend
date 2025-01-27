@@ -334,7 +334,7 @@ export default function Products() {
                                 Buscar
                             </Button>
                         </form>
-                        {loadingProductsData && loadingCategoriesData ? (
+                        {loadingProductsData || loadingCategoriesData ? (
                             <p>Cargando datos ...</p>
                         ) : (
                             <>

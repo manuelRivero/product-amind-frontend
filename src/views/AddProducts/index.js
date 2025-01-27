@@ -57,7 +57,11 @@ const featureSchema = yup.object({
     hasSize: yup.boolean().nullable(), // Validación para que el stock sea un número entero
 })
 const schema = yup.object({
-    features: yup.array().of(featureSchema),
+    features: yup
+        .array()
+        .of(featureSchema)
+        .min(1, 'Necesitas agregar al menos una variante')
+        .required(1, 'Necesitas agregar al menos una variante'),
     images: yup
         .array()
         .min(1, 'Campo obligatorio')
@@ -187,7 +191,6 @@ export default function AddProducts() {
         reset,
         formState: { errors },
         watch,
-        setValue,
     } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
@@ -335,7 +338,7 @@ export default function AddProducts() {
         }
     }, [productDetail])
 
-    if (loadingProductDetail && loadingCategoriesData) {
+    if (loadingProductDetail || loadingCategoriesData) {
         return <LoadinScreen />
     }
     console.log('values ', watch())
@@ -443,10 +446,12 @@ export default function AddProducts() {
                     <Controller
                         name="category"
                         control={control}
-                        render={({ field }) => (
+                        render={({ field, fieldState }) => (
                             <Box>
                                 <TextField
                                     select
+                                    error={fieldState.error ? true : false}
+                                    errorMessage={fieldState.error}
                                     SelectProps={{
                                         MenuProps: {
                                             anchorOrigin: {
@@ -467,15 +472,13 @@ export default function AddProducts() {
                                         backgroundColor: '#FFF',
                                         minWidth: '200px',
                                     }}
-                                    onChange={(e) => {
-                                        setValue('category', e.target.value)
-                                    }}
+                                    onChange={field.onChange}
                                 >
                                     {categoriesData &&
                                         categoriesData.data.map((category) => (
                                             <MenuItem
                                                 key={category._id}
-                                                value={category.name}
+                                                value={category._id}
                                                 onClick={() =>
                                                     setSelectedCategory(
                                                         category._id
@@ -714,6 +717,13 @@ export default function AddProducts() {
                             </Box>
                         )
                     })}
+                    {console.log('errors', errors)}
+                    {errors.features && (
+                        <p>
+                            Las variantes son obligatorias, debes agregar al
+                            menos 1
+                        </p>
+                    )}
                     <Box className={classes.buttonsRow}>
                         <Button
                             onClick={() => featuresArray.append({})}
@@ -721,7 +731,7 @@ export default function AddProducts() {
                             color="primary"
                             type="button"
                         >
-                            Agregar otra variante
+                            Agregar variante
                         </Button>
                     </Box>
                 </>
@@ -748,6 +758,11 @@ export default function AddProducts() {
                     (editProductError && (
                         <p>Hubo un error al guardar el producto</p>
                     ))}
+                {Object.keys(errors).length > 0 && (
+                    <p>
+                        Al parecer faltan campos obligatorios en el formulario
+                    </p>
+                )}
                 <Box className={classes.buttonsRow}>
                     <Button
                         isLoading={loadingProduct | loadingEditProduct}
