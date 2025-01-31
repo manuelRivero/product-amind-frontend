@@ -8,7 +8,7 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import Button from 'components/CustomButtons/Button'
 
-import { useParams, useHistory } from 'react-router-dom'
+import { useParams, useHistory, useLocation } from 'react-router-dom'
 
 import { primaryColor } from 'assets/jss/material-dashboard-react.js'
 import { useDispatch, useSelector } from 'react-redux'
@@ -101,6 +101,9 @@ const useStyles = makeStyles({
 })
 
 export default function AddCategories() {
+    const location = useLocation()
+    console.log('location', location)
+
     const history = useHistory()
     const params = useParams()
     const { user } = useSelector((state) => state.auth)
@@ -215,7 +218,10 @@ export default function AddCategories() {
                 }}
             />
             <CustomModal
-                open={params.id === undefined || params.name === undefined}
+                open={
+                    location.pathname.includes('/edit-category') &&
+                    (!params.id || !params.name)
+                }
                 handleClose={() => {
                     history.push('/admin/categories')
                 }}
