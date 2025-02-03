@@ -12,12 +12,14 @@ import { useDispatch, useSelector } from 'react-redux'
 import { getSale } from 'store/sales'
 
 import { useParams } from 'react-router-dom'
-import { Box, IconButton } from '@material-ui/core'
+import { Box, Grid, IconButton } from '@material-ui/core'
 import moment from 'moment'
 
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
-import { useHistory } from 'react-router-dom/cjs/react-router-dom.min'
 import { finalPrice } from '../../helpers/product'
+import { Link, useHistory } from 'react-router-dom'
+import Button from 'components/CustomButtons/Button'
+
 
 const styles = {
     cardCategoryWhite: {
@@ -94,34 +96,79 @@ export default function SaleDetail() {
                                 <p>Cargando datos...</p>
                             ) : (
                                 <Box>
-                                    <p>
-                                        Estatus:{' '}
-                                        <strong>{saleData.status}</strong>
-                                    </p>
-                                    <p>
-                                        Fecha:{' '}
-                                        <strong>
-                                            {' '}
-                                            {moment(saleData.createdAt).utc().format(
-                                                'DD-MM-YYYY HH:mm:ss A'
-                                            )}{' '}
-                                        </strong>
-                                    </p>
-                                    <p>
-                                        Total de la orden:{' '}
-                                        <strong>
-                                            $ {saleData.products.reduce(
-                                                (acc, item) =>
-                                                    acc +
-                                                    finalPrice(
-                                                        item.data.price,
-                                                        item.data.discount
-                                                    ) *
-                                                        item.quantity,
-                                                0
-                                            ).toFixed(1)}
-                                        </strong>
-                                    </p>
+                                    <Grid container spacing={4}>
+                                        <Grid item>
+                                            <p>
+                                                Nombre:{' '}
+                                                <strong>{saleData.name}</strong>
+                                            </p>
+                                            <p>
+                                                Apellido:{' '}
+                                                <strong>
+                                                    {saleData.lastName}
+                                                </strong>
+                                            </p>
+                                            <p>
+                                                DNI:{' '}
+                                                <strong>{saleData.dni}</strong>
+                                            </p>
+                                            <p>
+                                                Email:{' '}
+                                                <strong>{saleData.user}</strong>
+                                            </p>
+                                            <p>
+                                                Dirección:{' '}
+                                                <strong>
+                                                    {saleData.address}
+                                                </strong>
+                                            </p>
+                                            <p>
+                                                Código postal:{' '}
+                                                <strong>
+                                                    {saleData.postalCode}
+                                                </strong>
+                                            </p>
+                                        </Grid>
+                                        <Grid item>
+                                            <p>
+                                                Estatus:{' '}
+                                                <strong>
+                                                    {saleData.status}
+                                                </strong>
+                                            </p>
+                                            <p>
+                                                Fecha:{' '}
+                                                <strong>
+                                                    {' '}
+                                                    {moment(saleData.createdAt)
+                                                        .utc()
+                                                        .format(
+                                                            'DD-MM-YYYY HH:mm:ss A'
+                                                        )}{' '}
+                                                </strong>
+                                            </p>
+                                            <p>
+                                                Total de la orden:{' '}
+                                                <strong>
+                                                    ${' '}
+                                                    {saleData.products
+                                                        .reduce(
+                                                            (acc, item) =>
+                                                                acc +
+                                                                finalPrice(
+                                                                    item.data
+                                                                        .price,
+                                                                    item.data
+                                                                        .discount
+                                                                ) *
+                                                                    item.quantity,
+                                                            0
+                                                        )
+                                                        .toFixed(1)}
+                                                </strong>
+                                            </p>
+                                        </Grid>
+                                    </Grid>
                                     <Table
                                         tableHeaderColor="primary"
                                         tableHead={[
@@ -131,7 +178,8 @@ export default function SaleDetail() {
                                             'variante',
                                             'Precio',
                                             'Descuento',
-                                            'Precio final'
+                                            'Precio final',
+                                            'Acciones'
                                         ]}
                                         tableData={saleData.products.map(
                                             (product) => {
@@ -139,10 +187,34 @@ export default function SaleDetail() {
                                                     product.data._id,
                                                     product.data.name,
                                                     product.quantity,
-                                                    `Color: ${product.data.color} ${product.data.size ? '- Talle:' + product.data.size : ''}`,
-                                                    "$" + product.data.price,
-                                                    product.data.discount + "%",
-                                                    `$${finalPrice(product.data.price, product.data.discount).toFixed(1)}`,
+                                                    `Color: ${
+                                                        product.data.color
+                                                    } ${
+                                                        product.data.size
+                                                            ? '- Talle:' +
+                                                              product.data.size
+                                                            : ''
+                                                    }`,
+                                                    '$' + product.data.price,
+                                                    product.data.discount + '%',
+                                                    `$${finalPrice(
+                                                        product.data.price,
+                                                        product.data.discount
+                                                    ).toFixed(1)}`,
+                                                    <Link
+                                                    key={`detail-button-${product.data._id}`}
+                                                    to={`/admin/products/detail/${product.data._id}`}
+                                                >
+                                                    <Button
+                                                        isLoading={false}
+                                                        variant="contained"
+                                                        color="primary"
+                                                        type="button"
+                                                    >
+                                                        Ver producto
+                                                    </Button>
+                                                    
+                                                </Link>,
                                                 ]
                                             }
                                         )}

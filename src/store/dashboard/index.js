@@ -6,6 +6,7 @@ import {
     getMonthlySales as getMonthlySalesRequest,
     getTopProducts as getTopProductsRequest,
 } from 'api/dashboard'
+import { getPendingSales } from '../../api/sales'
 
 const initialState = {
     salesStats: null,
@@ -16,13 +17,28 @@ const initialState = {
     monthlySales: null,
     topProductsData: null,
     loadingTopsProducts: true,
+    loadingPendingOrders: true,
+    pendingOrders: null,
+    ErrorPendingOrders: false,
 }
 
+export const getPendingOrders = createAsyncThunk(
+    '/get/pending-orders',
+    async (args, { rejectWithValue }) => {
+        try {
+            const response = await getPendingSales(args.access)
+            console.log('response', response)
+            return response
+        } catch (error) {
+            return rejectWithValue(error.response.data)
+        }
+    }
+)
 export const getStats = createAsyncThunk(
     '/get/stats',
     async (args, { rejectWithValue }) => {
-        console.log("store date", new Date() )
-        console.log("store from", args.from )
+        console.log('store date', new Date())
+        console.log('store from', args.from)
         try {
             const [salesStats, users, dailySales] = await Promise.all([
                 getSalesStats(args.access, args.from ? args.from : new Date()),
@@ -112,13 +128,27 @@ export const dashboardSlice = createSlice({
             console.log('action', action.payload)
             state.notificationsPage = action.payload.page
         },
-        resetNotifications:(state) => {
-            console.log("reset notifications")
+        resetNotifications: (state) => {
+            console.log('reset notifications')
             state.notifications = null
             state.notificationsPage = 0
-        }
+        },
     },
     extraReducers: {
+        [getPendingOrders.pending]: (state) => {
+            state.loadingPendingOrders = true
+        },
+        [getPendingOrders.fulfilled]: (state, action) => {
+            console.log('action', action.payload)
+            state.pendingOrders = action.payload
+            state.loadingPendingOrders = false
+            state.ErrorPendingOrders = false
+
+        },
+        [getPendingOrders.rejected]: (state) => {
+            state.loadingPendingOrders = false
+            state.ErrorPendingOrders = true
+        },
         [getStats.pending]: (state) => {
             state.loadingStats = true
         },
@@ -157,7 +187,7 @@ export const dashboardSlice = createSlice({
             state.loadingTopsProducts = true
         },
         [getTopProducts.fulfilled]: (state, action) => {
-             console.log("action top products", action.payload.data.topProducts)
+            console.log('action top products', action.payload.data.topProducts)
             state.loadingTopsProducts = false
             state.topProductsData = {
                 data: action.payload.data.data,

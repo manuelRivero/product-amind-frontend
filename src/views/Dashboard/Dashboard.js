@@ -23,6 +23,7 @@ import MainCharts from 'components/dashboard/mainCharts'
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { getTopProducts } from 'store/dashboard'
+import PendingOrders from '../../components/dashboard/pendingOrders'
 
 const useStyles = makeStyles(styles)
 
@@ -44,6 +45,7 @@ export default function Dashboard() {
     console.log("top products isLoading", loadingTopsProducts);
     return (
         <div>
+            <PendingOrders />
             <MainStats />
             <MainCharts />
             <GridContainer>

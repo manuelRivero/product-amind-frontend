@@ -57,3 +57,14 @@ export const createSale = (access, saleData) => {
     })
 
 }
+
+export const getPendingSales = (access, page) => {
+    return client.get(`api/sale/pending-sales`, {
+        params:{
+            page
+        },
+        headers: {
+            'x-token': access,
+        },
+    })
+}

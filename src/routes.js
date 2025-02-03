@@ -104,11 +104,11 @@ const dashboardRoutes = [
                 name: 'Editar Producto',
                 component: AddProducts,
             },
-            {
-                path: '/upload-from-excel',
-                name: 'Carga masiva de excel',
-                component: UploadProductsFromExcel,
-            },
+            // {
+            //     path: '/upload-from-excel',
+            //     name: 'Carga masiva de excel',
+            //     component: UploadProductsFromExcel,
+            // },
             // {
             //     path: '/upload-images-from-zip',
             //     name: 'Carga masiva de imágenes',

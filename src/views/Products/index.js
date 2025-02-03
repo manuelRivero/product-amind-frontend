@@ -187,7 +187,7 @@ export default function Products() {
 
     return (
         <GridContainer>
-            <GridItem xs={12} sm={12} md={6}>
+            {/* <GridItem xs={12} sm={12} md={6}>
                 <Card>
                     <CardHeader color="primary">
                         <h4 className={classes.cardTitleWhite}>
@@ -208,7 +208,7 @@ export default function Products() {
                         </Link>
                     </CardBody>
                 </Card>
-            </GridItem>
+            </GridItem> */}
             {/* <GridItem xs={12} sm={12} md={6}>
                 <Card>
                     <CardHeader color="primary">

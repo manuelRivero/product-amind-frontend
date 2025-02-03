@@ -88,6 +88,9 @@ const headerLinksStyle = (theme) => ({
       color: '#999'
     }
   },
+  icons: {
+    color: "#555555"
+  }
 });
 
 export default headerLinksStyle;

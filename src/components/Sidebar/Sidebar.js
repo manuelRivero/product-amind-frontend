@@ -11,9 +11,6 @@ import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemText from '@material-ui/core/ListItemText'
 import Icon from '@material-ui/core/Icon'
-// core components
-import AdminNavbarLinks from 'components/Navbars/AdminNavbarLinks.js'
-import RTLNavbarLinks from 'components/Navbars/RTLNavbarLinks.js'
 
 import styles from 'assets/jss/material-dashboard-react/components/sidebarStyle.js'
 import { Box } from '@material-ui/core'
@@ -29,15 +26,15 @@ export default function Sidebar(props) {
         return location.pathname.includes(routeName)
     }
     const hasVisibleRoutes = (route) => {
-        console.log("route", route)
-        let visibleRoutes = false;
-        const childrenRoutes = route.childrens.filter(e => !e.noshow)
-        if (childrenRoutes.length > 0){
-            visibleRoutes = true;
+        console.log('route', route)
+        let visibleRoutes = false
+        const childrenRoutes = route.childrens.filter((e) => !e.noshow)
+        if (childrenRoutes.length > 0) {
+            visibleRoutes = true
         }
         return visibleRoutes
     }
-    
+
     const { color, logo, image, logoText, routes } = props
     var links = (
         <List className={classes.list}>
@@ -61,13 +58,15 @@ export default function Sidebar(props) {
                         to={prop.layout + prop.path}
                         className={classes.item}
                         activeClassName="active"
+                        onClick={() =>
+                            !prop.childrens && props.handleDrawerToggle()
+                        }
                         key={key}
-                        
                     >
                         <ListItem
                             button
                             className={classes.itemLink + listItemClasses}
-                            onClick={()=>setActiveTab(key)}
+                            onClick={() => setActiveTab(key)}
                         >
                             {typeof prop.icon === 'string' ? (
                                 <Icon
@@ -108,37 +107,43 @@ export default function Sidebar(props) {
                                 disableTypography={true}
                             />
                         </ListItem>
-                        {prop.childrens && activeTab === key && (
-                            hasVisibleRoutes(prop) &&
-                           ( <Box className={classes.childrensContainer}>
-                                {prop.childrens?.map((e, i) => {
-                                    if (e.noshow) return
-                                    return (
-                                        <NavLink
-                                            to={
-                                                prop.layout + prop.path + e.path
-                                            }
-                                            className={classes.item}
-                                            activeClassName={
-                                                classes.childrenActive
-                                            }
-                                            style={{
-                                                color:
-                                                    location.pathname ===
+                        {prop.childrens &&
+                            activeTab === key &&
+                            hasVisibleRoutes(prop) && (
+                                <Box className={classes.childrensContainer}>
+                                    {prop.childrens?.map((e, i) => {
+                                        if (e.noshow) return
+                                        return (
+                                            <NavLink
+                                                to={
                                                     prop.layout +
-                                                        prop.path +
-                                                        e.path
-                                                        ? '#fff'
-                                                        : '#00ACC1',
-                                            }}
-                                            key={`child-route-${i}`}
-                                        >
-                                            {e.name}
-                                        </NavLink>
-                                    )
-                                })}
-                            </Box>)
-                        )}
+                                                    prop.path +
+                                                    e.path
+                                                }
+                                                className={classes.item}
+                                                activeClassName={
+                                                    classes.childrenActive
+                                                }
+                                                onClick={() =>
+                                                    props.handleDrawerToggle()
+                                                }
+                                                style={{
+                                                    color:
+                                                        location.pathname ===
+                                                        prop.layout +
+                                                            prop.path +
+                                                            e.path
+                                                            ? '#fff'
+                                                            : '#00ACC1',
+                                                }}
+                                                key={`child-route-${i}`}
+                                            >
+                                                {e.name}
+                                            </NavLink>
+                                        )
+                                    })}
+                                </Box>
+                            )}
                     </NavLink>
                 )
             })}
@@ -178,9 +183,7 @@ export default function Sidebar(props) {
                     }}
                 >
                     {brand}
-                    <div className={classes.sidebarWrapper}>
-                        {links}
-                    </div>
+                    <div className={classes.sidebarWrapper}>{links}</div>
                     {image !== undefined ? (
                         <div
                             className={classes.background}

@@ -1,26 +1,17 @@
-import React, { useEffect, useState } from 'react'
-// @material-ui/core components
+import React, { useState } from 'react'
 import { makeStyles } from '@material-ui/core/styles'
-// core components
 import GridItem from 'components/Grid/GridItem.js'
 import GridContainer from 'components/Grid/GridContainer.js'
 import Table from 'components/Table/Table.js'
 import Card from 'components/Card/Card.js'
 import CardHeader from 'components/Card/CardHeader.js'
 import CardBody from 'components/Card/CardBody.js'
-import Button from 'components/CustomButtons/Button'
+import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { getSales, changeSalesStatus } from 'store/sales'
-import PropTypes from 'prop-types'
-import { Link } from 'react-router-dom'
-import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
-import ChevronRightIcon from '@material-ui/icons/ChevronRight'
-
-// form
-import { useForm, Controller } from 'react-hook-form'
-import { yupResolver } from '@hookform/resolvers/yup'
-import * as yup from 'yup'
-
+import { getPendingOrders } from '../../../store/dashboard'
+import { Controller, useForm } from 'react-hook-form'
+import { changeSalesStatus } from '../../../store/sales'
+import Button from 'components/CustomButtons/Button'
 import {
     Box,
     Checkbox,
@@ -32,8 +23,15 @@ import {
     MenuList,
     Popper,
 } from '@material-ui/core'
-import moment from 'moment-timezone'
+import * as yup from 'yup'
+import { yupResolver } from '@hookform/resolvers/yup'
+import PropTypes from 'prop-types'
+import moment from 'moment'
 import ReactPaginate from 'react-paginate'
+
+import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
+import ChevronRightIcon from '@material-ui/icons/ChevronRight'
+import { Link } from 'react-router-dom'
 
 const styles = {
     pagination: {
@@ -131,196 +129,146 @@ const styles = {
         justifyContent: 'center',
     },
 }
-
 const useStyles = makeStyles(styles)
 
-export default function Sales() {
-    const classes = useStyles()
-    const dispatch = useDispatch()
+export default function PendingOrders() {
     const { user } = useSelector((state) => state.auth)
-    const { salesData, loadingSalesData } = useSelector((state) => state.sales)
-    const [filter, setFilter] = useState(null)
+    const dispatch = useDispatch()
+    const { pendingOrders, loadingPendingOrders } = useSelector(
+        (state) => state.dashboard
+    )
+    const classes = useStyles()
     const [page, setPage] = useState(0)
 
-    const handleFilter = (filter) => {
-        setFilter(filter)
-    }
     useEffect(() => {
-        console.log('use effect filter', filter)
-        if (filter !== null) {
-            dispatch(
-                getSales({
-                    access: user.token,
-                    filters: { status: filter },
-                    page: 0,
-                })
-            )
-        } else {
-            dispatch(getSales({ access: user.token, filters: {} }))
+        const getData = async () => {
+            dispatch(getPendingOrders({ access: user.token, page: 0 }))
         }
-    }, [filter])
+        getData()
+    }, [])
     useEffect(() => {
-        console.log('use effect filter', filter)
-        if (filter !== null) {
-            dispatch(
-                getSales({
-                    access: user.token,
-                    filters: { status: filter },
-                    page,
-                })
-            )
-        } else {
-            dispatch(getSales({ access: user.token, filters: {}, page }))
-        }
+        dispatch(getPendingOrders({ access: user.token, page }))
     }, [page])
-    console.log('page', page)
     return (
-        <GridContainer>
-            <GridItem xs={12} sm={12} md={12}>
-                <Card>
-                    <CardHeader color="primary">
-                        <h4 className={classes.cardTitleWhite}>
-                            Tabla de ordenes
-                        </h4>
-                        <p className={classes.cardCategoryWhite}>
-                            Aquí podras visualizar todas tus ordenes, cambiar su
-                            estatus y acceder al detalle de cada orden
-                        </p>
-                    </CardHeader>
-                    <CardBody>
-                        <Box className={classes.filtersWrapper}>
-                            <Button
-                                isLoading={false}
-                                variant="contained"
-                                color="primary"
-                                type="button"
-                                onClick={() => handleFilter(null)}
-                            >
-                                Todos
-                            </Button>
-                            <Button
-                                isLoading={false}
-                                variant="contained"
-                                color="primary"
-                                type="button"
-                                onClick={() => handleFilter(2)}
-                            >
-                                Pagado
-                            </Button>
-                            <Button
-                                isLoading={false}
-                                variant="contained"
-                                color="primary"
-                                type="button"
-                                onClick={() => handleFilter(3)}
-                            >
-                                Enviado
-                            </Button>
-                            <Button
-                                isLoading={false}
-                                variant="contained"
-                                color="primary"
-                                type="button"
-                                onClick={() => handleFilter(5)}
-                            >
-                                Cancelado
-                            </Button>
-                        </Box>
-                        {loadingSalesData ? (
-                            <p>Cargando datos...</p>
-                        ) : (
-                            <>
-                                <Table
-                                    tableHeaderColor="primary"
-                                    tableHead={[
-                                        'Id',
-                                        'Total',
-                                        'Fecha',
-                                        'Estatus',
-                                        'Cambiar estatus',
-                                        'Acciones',
-                                    ]}
-                                    tableData={salesData.sales.map((e) => {
-                                        console.log('e', e)
-                                        return [
-                                            <p key={`sale-id-${e._id}`}>
-                                                {e._id}
-                                            </p>,
-                                            <p key={`sale-total-${e._id}`}>
-                                                {e.total}
-                                            </p>,
-                                            <p key={`sale-date-${e._id}`}>
-                                                {moment(e.createdAt)
-                                                    .utc()
-                                                    .format(
-                                                        'DD-MM-YYYY HH:mm:ss A'
-                                                    )}
-                                            </p>,
-                                            <p key={`sale-status-${e._id}`}>
-                                                {e.status}
-                                            </p>,
-                                            <ChangeStatusDropdown
-                                                key={e._id}
-                                                sale={e}
-                                            />,
-                                            <Link
-                                                key={`detail-button-${e._id}`}
-                                                to={`/admin/orders/detail/${e._id}`}
+        <div>
+            <GridContainer>
+                <GridItem xs={12} sm={12} md={12}>
+                    <Card>
+                        <CardHeader color="primary">
+                            <h4 className={classes.cardTitleWhite}>
+                                Ordenes pendientes de envio
+                            </h4>
+                        </CardHeader>
+                        <CardBody>
+                            {loadingPendingOrders ? (
+                                <p>Cargando datos...</p>
+                            ) : (
+                                <>
+                                    <Table
+                                        tableHeaderColor="primary"
+                                        tableHead={[
+                                            'Id',
+                                            'Total',
+                                            'Fecha',
+                                            'Estatus',
+                                            'Cambiar estatus',
+                                            'Acciones',
+                                        ]}
+                                        tableData={pendingOrders.data.sales.map(
+                                            (e) => {
+                                                console.log('e', e)
+                                                return [
+                                                    <p key={`sale-id-${e._id}`}>
+                                                        {e._id}
+                                                    </p>,
+                                                    <p
+                                                        key={`sale-total-${e._id}`}
+                                                    >
+                                                        $
+                                                        {e.totalPrice.toFixed(
+                                                            2
+                                                        )}
+                                                    </p>,
+                                                    <p
+                                                        key={`sale-date-${e._id}`}
+                                                    >
+                                                        {moment(e.createdAt)
+                                                            .utc()
+                                                            .format(
+                                                                'DD-MM-YYYY HH:mm:ss A'
+                                                            )}
+                                                    </p>,
+                                                    <p
+                                                        key={`sale-status-${e._id}`}
+                                                    >
+                                                        {e.status}
+                                                    </p>,
+                                                    <ChangeStatusDropdown
+                                                        key={e._id}
+                                                        sale={e}
+                                                    />,
+                                                    <Link
+                                                        key={`detail-button-${e._id}`}
+                                                        to={`/admin/orders/detail/${e._id}`}
+                                                    >
+                                                        <Button
+                                                            isLoading={false}
+                                                            variant="contained"
+                                                            color="primary"
+                                                            type="button"
+                                                        >
+                                                            Ver detalle
+                                                        </Button>
+                                                        
+                                                    </Link>,
+                                                ]
+                                            }
+                                        )}
+                                    />
+                                    <ReactPaginate
+                                        forcePage={page}
+                                        pageClassName={classes.page}
+                                        containerClassName={classes.pagination}
+                                        activeClassName={classes.activePage}
+                                        breakLabel="..."
+                                        nextLabel={
+                                            <Button
+                                                isLoading={false}
+                                                variant="contained"
+                                                color="primary"
+                                                type="button"
+                                                justIcon
                                             >
-                                                <Button
-                                                    isLoading={false}
-                                                    variant="contained"
-                                                    color="primary"
-                                                    type="button"
-                                                >
-                                                    Ver detalle
-                                                </Button>
-                                                ,
-                                            </Link>,
-                                        ]
-                                    })}
-                                />
-                                <ReactPaginate
-                                    forcePage={page}
-                                    pageClassName={classes.page}
-                                    containerClassName={classes.pagination}
-                                    activeClassName={classes.activePage}
-                                    breakLabel="..."
-                                    nextLabel={
-                                        <Button
-                                            isLoading={false}
-                                            variant="contained"
-                                            color="primary"
-                                            type="button"
-                                            justIcon
-                                        >
-                                            <ChevronRightIcon />
-                                        </Button>
-                                    }
-                                    onPageChange={(e) => {
-                                        setPage(e.selected)
-                                    }}
-                                    pageRangeDisplayed={5}
-                                    pageCount={Math.ceil(salesData.total / 10)}
-                                    previousLabel={
-                                        <Button
-                                            isLoading={false}
-                                            variant="contained"
-                                            color="primary"
-                                            type="button"
-                                            justIcon
-                                        >
-                                            <ChevronLeftIcon />
-                                        </Button>
-                                    }
-                                    renderOnZeroPageCount={null}
-                                />
-                            </>
-                        )}
-                    </CardBody>
-                </Card>
-            </GridItem>
-        </GridContainer>
+                                                <ChevronRightIcon />
+                                            </Button>
+                                        }
+                                        onPageChange={(e) => {
+                                            setPage(e.selected)
+                                        }}
+                                        pageRangeDisplayed={5}
+                                        pageCount={Math.ceil(
+                                            pendingOrders.data.total / 10
+                                        )}
+                                        previousLabel={
+                                            <Button
+                                                isLoading={false}
+                                                variant="contained"
+                                                color="primary"
+                                                type="button"
+                                                justIcon
+                                            >
+                                                <ChevronLeftIcon />
+                                            </Button>
+                                        }
+                                        renderOnZeroPageCount={null}
+                                    />
+                                </>
+                            )}
+                        </CardBody>
+                    </Card>
+                </GridItem>
+            </GridContainer>
+        </div>
     )
 }
 const paymentSchema = yup.object({
