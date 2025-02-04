@@ -41,9 +41,7 @@ const featureSchema = yup.object({
         .string()
         .nullable()
         .matches(/^[a-zA-Z]+$/, 'El color solo puede contener letras'), // Validación de letras
-    size: yup
-        .string()
-        .nullable(),
+    size: yup.string().nullable(),
     stock: yup
         .number()
         .required('El stock es obligatorio')
@@ -56,8 +54,7 @@ const schema = yup.object({
     features: yup
         .array()
         .of(featureSchema)
-        .min(1, 'Necesitas agregar al menos una variante')
-        .required('Necesitas agregar al menos una variante'),
+        .min(1, 'Necesitas agregar al menos una variante'),
     images: yup
         .array()
         .min(1, 'Campo obligatorio')
@@ -597,51 +594,26 @@ export default function AddProducts() {
                                     </IconButton>
                                 </Box>
                                 <p style={{ margin: 0 }}>Color</p>
-                                <Box>
+
+                                <Box style={{ marginBottom: 16 }}>
                                     <Controller
-                                        name={`featuresArray.${index}.hasColor`}
+                                        name={`featuresArray.${index}.color`}
                                         control={control}
-                                        render={({ field }) => (
-                                            <label
-                                                htmlFor={`features-color-${index}`}
-                                            >
-                                                Activar variante de color
-                                                <Switch
-                                                    id={`features-color-${index}`}
-                                                    checked={
-                                                        field.value || false
-                                                    }
-                                                    onChange={field.onChange}
-                                                    inputProps={{
-                                                        'aria-label':
-                                                            'primary checkbox',
-                                                    }}
-                                                />
-                                            </label>
+                                        render={({ field, fieldState }) => (
+                                            <TextInput
+                                                error={!!fieldState.error}
+                                                errorMessage={
+                                                    fieldState.error?.message ||
+                                                    ''
+                                                }
+                                                icon={null}
+                                                label="Color del producto"
+                                                value={field.value || ''}
+                                                onChange={field.onChange}
+                                            />
                                         )}
                                     />
                                 </Box>
-                                {hasColor && (
-                                    <Box style={{ marginBottom: 16 }}>
-                                        <Controller
-                                            name={`featuresArray.${index}.color`}
-                                            control={control}
-                                            render={({ field, fieldState }) => (
-                                                <TextInput
-                                                    error={!!fieldState.error}
-                                                    errorMessage={
-                                                        fieldState.error
-                                                            ?.message || ''
-                                                    }
-                                                    icon={null}
-                                                    label="Color del producto"
-                                                    value={field.value || ''}
-                                                    onChange={field.onChange}
-                                                />
-                                            )}
-                                        />
-                                    </Box>
-                                )}
                                 <p style={{ margin: 0 }}>Talla</p>
                                 <Box>
                                     <Controller

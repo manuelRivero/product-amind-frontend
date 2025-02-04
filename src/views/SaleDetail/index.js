@@ -203,7 +203,7 @@ export default function SaleDetail() {
                                                     ).toFixed(1)}`,
                                                     <Link
                                                     key={`detail-button-${product.data._id}`}
-                                                    to={`/admin/products/detail/${product.data._id}`}
+                                                    to={`/admin/product-detail/${product.data._id}`}
                                                 >
                                                     <Button
                                                         isLoading={false}

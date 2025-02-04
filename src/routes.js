@@ -26,7 +26,6 @@ import DashboardPage from 'views/Dashboard/Dashboard.js'
 
 import Products from 'views/Products'
 import Login from 'views/Login'
-import UploadProductsFromExcel from 'views/UploadProductsFromExcel'
 // import UploadImagesFromZip from 'views/uploadImagesFromZip'
 import AddProducts from 'views/AddProducts'
 import Sales from 'views/Sales'
@@ -37,6 +36,7 @@ import Banners from './views/Banners'
 import AdminBanners from './views/AdminBanners'
 import Categories from 'views/Categories'
 import AddCategories from 'views/AddCategories'
+import ProductDetail from './views/productDetail'
 
 const dashboardRoutes = [
     {
@@ -85,6 +85,15 @@ const dashboardRoutes = [
                 component: AddCategories,
             },
         ],
+    },
+    {
+        path: '/product-detail/:id',
+        name: 'Detalle del producto',
+        icon: StorefrontIcon,
+        component: ProductDetail,
+        layout: '/admin',
+        childrens: [],
+        hidden: true,
     },
     {
         path: '/products',

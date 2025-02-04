@@ -52,99 +52,103 @@ export default function Sidebar(props) {
                         prop.layout + prop.path
                     ),
                 })
-
                 return (
-                    <NavLink
-                        to={prop.layout + prop.path}
-                        className={classes.item}
-                        activeClassName="active"
-                        onClick={() =>
-                            !prop.childrens && props.handleDrawerToggle()
-                        }
-                        key={key}
-                    >
-                        <ListItem
-                            button
-                            className={classes.itemLink + listItemClasses}
-                            onClick={() => setActiveTab(key)}
+                    !prop.hidden ? (
+                        <NavLink
+                            to={prop.layout + prop.path}
+                            className={classes.item}
+                            activeClassName="active"
+                            onClick={() =>
+                                !prop.childrens && props.handleDrawerToggle()
+                            }
+                            key={key}
                         >
-                            {typeof prop.icon === 'string' ? (
-                                <Icon
-                                    className={classNames(
-                                        classes.itemIcon,
-                                        whiteFontClasses,
-                                        {
-                                            [classes.itemIconRTL]:
-                                                props.rtlActive,
-                                        }
-                                    )}
-                                >
-                                    {prop.icon}
-                                </Icon>
-                            ) : (
-                                <prop.icon
-                                    className={classNames(
-                                        classes.itemIcon,
-                                        whiteFontClasses,
-                                        {
-                                            [classes.itemIconRTL]:
-                                                props.rtlActive,
-                                        }
-                                    )}
-                                />
-                            )}
-                            <ListItemText
-                                primary={
-                                    props.rtlActive ? prop.rtlName : prop.name
-                                }
-                                className={classNames(
-                                    classes.itemText,
-                                    whiteFontClasses,
-                                    {
-                                        [classes.itemTextRTL]: props.rtlActive,
-                                    }
+                            <ListItem
+                                button
+                                className={classes.itemLink + listItemClasses}
+                                onClick={() => setActiveTab(key)}
+                            >
+                                {typeof prop.icon === 'string' ? (
+                                    <Icon
+                                        className={classNames(
+                                            classes.itemIcon,
+                                            whiteFontClasses,
+                                            {
+                                                [classes.itemIconRTL]:
+                                                    props.rtlActive,
+                                            }
+                                        )}
+                                    >
+                                        {prop.icon}
+                                    </Icon>
+                                ) : (
+                                    <prop.icon
+                                        className={classNames(
+                                            classes.itemIcon,
+                                            whiteFontClasses,
+                                            {
+                                                [classes.itemIconRTL]:
+                                                    props.rtlActive,
+                                            }
+                                        )}
+                                    />
                                 )}
-                                disableTypography={true}
-                            />
-                        </ListItem>
-                        {prop.childrens &&
-                            activeTab === key &&
-                            hasVisibleRoutes(prop) && (
-                                <Box className={classes.childrensContainer}>
-                                    {prop.childrens?.map((e, i) => {
-                                        if (e.noshow) return
-                                        return (
-                                            <NavLink
-                                                to={
-                                                    prop.layout +
-                                                    prop.path +
-                                                    e.path
-                                                }
-                                                className={classes.item}
-                                                activeClassName={
-                                                    classes.childrenActive
-                                                }
-                                                onClick={() =>
-                                                    props.handleDrawerToggle()
-                                                }
-                                                style={{
-                                                    color:
-                                                        location.pathname ===
+                                <ListItemText
+                                    primary={
+                                        props.rtlActive
+                                            ? prop.rtlName
+                                            : prop.name
+                                    }
+                                    className={classNames(
+                                        classes.itemText,
+                                        whiteFontClasses,
+                                        {
+                                            [classes.itemTextRTL]:
+                                                props.rtlActive,
+                                        }
+                                    )}
+                                    disableTypography={true}
+                                />
+                            </ListItem>
+                            {prop.childrens &&
+                                activeTab === key &&
+                                hasVisibleRoutes(prop) && (
+                                    <Box className={classes.childrensContainer}>
+                                        {prop.childrens?.map((e, i) => {
+                                            if (e.noshow) return
+                                            return (
+                                                <NavLink
+                                                    to={
                                                         prop.layout +
-                                                            prop.path +
-                                                            e.path
-                                                            ? '#fff'
-                                                            : '#00ACC1',
-                                                }}
-                                                key={`child-route-${i}`}
-                                            >
-                                                {e.name}
-                                            </NavLink>
-                                        )
-                                    })}
-                                </Box>
-                            )}
-                    </NavLink>
+                                                        prop.path +
+                                                        e.path
+                                                    }
+                                                    className={classes.item}
+                                                    activeClassName={
+                                                        classes.childrenActive
+                                                    }
+                                                    onClick={() =>
+                                                        props.handleDrawerToggle()
+                                                    }
+                                                    style={{
+                                                        color:
+                                                            location.pathname ===
+                                                            prop.layout +
+                                                                prop.path +
+                                                                e.path
+                                                                ? '#fff'
+                                                                : '#00ACC1',
+                                                    }}
+                                                    key={`child-route-${i}`}
+                                                >
+                                                    {e.name}
+                                                </NavLink>
+                                            )
+                                        })}
+                                    </Box>
+                                )}
+                        </NavLink>
+                    ) : null
                 )
             })}
         </List>

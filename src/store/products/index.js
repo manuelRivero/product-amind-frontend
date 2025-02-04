@@ -22,6 +22,7 @@ const initialState = {
     productError: false,
     productDetailError:false,
     productDetail:null,
+    loadingProductDetail: true,
     loadingEditProduct:false,
     editProductError:false,
     editProductSuccess:false,
