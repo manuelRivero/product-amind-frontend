@@ -17,6 +17,7 @@ import { editConfig } from '../../api/config'
 const schema = yup.object({
     logoUrl: yup.string().url('Debe ser una URL válida').nullable(),
     title: yup.string().required('El título es obligatorio'),
+    phone: yup.string().required('El título es obligatorio'),
     description: yup.string().required('La descripción es obligatoria'),
     primaryColor: yup.string().required('El color primario es obligatorio'),
     contrastTextColor: yup
@@ -107,6 +108,7 @@ export default function ConfigPage() {
             contrastTextColor: '',
             logo: '',
             logoUrl: '',
+            phone: '',
         },
     })
     const onDrop = useCallback((acceptedFiles) => {
@@ -154,6 +156,7 @@ export default function ConfigPage() {
                 description: configDetail.metadata.description,
                 primaryColor: configDetail.palette.primary.main,
                 contrastTextColor: configDetail.palette.primary.contrastText,
+                phone: configDetail.phone,
                 logoUrl: configDetail.metadata.logo,
             })
             setPreview(configDetail.metadata.logo)
@@ -233,6 +236,29 @@ export default function ConfigPage() {
                                             label={'Nombre'}
                                             value={field.value}
                                             onChange={field.onChange}
+                                        />
+                                    )}
+                                />
+                            </Box>
+                            <Box marginBottom={2} flex={1}>
+                                <Controller
+                                    name="phone"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <TextInput
+                                            className={classes.input}
+                                            error={
+                                                fieldState.error ? true : false
+                                            }
+                                            errorMessage={fieldState.error}
+                                            icon={null}
+                                            label={'Nombre'}
+                                            value={field.value}
+                                            onChange={(e) =>
+                                                field.onChange(
+                                                    e.target.value.replace(/[^\d]/g, '')
+                                                )
+                                            }
                                         />
                                     )}
                                 />
