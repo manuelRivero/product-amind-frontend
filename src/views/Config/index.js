@@ -256,14 +256,14 @@ export default function ConfigPage() {
                                                 value={field.value}
                                                 onChange={field.onChange}
                                             />
-                                            {errors.images && (
+                                            {fieldState.error && (
                                                 <TextDanger>
                                                     <p
                                                         className={
                                                             classes.errorText
                                                         }
                                                     >
-                                                        {errors.images.message}
+                                                        {fieldState.error.message}
                                                     </p>
                                                 </TextDanger>
                                             )}
