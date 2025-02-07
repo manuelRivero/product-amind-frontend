@@ -24,13 +24,15 @@ export default function TextInput({
     multiline = false,
     rows = 1,
     errorMessage,
-    name= 'input'
+    name= 'input',
+    className={}
 }) {
     const classes = useStyles();
+    console.log("input", className)
     return (
-        <div>
+        <div style={{width: '100%'}}>
             <TextField
-            className={classes.input}
+            className={ `${classes.input} ${className}`}
                 name={name}
                 rows={rows}
                 multiline={multiline}
@@ -66,4 +68,5 @@ TextInput.propTypes = {
     helperText: PropTypes.string,
     multiline: PropTypes.bool,
     rows: PropTypes.number,
+    className: PropTypes.object,
 }

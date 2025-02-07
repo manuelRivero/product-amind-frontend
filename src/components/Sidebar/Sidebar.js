@@ -58,9 +58,9 @@ export default function Sidebar(props) {
                             to={prop.layout + prop.path}
                             className={classes.item}
                             activeClassName="active"
-                            onClick={() =>
-                                !prop.childrens && props.handleDrawerToggle()
-                            }
+                            // onClick={() =>
+                            //     !prop.childrens && props.handleDrawerToggle()
+                            // }
                             key={key}
                         >
                             <ListItem
@@ -127,9 +127,9 @@ export default function Sidebar(props) {
                                                     activeClassName={
                                                         classes.childrenActive
                                                     }
-                                                    onClick={() =>
-                                                        props.handleDrawerToggle()
-                                                    }
+                                                    // onClick={() =>
+                                                    //     props.handleDrawerToggle()
+                                                    // }
                                                     style={{
                                                         color:
                                                             location.pathname ===

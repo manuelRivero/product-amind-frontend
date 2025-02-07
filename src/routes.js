@@ -37,6 +37,7 @@ import AdminBanners from './views/AdminBanners'
 import Categories from 'views/Categories'
 import AddCategories from 'views/AddCategories'
 import ProductDetail from './views/productDetail'
+import ConfigPage from './views/Config'
 
 const dashboardRoutes = [
     {
@@ -124,6 +125,13 @@ const dashboardRoutes = [
             //     component: UploadImagesFromZip,
             // },
         ],
+    },
+    {
+        path: '/config',
+        name: 'Configuración',
+        icon: StorefrontIcon,
+        component: ConfigPage,
+        layout: '/admin',
     },
     // {
     //     path: '/create-sale',
