@@ -333,7 +333,7 @@ export default function AddProducts() {
         }
     }, [productDetail])
 
-    if (loadingProductDetail || loadingCategoriesData) {
+    if ((params.id && loadingProductDetail) || loadingCategoriesData) {
         return <LoadinScreen />
     }
     console.log('values ', watch())
