@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 
 import { makeStyles } from '@material-ui/core/styles'
 import { useDropzone } from 'react-dropzone'
