@@ -12,7 +12,6 @@ import { Link } from 'react-router-dom'
 
 //icons
 import EditIcon from '@material-ui/icons/Edit'
-import DeleteIcon from '@material-ui/icons/Delete'
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
 import ChevronRightIcon from '@material-ui/icons/ChevronRight'
 import AddIcon from '@material-ui/icons/Add'
@@ -29,7 +28,7 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { finalPrice, formatNumber } from '../../helpers/product'
 import { getCategories } from 'store/categories'
-import { PanoramaFishEye, RemoveRedEye } from '@material-ui/icons'
+import { RemoveRedEye } from '@material-ui/icons'
 
 const schema = yup.object({
     search: yup.string().nullable(),
@@ -425,17 +424,17 @@ export default function Products() {
 
 const ActionGroup = ({ product }) => {
     const classes = useStyles()
-    const [isLoading, setIsLoading] = useState(false)
-    const deleteHandler = () => {
-        try {
-            console.log('product', product)
-            setIsLoading(true)
-        } catch (error) {
-            console.log('deleteHandler error', error)
-        } finally {
-            setIsLoading(false)
-        }
-    }
+    // const [isLoading, setIsLoading] = useState(false)
+    // const deleteHandler = () => {
+    //     try {
+    //         console.log('product', product)
+    //         setIsLoading(true)
+    //     } catch (error) {
+    //         console.log('deleteHandler error', error)
+    //     } finally {
+    //         setIsLoading(false)
+    //     }
+    // }
     return (
         <Box className={classes.actionWrapper}>
             <Link to={`/admin/products/edit-product/${product._id}`}>
