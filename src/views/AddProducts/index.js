@@ -158,7 +158,7 @@ const useStyles = makeStyles({
 })
 
 export default function AddProducts() {
-    const currencyInputRef = useRef(null)
+
     const history = useHistory()
     const params = useParams()
     console.log('params', params)
