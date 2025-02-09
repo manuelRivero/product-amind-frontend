@@ -158,7 +158,6 @@ const useStyles = makeStyles({
 })
 
 export default function AddProducts() {
-
     const history = useHistory()
     const params = useParams()
     console.log('params', params)
@@ -234,7 +233,7 @@ export default function AddProducts() {
         // Agregar datos básicos del producto
         data.append('name', values.name || '')
         data.append('category', selectedCategory || '')
-        data.append('price', values.price || 0)
+        data.append('price', values.price.replace('$', '').replace(",", '') || 0)
         data.append('description', values.description || '')
         data.append('discount', values.discount || '')
 
@@ -308,7 +307,7 @@ export default function AddProducts() {
                 )
                     ? categoriesData.data.find(
                           (category) => category._id === productDetail.category
-                      ).name
+                      )._id
                     : '',
             })
             if (productDetail.features.length > 0) {
@@ -442,7 +441,7 @@ export default function AddProducts() {
                                 {fieldState.error && (
                                     <Typography
                                         color="error"
-                                        variant='caption'
+                                        variant="caption"
                                         sx={{
                                             display: 'block',
                                             marginTop: 1,

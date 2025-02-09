@@ -27,8 +27,9 @@ import TextInput from 'components/TextInput/Index'
 import { useForm, Controller } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
-import { finalPrice } from '../../helpers/product'
+import { finalPrice, formatNumber } from '../../helpers/product'
 import { getCategories } from 'store/categories'
+import { PanoramaFishEye, RemoveRedEye } from '@material-ui/icons'
 
 const schema = yup.object({
     search: yup.string().nullable(),
@@ -356,14 +357,14 @@ export default function Products() {
                                                 e._id,
                                                 e.name,
                                                 productCategory(e.category),
-                                                `$${e.price.toFixed(1)}`,
+                                                `$${formatNumber(e.price.toFixed(1))}`,
                                                 e.discount
                                                     ? `${e.discount}%`
                                                     : 0,
-                                                `$${finalPrice(
+                                                `$${formatNumber(finalPrice(
                                                     e.price,
                                                     e.discount
-                                                ).toFixed(1)}`,
+                                                ))}`,
                                                 e.status
                                                     ? e.status.available
                                                         ? 'Disponible'
@@ -448,7 +449,18 @@ const ActionGroup = ({ product }) => {
                     <EditIcon />
                 </Button>
             </Link>
-            <Button
+            <Link to={`/admin/products/edit-product/${product._id}`}>
+                <Button
+                    isLoading={false}
+                    variant="contained"
+                    color="primary"
+                    type="submit"
+                    justIcon
+                >
+                    <RemoveRedEye />
+                </Button>
+            </Link>
+            {/* <Button
                 isLoading={isLoading}
                 variant="contained"
                 color="primary"
@@ -457,7 +469,7 @@ const ActionGroup = ({ product }) => {
                 onClick={deleteHandler}
             >
                 <DeleteIcon />
-            </Button>
+            </Button> */}
         </Box>
     )
 }

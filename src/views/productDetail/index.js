@@ -11,6 +11,7 @@ import LoadinScreen from 'components/LoadingScreen'
 import { getProductDetail } from 'store/products'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import { getCategories } from '../../store/categories'
+import { formatNumber } from '../../helpers/product'
 
 const useStyles = makeStyles({
     uploadImage: {
@@ -110,7 +111,7 @@ export default function ProductDetail() {
                 (category) => category._id === productDetail.category
             )
             if (target) {
-                return target.name
+                return target._id
             } else {
                 return null
             }
@@ -179,7 +180,7 @@ export default function ProductDetail() {
                 <div>
                     <p>Precio</p>
                     <p>
-                        <strong>${productDetail.price.toFixed(2)}</strong>
+                        <strong>${formatNumber(productDetail.price)}</strong>
                     </p>
                 </div>
                 <div>

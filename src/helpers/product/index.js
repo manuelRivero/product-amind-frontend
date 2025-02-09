@@ -10,3 +10,9 @@ export function finalPrice(price, percentage) {
     const finalPrice = price - discount;
     return parseFloat(finalPrice.toFixed(2)); // Redondea a 2 decimales
   }
+export const formatNumber = (value) => {
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(value);
+};

@@ -24,6 +24,7 @@ import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { getTopProducts } from 'store/dashboard'
 import PendingOrders from '../../components/dashboard/pendingOrders'
+import { formatNumber } from '../../helpers/product'
 
 const useStyles = makeStyles(styles)
 
@@ -112,7 +113,7 @@ export default function Dashboard() {
                                     tableData={
                                         topProductsData.data.map(product =>{
                                             const productData = product
-                                                return [productData.data._id, productData.data.name, "$" + productData.data.price.toFixed(2), product.count]
+                                                return [productData.data._id, productData.data.name, "$" + formatNumber(productData.data.price), product.count]
                                         })
                                     }
                                 />

@@ -16,7 +16,7 @@ import { Box, Grid, IconButton } from '@material-ui/core'
 import moment from 'moment'
 
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
-import { finalPrice } from '../../helpers/product'
+import { finalPrice, formatNumber } from '../../helpers/product'
 import { Link, useHistory } from 'react-router-dom'
 import Button from 'components/CustomButtons/Button'
 
@@ -195,12 +195,12 @@ export default function SaleDetail() {
                                                               product.data.size
                                                             : ''
                                                     }`,
-                                                    '$' + product.data.price,
-                                                    product.data.discount + '%',
-                                                    `$${finalPrice(
+                                                    '$' + formatNumber(product.data.price,
+                                                    product.data.discount) + '%',
+                                                    `$${formatNumber(finalPrice(
                                                         product.data.price,
                                                         product.data.discount
-                                                    ).toFixed(1)}`,
+                                                    ))}`,
                                                     <Link
                                                     key={`detail-button-${product.data._id}`}
                                                     to={`/admin/product-detail/${product.data._id}`}

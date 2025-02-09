@@ -15,6 +15,7 @@ import DeleteForeverIcon from '@material-ui/icons/DeleteForever'
 import CustomModal from 'components/CustomModal'
 import { resetCreateSaleSuccess } from 'store/sales'
 import { createSale } from 'store/sales'
+import { formatNumber } from '../../helpers/product'
 
 const useStyles = makeStyles({
     root: {},
@@ -252,7 +253,7 @@ export default function CreateSale() {
                                     />
                                 </Box>
                                 <p>
-                                    Precio: <strong>{product.price}</strong>
+                                    Precio: <strong>{formatNumber(product.price)}</strong>
                                 </p>
                             </Box>
                         </GridItem>
