@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 import { makeStyles } from '@material-ui/core/styles'
 import { useDropzone } from 'react-dropzone'
@@ -11,6 +11,7 @@ import {
     MenuItem,
     Switch,
     TextField,
+    Typography,
 } from '@material-ui/core'
 import TextInput from 'components/TextInput/Index'
 import { useForm, Controller, useFieldArray } from 'react-hook-form'
@@ -31,7 +32,7 @@ import { getProductDetail } from 'store/products'
 import { resetEditProductSuccess } from 'store/products'
 import { editProduct } from 'store/products'
 import { Delete, DeleteForever } from '@material-ui/icons'
-import CurrencyTextField from '@unicef/material-ui-currency-textfield'
+import { NumericFormat } from 'react-number-format'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import { getCategories } from 'store/categories'
 
@@ -157,6 +158,7 @@ const useStyles = makeStyles({
 })
 
 export default function AddProducts() {
+    const currencyInputRef = useRef(null)
     const history = useHistory()
     const params = useParams()
     console.log('params', params)
@@ -423,18 +425,59 @@ export default function AddProducts() {
                         name="price"
                         control={control}
                         render={({ field, fieldState }) => (
-                            <CurrencyTextField
-                                variant="outlined"
-                                className={classes.input}
-                                inputProps={{ background: '#fff' }}
-                                minimumValue="0"
-                                error={fieldState.error ? true : false}
-                                errorMessage={fieldState.error}
-                                icon={null}
-                                label={'Precio en Pesos'}
-                                value={field.value}
-                                onChange={field.onChange}
-                            />
+                            <Box>
+                                <NumericFormat
+                                    className={classes.input}
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    customInput={TextField}
+                                    label="Precio en Pesos"
+                                    variant="outlined"
+                                    thousandSeparator=","
+                                    decimalSeparator="."
+                                    decimalScale={2} // Máximo 2 decimales
+                                    prefix="$"
+                                    error={fieldState.error ? true : false}
+                                />
+                                {fieldState.error && (
+                                    <Typography
+                                        color="error"
+                                        variant='caption'
+                                        sx={{
+                                            display: 'block',
+                                            marginTop: 1,
+                                            fontSize: '14px',
+                                        }}
+                                    >
+                                        {fieldState.error.message}
+                                    </Typography>
+                                )}
+                            </Box>
+                            // <CurrencyTextField
+                            //     autoFocus={false}
+                            //     variant="outlined"
+                            //     className={classes.input}
+                            //     inputProps={{ background: '#fff' }}
+                            //     minimumValue="0"
+                            //     error={fieldState.error ? true : false}
+                            //     errorMessage={fieldState.error}
+                            //     icon={null}
+                            //     label={'Precio en Pesos'}
+                            //     value={field.value}
+                            //     onChange={field.onChange}
+                            //     onFocus={(e) =>
+                            //         e.target.setSelectionRange(
+                            //             e.target.value.length,
+                            //             e.target.value.length
+                            //         )
+                            //     } // Llevar el cursor al final
+                            //     onBlur={(e) =>
+                            //         e.target.setSelectionRange(
+                            //             e.target.value.length,
+                            //             e.target.value.length
+                            //         )
+                            //     }
+                            // />
                         )}
                     />
 
@@ -484,6 +527,18 @@ export default function AddProducts() {
                                             </MenuItem>
                                         ))}
                                 </TextField>
+                                {fieldState.error && (
+                                    <Typography
+                                        variant="caption"
+                                        color="error"
+                                        sx={{
+                                            display: 'block',
+                                            marginTop: 1,
+                                        }}
+                                    >
+                                        {fieldState.error.message}
+                                    </Typography>
+                                )}
                             </Box>
                         )}
                     />
