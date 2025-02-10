@@ -106,19 +106,19 @@ export default function ProductDetail() {
     )
 
     const category = useMemo(() => {
-        if (categoriesData) {
+        if (categoriesData && productDetail) {
             const target = categoriesData.data.find(
                 (category) => category._id === productDetail.category
             )
             if (target) {
-                return target._id
+                return target
             } else {
                 return null
             }
         } else {
             return null
         }
-    }, [categoriesData])
+    }, [categoriesData, productDetail])
     console.log('category data', categoriesData?.data)
     const dispatch = useDispatch()
     const classes = useStyles()
@@ -186,7 +186,7 @@ export default function ProductDetail() {
                 <div>
                     <p>Categoría</p>
                     <p>
-                        <strong>{category}</strong>
+                        <strong>{category?.name}</strong>
                     </p>
                 </div>
                 <div>
