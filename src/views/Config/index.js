@@ -13,8 +13,10 @@ import LoadinScreen from '../../components/LoadingScreen'
 import { useDispatch, useSelector } from 'react-redux'
 import { getConfigRequest } from '../../store/config'
 import { editConfig } from '../../api/config'
+import FontPicker from 'font-picker-react'
 
 const schema = yup.object({
+    titleFont: yup.string().required('Campo obligatorio'),
     logoUrl: yup.string().url('Debe ser una URL válida').nullable(),
     title: yup.string().required('El título es obligatorio'),
     phone: yup.string().required('El título es obligatorio'),
@@ -28,10 +30,10 @@ const schema = yup.object({
         then: yup
             .mixed()
             .test('fileRequired', 'El logo es obligatorio', (value) => {
-                return value && value.length > 0
+                return value
             })
             .test('fileSize', 'El archivo no debe superar los 2MB', (value) => {
-                return value && value[0] && value[0].size <= 2 * 1024 * 1024 // 2MB
+                return value && value.size <= 2 * 1024 * 1024 // 2MB
             })
             .test(
                 'fileType',
@@ -39,9 +41,8 @@ const schema = yup.object({
                 (value) => {
                     return (
                         value &&
-                        value[0] &&
                         ['image/png', 'image/jpg', 'image/jpeg'].includes(
-                            value[0].type
+                            value.type
                         )
                     )
                 }
@@ -97,7 +98,6 @@ export default function ConfigPage() {
         control,
         handleSubmit,
         setValue,
-        watch,
         formState: { errors },
     } = useForm({
         resolver: yupResolver(schema),
@@ -109,6 +109,8 @@ export default function ConfigPage() {
             logo: '',
             logoUrl: '',
             phone: '',
+            titleFont: '',
+            bodyFont: '',
         },
     })
     const onDrop = useCallback((acceptedFiles) => {
@@ -129,6 +131,8 @@ export default function ConfigPage() {
         form.append('description', values.description)
         form.append('primaryColor', values.primaryColor)
         form.append('contrastTextColor', values.contrastTextColor)
+        form.append('titleFont', values.titleFont)
+        form.append('bodyFont', values.bodyFont)
         if (values.logo) {
             form.append('logo', values.logo)
         }
@@ -150,23 +154,27 @@ export default function ConfigPage() {
 
     useEffect(() => {
         if (configDetail) {
-            console.log('config detail', configDetail)
-            reset({
-                title: configDetail.metadata.title,
-                description: configDetail.metadata.description,
-                primaryColor: configDetail.palette.primary.main,
-                contrastTextColor: configDetail.palette.primary.contrastText,
-                phone: configDetail.phone,
-                logoUrl: configDetail.metadata.logo,
-            })
             setPreview(configDetail.metadata.logo)
+            setTimeout(() => {
+                reset({
+                    title: configDetail.metadata.title,
+                    description: configDetail.metadata.description,
+                    primaryColor: configDetail.palette.primary.main,
+                    contrastTextColor:
+                        configDetail.palette.primary.contrastText,
+                    phone: configDetail.phone,
+                    logoUrl: null,
+                    titleFont: configDetail.typography?.title ?? '',
+                    bodyFont: configDetail.typography?.body ?? '',
+                })
+            }, 1000)
         }
     }, [configDetail])
 
     if (loadingConfig) {
         return <LoadinScreen />
     }
-    console.log('values', watch())
+    console.log('values', errors)
     return (
         <>
             <Box>
@@ -220,8 +228,18 @@ export default function ConfigPage() {
                                 )}
                             </div>
                         </Box>
-                        <Box display="flex" style={{ gap: '2rem' }}>
-                            <Box marginBottom={2} flex={1}>
+                        {errors.logo && (
+                            <TextDanger>
+                                <p className={classes.errorText} style={{marginBottom: '1rem'}}>
+                                    {errors.logo.message}
+                                </p>
+                            </TextDanger>
+                        )}
+                        <Box
+                            display="flex"
+                            style={{ gap: '2rem', flexWrap: 'wrap' }}
+                        >
+                            <Box marginBottom={2} flex={1} flexBasis={150}>
                                 <Controller
                                     name="title"
                                     control={control}
@@ -240,7 +258,7 @@ export default function ConfigPage() {
                                     )}
                                 />
                             </Box>
-                            <Box marginBottom={2} flex={1}>
+                            <Box marginBottom={2} flex={1} flexBasis={150}>
                                 <Controller
                                     name="phone"
                                     control={control}
@@ -256,14 +274,22 @@ export default function ConfigPage() {
                                             value={field.value}
                                             onChange={(e) =>
                                                 field.onChange(
-                                                    e.target.value.replace(/[^\d]/g, '')
+                                                    e.target.value.replace(
+                                                        /[^\d]/g,
+                                                        ''
+                                                    )
                                                 )
                                             }
                                         />
                                     )}
                                 />
                             </Box>
-                            <Box marginBottom={2} flex={1}>
+                        </Box>
+                        <Box
+                            display="flex"
+                            style={{ gap: '2rem', flexWrap: 'wrap' }}
+                        >
+                            <Box marginBottom={2} flexBasis={150}>
                                 <Controller
                                     name="primaryColor"
                                     control={control}
@@ -289,7 +315,10 @@ export default function ConfigPage() {
                                                             classes.errorText
                                                         }
                                                     >
-                                                        {fieldState.error.message}
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
                                                     </p>
                                                 </TextDanger>
                                             )}
@@ -297,7 +326,7 @@ export default function ConfigPage() {
                                     )}
                                 />
                             </Box>
-                            <Box marginBottom={2} flex={1}>
+                            <Box marginBottom={2} flexBasis={150}>
                                 <Controller
                                     name="contrastTextColor"
                                     control={control}
@@ -316,6 +345,117 @@ export default function ConfigPage() {
                                                 value={field.value}
                                                 onChange={field.onChange}
                                             />
+                                            {fieldState.error && (
+                                                <TextDanger>
+                                                    <p
+                                                        className={
+                                                            classes.errorText
+                                                        }
+                                                    >
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                </TextDanger>
+                                            )}
+                                        </>
+                                    )}
+                                />
+                            </Box>
+                        </Box>
+                        <Box
+                            display="flex"
+                            style={{ gap: '2rem', flexWrap: 'wrap' }}
+                        >
+                            <Box marginBottom={2} flexBasis={150}>
+                                <Controller
+                                    name="titleFont"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <>
+                                            <p
+                                                style={{
+                                                    marginTop: 0,
+                                                    marginBottom: 0,
+                                                }}
+                                            >
+                                                Fuente para los títulos
+                                            </p>
+                                            <FontPicker
+                                                families={[
+                                                    'Merriweather',
+                                                    'Open Sans',
+                                                ]}
+                                                apiKey={
+                                                    process.env
+                                                        .REACT_APP_FONTS_KEY
+                                                }
+                                                activeFontFamily={field.value}
+                                                onChange={(nextFont) =>
+                                                    field.onChange(
+                                                        nextFont.family
+                                                    )
+                                                }
+                                            />
+                                            <p className="apply-font">
+                                                Título de Ejemplo.
+                                            </p>
+
+                                            {fieldState.error && (
+                                                <TextDanger>
+                                                    <p
+                                                        className={
+                                                            classes.errorText
+                                                        }
+                                                    >
+                                                        {
+                                                            fieldState.error
+                                                                .message
+                                                        }
+                                                    </p>
+                                                </TextDanger>
+                                            )}
+                                        </>
+                                    )}
+                                />
+                            </Box>
+                            <Box marginBottom={2} flexBasis={150}>
+                                <Controller
+                                    name="bodyFont"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <>
+                                            <p
+                                                style={{
+                                                    marginTop: 0,
+                                                    marginBottom: 0,
+                                                }}
+                                            >
+                                                Fuente para el cuerpo
+                                            </p>
+                                            <FontPicker
+                                                pickerId="body"
+                                                families={[
+                                                    'Merriweather',
+                                                    'Open Sans',
+                                                ]}
+                                                apiKey={
+                                                    process.env
+                                                        .REACT_APP_FONTS_KEY
+                                                }
+                                                activeFontFamily={field.value}
+                                                value={field.value}
+                                                onChange={(nextFont) =>
+                                                    field.onChange(
+                                                        nextFont.family
+                                                    )
+                                                }
+                                            />
+                                            <p className="apply-font-body">
+                                                Cuerpo de Ejemplo.
+                                            </p>
+
                                             {fieldState.error && (
                                                 <TextDanger>
                                                     <p
@@ -384,7 +524,7 @@ export default function ConfigPage() {
                 hasCancel={false}
                 hasConfirm={true}
                 cancelCb={() => {}}
-                confirmCb={() =>  setShowSuccessModal(false)}
+                confirmCb={() => setShowSuccessModal(false)}
             />
         </>
     )
