@@ -19,6 +19,7 @@ import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import { finalPrice, formatNumber } from '../../helpers/product'
 import { Link, useHistory } from 'react-router-dom'
 import Button from 'components/CustomButtons/Button'
+import { RemoveRedEye } from '@material-ui/icons'
 
 const styles = {
     cardCategoryWhite: {
@@ -74,7 +75,7 @@ export default function SaleDetail() {
         <>
             <IconButton
                 className={classes.backButton}
-                onClick={() => history.push('/admin/orders')}
+                onClick={() => history.goBack()}
             >
                 <ArrowBackIcon />
             </IconButton>
@@ -110,6 +111,12 @@ export default function SaleDetail() {
                                             <p>
                                                 DNI:{' '}
                                                 <strong>{saleData.dni}</strong>
+                                            </p>
+                                            <p>
+                                                Télefono:{' '}
+                                                <strong>
+                                                    {saleData.phone}
+                                                </strong>
                                             </p>
                                             <p>
                                                 Email:{' '}
@@ -206,11 +213,9 @@ export default function SaleDetail() {
                                                     }`,
                                                     '$' +
                                                         formatNumber(
-                                                            product.data.price,
-                                                            product.data
-                                                                .discount
-                                                        ) +
-                                                        '%',
+                                                            product.data.price
+                                                        ),
+                                                    `%${product.data.discount}`,
                                                     `$${formatNumber(
                                                         finalPrice(
                                                             product.data.price,
@@ -228,7 +233,7 @@ export default function SaleDetail() {
                                                             color="primary"
                                                             type="button"
                                                         >
-                                                            Ver producto
+                                                            <RemoveRedEye />
                                                         </Button>
                                                     </Link>,
                                                 ]

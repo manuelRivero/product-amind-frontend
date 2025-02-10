@@ -448,7 +448,7 @@ const ActionGroup = ({ product }) => {
                     <EditIcon />
                 </Button>
             </Link>
-            <Link to={`/admin/products/edit-product/${product._id}`}>
+            <Link to={`/admin/product-detail/${product._id}`}>
                 <Button
                     isLoading={false}
                     variant="contained"
