@@ -99,7 +99,7 @@ export default function Dashboard() {
                             </h4>
                         </CardHeader>
                         <CardBody>
-                            {loadingTopsProducts ? (
+                            {loadingTopsProducts && !topProductsData ? (
                                 <p>Cargando datos</p>
                             ) : (
                                 <Table

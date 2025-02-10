@@ -6,6 +6,7 @@ import {
     getMonthlySales as getMonthlySalesRequest,
     getTopProducts as getTopProductsRequest,
 } from 'api/dashboard'
+import { changeSaleStatus as changeSaleStatusRequest } from 'api/sales'
 import { getPendingSales } from '../../api/sales'
 
 const initialState = {
@@ -20,6 +21,7 @@ const initialState = {
     loadingPendingOrders: true,
     pendingOrders: null,
     ErrorPendingOrders: false,
+    loadingChangeStatus: null
 }
 
 export const getPendingOrders = createAsyncThunk(
@@ -101,6 +103,23 @@ export const getTopProducts = createAsyncThunk(
         }
     }
 )
+export const changePendingSalesStatus = createAsyncThunk(
+    'put/pending-sales',
+    async (args, { rejectWithValue }) => {
+        try {
+            console.log('put sales')
+            const response = await changeSaleStatusRequest(
+                args.access,
+                args.id,
+                args.status,
+                args.paymentMethod
+            )
+            return response
+        } catch (error) {
+            return rejectWithValue(error.response.data)
+        }
+    }
+)
 
 export const dashboardSlice = createSlice({
     name: 'dashboard',
@@ -135,6 +154,21 @@ export const dashboardSlice = createSlice({
         },
     },
     extraReducers: {
+        [changePendingSalesStatus.pending]: (state, action) => {
+            console.log('action', action)
+            state.loadingChangeStatus = action.meta.arg.id
+        },
+        [changePendingSalesStatus.fulfilled]: (state, action) => {
+            state.loadingChangeStatus = null
+            const { id, status } = action.payload.data
+            const targetIndex = state.pendingOrders.data.sales.findIndex(
+                (e) => e._id === id
+            )
+            state.pendingOrders.data.sales[targetIndex].status = status
+        },
+        [changePendingSalesStatus.rejected]: (state) => {
+            state.loadingChangeStatus = null
+        },
         [getPendingOrders.pending]: (state) => {
             state.loadingPendingOrders = true
         },
@@ -143,7 +177,6 @@ export const dashboardSlice = createSlice({
             state.pendingOrders = action.payload
             state.loadingPendingOrders = false
             state.ErrorPendingOrders = false
-
         },
         [getPendingOrders.rejected]: (state) => {
             state.loadingPendingOrders = false

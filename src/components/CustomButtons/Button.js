@@ -11,6 +11,7 @@ import Button from '@material-ui/core/Button'
 import LoopIcon from '@material-ui/icons/Loop';
 
 import styles from 'assets/jss/material-dashboard-react/components/buttonStyle.js'
+import { CircularProgress } from '@material-ui/core'
 
 const useStyles = makeStyles(styles)
 
@@ -44,7 +45,7 @@ export default function RegularButton(props) {
     })
     return (
         <Button {...rest} classes={muiClasses} className={btnClasses}>
-            {props.isLoading ? <LoopIcon /> : children}
+            {props.isLoading ? <CircularProgress size={'sm'} color='inherit' /> : children}
         </Button>
     )
 }

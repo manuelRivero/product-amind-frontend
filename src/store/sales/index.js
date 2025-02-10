@@ -111,6 +111,7 @@ export const salesSlice = createSlice({
         [changeSalesStatus.fulfilled]: (state, action) => {
             state.loadingChangeStatus = null
             const { id, status } = action.payload.data
+            console.log("sales data", state.salesData)
             const targetIndex = state.salesData.sales.findIndex(
                 (e) => e._id === id
             )

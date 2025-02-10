@@ -8,16 +8,12 @@ import CardHeader from 'components/Card/CardHeader.js'
 import CardBody from 'components/Card/CardBody.js'
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { getPendingOrders } from '../../../store/dashboard'
-import { Controller, useForm } from 'react-hook-form'
-import { changeSalesStatus } from '../../../store/sales'
+import { changePendingSalesStatus, getPendingOrders } from '../../../store/dashboard'
+import { useForm } from 'react-hook-form'
 import Button from 'components/CustomButtons/Button'
 import {
     Box,
-    Checkbox,
     ClickAwayListener,
-    Dialog,
-    DialogTitle,
     Fade,
     MenuItem,
     MenuList,
@@ -32,6 +28,8 @@ import ReactPaginate from 'react-paginate'
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
 import ChevronRightIcon from '@material-ui/icons/ChevronRight'
 import { Link } from 'react-router-dom'
+import { RemoveRedEye } from '@material-ui/icons'
+import { saleStatus } from '../../../const/sales'
 
 const styles = {
     pagination: {
@@ -217,7 +215,7 @@ export default function PendingOrders() {
                                                             color="primary"
                                                             type="button"
                                                         >
-                                                            Ver detalle
+                                                            <RemoveRedEye />
                                                         </Button>
                                                         
                                                     </Link>,
@@ -272,33 +270,23 @@ export default function PendingOrders() {
     )
 }
 const paymentSchema = yup.object({
-    paymentMethod: yup
-        .string()
-        .oneOf(['1', '0'], 'Campo obligatorio')
-        .required('Campo obligatorio'),
     status: yup.string().required(),
 })
 const ChangeStatusDropdown = ({ sale }) => {
     const dispatch = useDispatch()
-    const { loadingChangeStatus } = useSelector((state) => state.sales)
+    const { loadingChangeStatus } = useSelector((state) => state.dashboard)
     const { user } = useSelector((state) => state.auth)
 
     const classes = useStyles()
-    //form
-    const {
-        control,
-        handleSubmit,
-        formState: { errors },
-    } = useForm({
+
+    useForm({
         resolver: yupResolver(paymentSchema),
         defaultValues: {
-            paymentMethod: '0',
-            status: 2,
+            status: saleStatus[sale.status]
         },
     })
     const [anchorEl, setAnchorEl] = React.useState(null)
     const [open, setOpen] = React.useState(false)
-    const [showPaymentDialog, setShowPaymentDialog] = React.useState(false)
 
     const handleClick = (event) => {
         setOpen(!open)
@@ -307,34 +295,12 @@ const ChangeStatusDropdown = ({ sale }) => {
 
     const onStatusChange = async (status) => {
         setOpen(false)
-        setAnchorEl(null)
-        if (status === 2) {
-            setShowPaymentDialog(true)
-            return
-        }
+        setAnchorEl(anchorEl ? null : event.currentTarget)
         dispatch(
-            changeSalesStatus({ access: user.token, id: sale._id, status })
+            changePendingSalesStatus({ access: user.token, id: sale._id, status })
         )
     }
 
-    const submitPaymentMethod = async (values) => {
-        dispatch(
-            changeSalesStatus({
-                access: user.token,
-                id: sale._id,
-                status: values.status,
-                paymentMethod: values.paymentMethod,
-            })
-        )
-    }
-
-    useEffect(() => {
-        if (loadingChangeStatus === sale._id) {
-            setOpen(false)
-            setAnchorEl(null)
-            setShowPaymentDialog(false)
-        }
-    }, [loadingChangeStatus])
 
     return (
         <Box>
@@ -373,7 +339,7 @@ const ChangeStatusDropdown = ({ sale }) => {
                             <div className={classes.dropdown}>
                                 <MenuList role="menu">
                                     <MenuItem
-                                        onClick={() => onStatusChange(2)}
+                                        onClick={() => onStatusChange(1)}
                                         className={
                                             sale.status === 'PAGADO'
                                                 ? classes.activeStatus
@@ -383,7 +349,7 @@ const ChangeStatusDropdown = ({ sale }) => {
                                         Pagado
                                     </MenuItem>
                                     <MenuItem
-                                        onClick={() => onStatusChange(3)}
+                                        onClick={() => onStatusChange(2)}
                                         className={
                                             sale.status === 'ENVIADO'
                                                 ? classes.activeStatus
@@ -393,7 +359,7 @@ const ChangeStatusDropdown = ({ sale }) => {
                                         Enviado
                                     </MenuItem>
                                     <MenuItem
-                                        onClick={() => onStatusChange(4)}
+                                        onClick={() => onStatusChange(3)}
                                         className={
                                             sale.status === 'CANCELADO'
                                                 ? classes.activeStatus
@@ -408,85 +374,6 @@ const ChangeStatusDropdown = ({ sale }) => {
                     </Fade>
                 )}
             </Popper>
-            <Dialog
-                onClose={() => setShowPaymentDialog(false)}
-                aria-labelledby="simple-dialog-title"
-                open={showPaymentDialog}
-            >
-                <DialogTitle id="simple-dialog-title">
-                    Seleccionar metodo de pago
-                </DialogTitle>
-                <Box className={classes.modalBody}>
-                    <form onSubmit={handleSubmit(submitPaymentMethod)}>
-                        <Box className={classes.paymentRow}>
-                            <Controller
-                                name="paymentMethod"
-                                control={control}
-                                render={({ field }) => (
-                                    <label htmlFor="available">
-                                        Efectivo
-                                        <Checkbox
-                                            id="available"
-                                            classes={{
-                                                checked: classes.checked,
-                                            }}
-                                            checked={
-                                                field.value === '0'
-                                                    ? true
-                                                    : false
-                                            }
-                                            onChange={() => field.onChange('0')}
-                                            inputProps={{
-                                                'aria-label':
-                                                    'primary checkbox',
-                                            }}
-                                        />
-                                    </label>
-                                )}
-                            />
-                            <Controller
-                                name="paymentMethod"
-                                control={control}
-                                render={({ field }) => (
-                                    <label htmlFor="available">
-                                        Transferencia
-                                        <Checkbox
-                                            id="available"
-                                            classes={{
-                                                checked: classes.checked,
-                                            }}
-                                            checked={
-                                                field.value === '1'
-                                                    ? true
-                                                    : false
-                                            }
-                                            onChange={() => field.onChange('1')}
-                                            inputProps={{
-                                                'aria-label':
-                                                    'primary checkbox',
-                                            }}
-                                        />
-                                    </label>
-                                )}
-                            />
-                        </Box>
-                        {errors.paymentMethod && (
-                            <Box>{errors.paymentMethod.message}</Box>
-                        )}
-
-                        <Box className={classes.modalButtonRow}>
-                            <Button
-                                isLoading={loadingChangeStatus === sale._id}
-                                variant="contained"
-                                color="primary"
-                                type="submit"
-                            >
-                                Guardar
-                            </Button>
-                        </Box>
-                    </form>
-                </Box>
-            </Dialog>
         </Box>
     )
 }

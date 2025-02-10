@@ -20,7 +20,6 @@ import { finalPrice, formatNumber } from '../../helpers/product'
 import { Link, useHistory } from 'react-router-dom'
 import Button from 'components/CustomButtons/Button'
 
-
 const styles = {
     cardCategoryWhite: {
         '&,& a,& a:hover,& a:focus': {
@@ -179,10 +178,20 @@ export default function SaleDetail() {
                                             'Precio',
                                             'Descuento',
                                             'Precio final',
-                                            'Acciones'
+                                            'Acciones',
                                         ]}
                                         tableData={saleData.products.map(
                                             (product) => {
+                                                console.log(
+                                                    'format number',
+                                                    formatNumber(
+                                                        finalPrice(
+                                                            product.data.price,
+                                                            product.data
+                                                                .discount
+                                                        )
+                                                    )
+                                                )
                                                 return [
                                                     product.data._id,
                                                     product.data.name,
@@ -195,26 +204,33 @@ export default function SaleDetail() {
                                                               product.data.size
                                                             : ''
                                                     }`,
-                                                    '$' + formatNumber(product.data.price,
-                                                    product.data.discount) + '%',
-                                                    `$${formatNumber(finalPrice(
-                                                        product.data.price,
-                                                        product.data.discount
-                                                    ))}`,
+                                                    '$' +
+                                                        formatNumber(
+                                                            product.data.price,
+                                                            product.data
+                                                                .discount
+                                                        ) +
+                                                        '%',
+                                                    `$${formatNumber(
+                                                        finalPrice(
+                                                            product.data.price,
+                                                            product.data
+                                                                .discount
+                                                        )
+                                                    )}`,
                                                     <Link
-                                                    key={`detail-button-${product.data._id}`}
-                                                    to={`/admin/product-detail/${product.data._id}`}
-                                                >
-                                                    <Button
-                                                        isLoading={false}
-                                                        variant="contained"
-                                                        color="primary"
-                                                        type="button"
+                                                        key={`detail-button-${product.data._id}`}
+                                                        to={`/admin/product-detail/${product.data._id}`}
                                                     >
-                                                        Ver producto
-                                                    </Button>
-                                                    
-                                                </Link>,
+                                                        <Button
+                                                            isLoading={false}
+                                                            variant="contained"
+                                                            color="primary"
+                                                            type="button"
+                                                        >
+                                                            Ver producto
+                                                        </Button>
+                                                    </Link>,
                                                 ]
                                             }
                                         )}
