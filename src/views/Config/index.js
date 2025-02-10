@@ -163,7 +163,7 @@ export default function ConfigPage() {
                     contrastTextColor:
                         configDetail.palette.primary.contrastText,
                     phone: configDetail.phone,
-                    logoUrl: null,
+                    logoUrl: configDetail.metadata.logo,
                     titleFont: configDetail.typography?.title ?? '',
                     bodyFont: configDetail.typography?.body ?? '',
                 })
