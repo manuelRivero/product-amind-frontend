@@ -15,7 +15,6 @@ import { useHistory } from 'react-router-dom'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import { useSelector } from 'react-redux'
 
-
 const schema = yup.object({
     images: yup
         .array()
@@ -62,13 +61,11 @@ const useStyles = makeStyles({
         position: 'relative',
         maxWidth: '1150px',
         width: '100%',
-        maxHeight: '350px',
-        aspectRatio: '3/1'
     },
     productImage: {
         borderRadius: '16px',
         width: '100%',
-        height: '100%',
+        aspectRatio: '3/1',
     },
     trashICon: {
         position: 'absolute',
@@ -86,8 +83,8 @@ const useStyles = makeStyles({
 })
 
 export default function AddBannersPage() {
-        const { user } = useSelector((state) => state.auth)
-    
+    const { user } = useSelector((state) => state.auth)
+
     const history = useHistory()
     const classes = useStyles()
     const {
@@ -152,7 +149,11 @@ export default function AddBannersPage() {
             setShowModal(true)
         } catch (error) {
             console.log('error al guardar el banner', error)
-            setShowFormAlert(error.response.data.message ? error.response.data.message : 'Error al guardar el banner')
+            setShowFormAlert(
+                error.response.data.message
+                    ? error.response.data.message
+                    : 'Error al guardar el banner'
+            )
         } finally {
             setLoading(false)
         }
@@ -162,15 +163,18 @@ export default function AddBannersPage() {
     return (
         <>
             <Box>
-            <IconButton
-                className={classes.backButton}
-                onClick={() => history.push('/admin/banners')}
-            >
-                <ArrowBackIcon />
-            </IconButton>
+                <IconButton
+                    className={classes.backButton}
+                    onClick={() => history.push('/admin/banners')}
+                >
+                    <ArrowBackIcon />
+                </IconButton>
                 <Box>
                     <h3>Cargar un nuevo banner</h3>
-                    <p>Las medidas recomendadas para un banner son de 2000px de ancho por 600px de alto o un spect ratio de 2/1</p>
+                    <p>
+                        Las medidas recomendadas para un banner son de 2000px de
+                        ancho por 600px de alto o un spect ratio de 2/1
+                    </p>
                 </Box>
                 <div className={classes.imagesRow}>
                     {fields.map((file, index) => {
@@ -247,7 +251,7 @@ export default function AddBannersPage() {
             </Box>
             <CustomModal
                 open={showModal}
-                handleClose={() =>  reset({images:[]})}
+                handleClose={() => reset({ images: [] })}
                 icon={'success'}
                 title="¡Listo!"
                 subTitle="Tu banner se guardo exitosamente"
@@ -255,7 +259,7 @@ export default function AddBannersPage() {
                 hasConfirm={true}
                 cancelCb={() => {}}
                 confirmCb={() => {
-                    reset({images:[]})
+                    reset({ images: [] })
                     history.push('/admin/banners')
                 }}
             />
