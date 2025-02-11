@@ -21,6 +21,12 @@ const useStyles = makeStyles({
         position: 'relative',
         maxWidth: '1150px',
         padding: '2rem',
+        aspectRatio: '3/1',
+    },
+    banner: {
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
     },
     trashIcon: {
         position: 'absolute',
@@ -132,6 +138,7 @@ export default function AdminBanners() {
                                 src={banner.url}
                                 alt="banner"
                                 style={{ width: '100%' }}
+                                className={classes.banner}
                             />
                             <Box
                                 display="flex"

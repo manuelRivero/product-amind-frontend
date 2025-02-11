@@ -61,7 +61,9 @@ const useStyles = makeStyles({
     imagesWrapper: {
         position: 'relative',
         maxWidth: '1150px',
-        height: '350px',
+        width: '100%',
+        maxHeight: '350px',
+        aspectRatio: '3/1'
     },
     productImage: {
         borderRadius: '16px',
@@ -168,6 +170,7 @@ export default function AddBannersPage() {
             </IconButton>
                 <Box>
                     <h3>Cargar un nuevo banner</h3>
+                    <p>Las medidas recomendadas para un banner son de 2000px de ancho por 600px de alto o un spect ratio de 2/1</p>
                 </Box>
                 <div className={classes.imagesRow}>
                     {fields.map((file, index) => {
@@ -188,6 +191,7 @@ export default function AddBannersPage() {
                                     src={file.preview}
                                     alt="product-image"
                                 />
+                                <p>Esta es una previsualización de tu banner</p>
                             </div>
                         )
                     })}
