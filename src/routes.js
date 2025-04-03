@@ -21,6 +21,8 @@ import Dashboard from '@material-ui/icons/Dashboard'
 import StorefrontIcon from '@material-ui/icons/Storefront'
 import CategoryIcon from '@material-ui/icons/Category'
 import ListAltIcon from '@material-ui/icons/ListAlt'
+import ImageIcon from '@material-ui/icons/Image';
+import SettingsIcon from '@material-ui/icons/Settings';
 // core components/views for Admin layout
 import DashboardPage from 'views/Dashboard/Dashboard.js'
 
@@ -51,7 +53,7 @@ const dashboardRoutes = [
     {
         path: '/banners',
         name: 'Banners',
-        icon: Dashboard,
+        icon: ImageIcon,
         component: Banners,
         layout: '/admin',
         childrens: [
@@ -129,7 +131,7 @@ const dashboardRoutes = [
     {
         path: '/config',
         name: 'Configuración',
-        icon: StorefrontIcon,
+        icon: SettingsIcon,
         component: ConfigPage,
         layout: '/admin',
     },

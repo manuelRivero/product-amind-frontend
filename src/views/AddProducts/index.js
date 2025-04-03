@@ -59,6 +59,7 @@ const schema = yup.object({
     images: yup
         .array()
         .min(1, 'Campo obligatorio')
+        .max(5, 'Máximo 5 imágenes')
         .required('Campo obligatorio'),
     name: yup.string().required('Campo obligatorio'),
     category: yup.string().required('Campo obligatorio'),
@@ -151,6 +152,7 @@ const useStyles = makeStyles({
         },
     },
     input: {
+        width: '100%',
         '& .MuiInputBase-input': {
             background: '#fff !important',
         },
@@ -233,7 +235,10 @@ export default function AddProducts() {
         // Agregar datos básicos del producto
         data.append('name', values.name || '')
         data.append('category', selectedCategory || '')
-        data.append('price', values.price.replace('$', '').replace(",", '') || 0)
+        data.append(
+            'price',
+            values.price.replace('$', '').replace(',', '') || 0
+        )
         data.append('description', values.description || '')
         data.append('discount', values.discount || '')
 
@@ -403,222 +408,220 @@ export default function AddProducts() {
                 </Box>
                 <Box>
                     <h3>Información de tu producto</h3>
-                </Box>
-                <Box className={classes.inputRow}>
-                    <Controller
-                        name="name"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <TextInput
-                                error={fieldState.error ? true : false}
-                                errorMessage={fieldState.error}
-                                icon={null}
-                                label={'Nombre del producto'}
-                                value={field.value}
-                                onChange={field.onChange}
-                            />
-                        )}
-                    />
-
-                    <Controller
-                        name="price"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <Box>
-                                <NumericFormat
-                                    className={classes.input}
-                                    value={field.value}
-                                    onChange={field.onChange}
-                                    customInput={TextField}
-                                    label="Precio en Pesos"
-                                    variant="outlined"
-                                    thousandSeparator=","
-                                    decimalSeparator="."
-                                    decimalScale={2} // Máximo 2 decimales
-                                    prefix="$"
-                                    error={fieldState.error ? true : false}
-                                />
-                                {fieldState.error && (
-                                    <Typography
-                                        color="error"
-                                        variant="caption"
-                                        sx={{
-                                            display: 'block',
-                                            marginTop: 1,
-                                            fontSize: '14px',
-                                        }}
-                                    >
-                                        {fieldState.error.message}
-                                    </Typography>
-                                )}
-                            </Box>
-                            // <CurrencyTextField
-                            //     autoFocus={false}
-                            //     variant="outlined"
-                            //     className={classes.input}
-                            //     inputProps={{ background: '#fff' }}
-                            //     minimumValue="0"
-                            //     error={fieldState.error ? true : false}
-                            //     errorMessage={fieldState.error}
-                            //     icon={null}
-                            //     label={'Precio en Pesos'}
-                            //     value={field.value}
-                            //     onChange={field.onChange}
-                            //     onFocus={(e) =>
-                            //         e.target.setSelectionRange(
-                            //             e.target.value.length,
-                            //             e.target.value.length
-                            //         )
-                            //     } // Llevar el cursor al final
-                            //     onBlur={(e) =>
-                            //         e.target.setSelectionRange(
-                            //             e.target.value.length,
-                            //             e.target.value.length
-                            //         )
-                            //     }
-                            // />
-                        )}
-                    />
-
-                    <Controller
-                        name="category"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <Box>
-                                <TextField
-                                    select
+                </Box>  
+                   <Box className={classes.inputRow}>
+                   
+                    <Box flex="0 1 812px">
+                        <Controller
+                            name="name"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <TextInput
                                     error={fieldState.error ? true : false}
                                     errorMessage={fieldState.error}
-                                    SelectProps={{
-                                        MenuProps: {
-                                            anchorOrigin: {
-                                                vertical: 'bottom',
-                                                horizontal: 'left',
-                                            },
-                                            transformOrigin: {
-                                                vertical: 'top',
-                                                horizontal: 'left',
-                                            },
-                                            getContentAnchorEl: null, // Esto asegura que el dropdown no se ancle al centro del campo
-                                        },
-                                    }}
-                                    variant="outlined"
+                                    icon={null}
+                                    label={'Nombre del producto'}
                                     value={field.value}
-                                    label="Categoría"
-                                    style={{
-                                        backgroundColor: '#FFF',
-                                        minWidth: '200px',
-                                    }}
                                     onChange={field.onChange}
-                                >
-                                    {categoriesData &&
-                                        categoriesData.data.map((category) => (
-                                            <MenuItem
-                                                key={category._id}
-                                                value={category._id}
-                                                onClick={() =>
-                                                    setSelectedCategory(
-                                                        category._id
-                                                    )
-                                                }
-                                            >
-                                                {category.name}
-                                            </MenuItem>
-                                        ))}
-                                </TextField>
-                                {fieldState.error && (
-                                    <Typography
-                                        variant="caption"
-                                        color="error"
-                                        sx={{
-                                            display: 'block',
-                                            marginTop: 1,
+                                />
+                            )}
+                        />
+                    </Box>
+                </Box>
+                <Box className={classes.inputRow}>
+                    <Box flex="0 1 250px">
+                        <Controller
+                            name="price"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <Box>
+                                    <NumericFormat
+                                        className={classes.input}
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        customInput={TextField}
+                                        label="Precio en Pesos"
+                                        variant="outlined"
+                                        thousandSeparator=","
+                                        decimalSeparator="."
+                                        decimalScale={2} // Máximo 2 decimales
+                                        prefix="$"
+                                        error={fieldState.error ? true : false}
+                                    />
+                                    {fieldState.error && (
+                                        <Typography
+                                            color="error"
+                                            variant="caption"
+                                            sx={{
+                                                display: 'block',
+                                                marginTop: 1,
+                                                fontSize: '14px',
+                                            }}
+                                        >
+                                            {fieldState.error.message}
+                                        </Typography>
+                                    )}
+                                </Box>
+                            )}
+                        />
+                    </Box>
+                    <Box flex="0 1 250px">
+                        <Controller
+                            name="discount"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <TextInput
+                                    error={fieldState.error ? true : false}
+                                    errorMessage={fieldState.error}
+                                    icon={null}
+                                    label={'Descuento en %'}
+                                    value={field.value}
+                                    onChange={(e) =>
+                                        field.onChange(
+                                            e.target.value.replace(/[^\d]/g, '')
+                                        )
+                                    }
+                                />
+                            )}
+                        />
+                    </Box>
+                    <Box flex="0 1 250px">
+                        <Controller
+                            name="category"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <>
+                                    <TextField
+                                        fullWidth
+                                        select
+                                        error={fieldState.error ? true : false}
+                                        errorMessage={fieldState.error}
+                                        SelectProps={{
+                                            MenuProps: {
+                                                anchorOrigin: {
+                                                    vertical: 'bottom',
+                                                    horizontal: 'left',
+                                                },
+                                                transformOrigin: {
+                                                    vertical: 'top',
+                                                    horizontal: 'left',
+                                                },
+                                                getContentAnchorEl: null, // Esto asegura que el dropdown no se ancle al centro del campo
+                                            },
                                         }}
+                                        variant="outlined"
+                                        value={field.value}
+                                        label="Categoría"
+                                        style={{
+                                            backgroundColor: '#FFF',
+                                        }}
+                                        onChange={field.onChange}
                                     >
-                                        {fieldState.error.message}
-                                    </Typography>
-                                )}
-                            </Box>
-                        )}
-                    />
-                    <Controller
-                        name="discount"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <TextInput
-                                error={fieldState.error ? true : false}
-                                errorMessage={fieldState.error}
-                                icon={null}
-                                label={'Descuento en %'}
-                                value={field.value}
-                                onChange={(e) =>
-                                    field.onChange(
-                                        e.target.value.replace(/[^\d]/g, '')
-                                    )
-                                }
-                            />
-                        )}
-                    />
-                    <Box>
-                        <p style={{ margin: 0 }}>Estatus</p>
-                        <Box>
-                            <Controller
-                                name="status"
-                                control={control}
-                                render={({ field }) => (
-                                    <label htmlFor="available">
-                                        Disponible
-                                        <Checkbox
-                                            id="available"
-                                            classes={{
-                                                checked: classes.checked,
+                                        {categoriesData &&
+                                            categoriesData.data.map(
+                                                (category) => (
+                                                    <MenuItem
+                                                        key={category._id}
+                                                        value={category._id}
+                                                        onClick={() =>
+                                                            setSelectedCategory(
+                                                                category._id
+                                                            )
+                                                        }
+                                                    >
+                                                        {category.name}
+                                                    </MenuItem>
+                                                )
+                                            )}
+                                    </TextField>
+                                    {fieldState.error && (
+                                        <Typography
+                                            variant="caption"
+                                            color="error"
+                                            sx={{
+                                                display: 'block',
+                                                marginTop: 1,
                                             }}
-                                            checked={
-                                                field.value === 0 ? true : false
-                                            }
-                                            onChange={() => field.onChange(0)}
-                                            inputProps={{
-                                                'aria-label':
-                                                    'primary checkbox',
-                                            }}
-                                        />
-                                    </label>
-                                )}
-                            />
+                                        >
+                                            {fieldState.error.message}
+                                        </Typography>
+                                    )}
+                                </>
+                            )}
+                        />
+                    </Box>
 
-                            <Controller
-                                name="status"
-                                control={control}
-                                render={({ field }) => (
-                                    <label htmlFor="disabled">
-                                        No disponible
-                                        <Checkbox
-                                            id="disabled"
-                                            checked={
-                                                field.value === 1 ? true : false
-                                            }
-                                            onChange={() => field.onChange(1)}
-                                            inputProps={{
-                                                'aria-label':
-                                                    'primary checkbox',
-                                            }}
-                                        />
-                                    </label>
-                                )}
-                            />
+                    <Box flex="0 1 250px">
+                        <Box>
+                            <p style={{ margin: 0 }}>Estatus</p>
                             <Box>
-                                {console.log('errors', errors)}
-                                {errors.status && (
-                                    <TextDanger>
-                                        <p className={classes.errorText}>
-                                            {errors.status.message}
-                                        </p>
-                                    </TextDanger>
-                                )}
+                                <Controller
+                                    name="status"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <label htmlFor="available">
+                                            Disponible
+                                            <Checkbox
+                                                id="available"
+                                                classes={{
+                                                    checked: classes.checked,
+                                                }}
+                                                checked={
+                                                    field.value === 0
+                                                        ? true
+                                                        : false
+                                                }
+                                                onChange={() =>
+                                                    field.onChange(0)
+                                                }
+                                                inputProps={{
+                                                    'aria-label':
+                                                        'primary checkbox',
+                                                }}
+                                            />
+                                        </label>
+                                    )}
+                                />
+
+                                <Controller
+                                    name="status"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <label htmlFor="disabled">
+                                            No disponible
+                                            <Checkbox
+                                                id="disabled"
+                                                checked={
+                                                    field.value === 1
+                                                        ? true
+                                                        : false
+                                                }
+                                                onChange={() =>
+                                                    field.onChange(1)
+                                                }
+                                                inputProps={{
+                                                    'aria-label':
+                                                        'primary checkbox',
+                                                }}
+                                            />
+                                        </label>
+                                    )}
+                                />
+                                <Box>
+                                    {console.log('errors', errors)}
+                                    {errors.status && (
+                                        <TextDanger>
+                                            <p className={classes.errorText}>
+                                                {errors.status.message}
+                                            </p>
+                                        </TextDanger>
+                                    )}
+                                </Box>
                             </Box>
                         </Box>
                     </Box>
                 </Box>
+           
 
                 <>
                     {featuresArray.fields.map((field, index) => {

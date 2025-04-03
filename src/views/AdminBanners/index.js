@@ -112,7 +112,9 @@ export default function AdminBanners() {
                 <ArrowBackIcon />
             </IconButton>
             {loading ? (
-                <CircularProgress />
+                <Box display="flex" justifyContent="center" padding={4}>
+                    <CircularProgress />
+                </Box>
             ) : (
                 <Box>
                     {banners.map((banner, index) => (
@@ -122,9 +124,13 @@ export default function AdminBanners() {
                             className={classes.imagesWrapper}
                         >
                             {loadingDeleteBanner === banner._id ? (
-                                <CircularProgress
-                                    className={classes.trashIcon}
-                                />
+                                <Box
+                                    display="flex"
+                                    justifyContent="center"
+                                    padding={4}
+                                >
+                                    <CircularProgress />
+                                </Box>
                             ) : (
                                 <IconButton
                                     className={classes.trashIcon}

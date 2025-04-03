@@ -9,6 +9,7 @@ const useStyles = makeStyles({
         marginBottom: '0px'
     },
     input:{
+        width: '100%',
         "& .MuiInputBase-input": {
       background: "#fff !important"
     }

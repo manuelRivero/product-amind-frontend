@@ -13,6 +13,7 @@ import { useForm } from 'react-hook-form'
 import Button from 'components/CustomButtons/Button'
 import {
     Box,
+    CircularProgress,
     ClickAwayListener,
     Fade,
     MenuItem,
@@ -159,7 +160,9 @@ export default function PendingOrders() {
                         </CardHeader>
                         <CardBody>
                             {loadingPendingOrders ? (
-                                <p>Cargando datos...</p>
+                                <Box display="flex" justifyContent="center" padding={4}>
+                                    <CircularProgress />
+                                </Box>
                             ) : (
                                 <>
                                     <Table
