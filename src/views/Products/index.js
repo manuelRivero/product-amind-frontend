@@ -1,5 +1,5 @@
 import React from 'react'
-import { Box, makeStyles } from '@material-ui/core'
+import { Box, CircularProgress, makeStyles } from '@material-ui/core'
 import Card from 'components/Card/Card'
 import CardBody from 'components/Card/CardBody'
 import CardHeader from 'components/Card/CardHeader'
@@ -335,7 +335,9 @@ export default function Products() {
                             </Button>
                         </form>
                         {loadingProductsData || loadingCategoriesData ? (
-                            <p>Cargando datos ...</p>
+                            <Box display="flex" justifyContent="center">
+                                <CircularProgress />
+                            </Box>
                         ) : (
                             <>
                                 <Table
@@ -356,14 +358,18 @@ export default function Products() {
                                                 e._id,
                                                 e.name,
                                                 productCategory(e.category),
-                                                `$${formatNumber(e.price.toFixed(1))}`,
+                                                `$${formatNumber(
+                                                    e.price.toFixed(1)
+                                                )}`,
                                                 e.discount
                                                     ? `${e.discount}%`
                                                     : 0,
-                                                `$${formatNumber(finalPrice(
-                                                    e.price,
-                                                    e.discount
-                                                ))}`,
+                                                `$${formatNumber(
+                                                    finalPrice(
+                                                        e.price,
+                                                        e.discount
+                                                    )
+                                                )}`,
                                                 e.status
                                                     ? e.status.available
                                                         ? 'Disponible'

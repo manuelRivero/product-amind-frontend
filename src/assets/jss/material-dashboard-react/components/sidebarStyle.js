@@ -17,19 +17,21 @@ import {
 
 const sidebarStyle = (theme) => ({
     childrensContainer: {
-        background: '#FFF',
-        padding: '20px',
+        background: '#eeeeee',
+        padding: '10px 15px',
         borderRadius: '4px',
         margin: '10px 15px 0',
         '& a': {
-            marginTop: '0',
+            marginY: '.5rem',
             fontSize: '14px',
-            padding: '0 10px'
+            padding: '8px'
+
         },
     },
     childrenActive: {
         backgroundColor: primaryColor[0],
         borderRadius: '4px',
+        padding: '8px'
     },
     drawerPaper: {
         border: 'none',
@@ -40,6 +42,7 @@ const sidebarStyle = (theme) => ({
         zIndex: '1',
         ...boxShadow,
         width: drawerWidth,
+        backgroundColor: '#000',
         [theme.breakpoints.up('md')]: {
             width: drawerWidth,
             position: 'fixed',
@@ -123,25 +126,7 @@ const sidebarStyle = (theme) => ({
         border: '0',
     },
     background: {
-        position: 'absolute',
-        zIndex: '1',
-        height: '100%',
-        width: '100%',
-        display: 'block',
-        top: '0',
-        left: '0',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center center',
-        '&:after': {
-            position: 'absolute',
-            zIndex: '3',
-            width: '100%',
-            height: '100%',
-            content: '""',
-            display: 'block',
-            background: blackColor,
-            opacity: '.8',
-        },
+        background: blackColor,
     },
     list: {
         marginTop: '20px',

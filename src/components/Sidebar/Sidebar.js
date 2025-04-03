@@ -35,7 +35,7 @@ export default function Sidebar(props) {
         return visibleRoutes
     }
 
-    const { color, logo, image, logoText, routes } = props
+    const { color, routes } = props
     var links = (
         <List className={classes.list}>
             {routes.map((prop, key) => {
@@ -153,22 +153,7 @@ export default function Sidebar(props) {
             })}
         </List>
     )
-    var brand = (
-        <div className={classes.logo}>
-            <a
-                href="https://www.creative-tim.com?ref=mdr-sidebar"
-                className={classNames(classes.logoLink, {
-                    [classes.logoLinkRTL]: props.rtlActive,
-                })}
-                target="_blank"
-            >
-                <div className={classes.logoImage}>
-                    <img src={logo} alt="logo" className={classes.img} />
-                </div>
-                {logoText}
-            </a>
-        </div>
-    )
+
     return (
         <div>
             <Hidden mdUp implementation="css">
@@ -186,14 +171,7 @@ export default function Sidebar(props) {
                         keepMounted: true, // Better open performance on mobile.
                     }}
                 >
-                    {brand}
                     <div className={classes.sidebarWrapper}>{links}</div>
-                    {image !== undefined ? (
-                        <div
-                            className={classes.background}
-                            style={{ backgroundImage: 'url(' + image + ')' }}
-                        />
-                    ) : null}
                 </Drawer>
             </Hidden>
             <Hidden smDown implementation="css">
@@ -207,14 +185,7 @@ export default function Sidebar(props) {
                         }),
                     }}
                 >
-                    {brand}
                     <div className={classes.sidebarWrapper}>{links}</div>
-                    {image !== undefined ? (
-                        <div
-                            className={classes.background}
-                            style={{ backgroundImage: 'url(' + image + ')' }}
-                        />
-                    ) : null}
                 </Drawer>
             </Hidden>
         </div>
@@ -226,8 +197,6 @@ Sidebar.propTypes = {
     handleDrawerToggle: PropTypes.func,
     bgColor: PropTypes.oneOf(['purple', 'blue', 'green', 'orange', 'red']),
     logo: PropTypes.string,
-    image: PropTypes.string,
-    logoText: PropTypes.string,
     routes: PropTypes.arrayOf(PropTypes.object),
     open: PropTypes.bool,
 }

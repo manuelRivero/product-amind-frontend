@@ -1,5 +1,5 @@
 import React from 'react'
-import { Box, makeStyles } from '@material-ui/core'
+import { Box, CircularProgress, makeStyles } from '@material-ui/core'
 import Card from 'components/Card/Card'
 import CardBody from 'components/Card/CardBody'
 import CardHeader from 'components/Card/CardHeader'
@@ -256,7 +256,9 @@ export default function Categories() {
                             </Button>
                         </form>
                         {loadingCategoriesData ? (
-                            <p>Cargando datos ...</p>
+                            <Box display="flex" justifyContent="center">
+                                <CircularProgress />
+                            </Box>
                         ) : (
                             <>
                                 <Table

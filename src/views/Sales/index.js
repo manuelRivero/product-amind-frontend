@@ -23,6 +23,7 @@ import * as yup from 'yup'
 
 import {
     Box,
+    CircularProgress,
     ClickAwayListener,
     Fade,
     MenuItem,
@@ -224,7 +225,9 @@ export default function Sales() {
                             </Button>
                         </Box>
                         {loadingSalesData ? (
-                            <p>Cargando datos...</p>
+                            <Box display="flex" justifyContent="center">
+                                <CircularProgress />
+                            </Box>
                         ) : (
                             <>
                                 <Table

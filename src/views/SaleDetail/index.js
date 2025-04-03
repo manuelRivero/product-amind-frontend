@@ -12,7 +12,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { getSale } from 'store/sales'
 
 import { useParams } from 'react-router-dom'
-import { Box, Grid, IconButton } from '@material-ui/core'
+import { Box, CircularProgress, Grid, IconButton } from '@material-ui/core'
 import moment from 'moment'
 
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
@@ -93,7 +93,9 @@ export default function SaleDetail() {
                         </CardHeader>
                         <CardBody>
                             {loadingSaleData ? (
-                                <p>Cargando datos...</p>
+                                <Box display="flex" justifyContent="center">
+                                    <CircularProgress />
+                                </Box>
                             ) : (
                                 <Box>
                                     <Grid container spacing={4}>

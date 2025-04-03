@@ -25,15 +25,15 @@ import { useDispatch, useSelector } from 'react-redux'
 import { getTopProducts } from 'store/dashboard'
 import PendingOrders from '../../components/dashboard/pendingOrders'
 import { formatNumber } from '../../helpers/product'
+import { Box, CircularProgress } from '@material-ui/core'
 
 const useStyles = makeStyles(styles)
 
 export default function Dashboard() {
     const { user } = useSelector((state) => state.auth)
-    const {
-        topProductsData,
-        loadingTopsProducts,
-    } = useSelector((state) => state.dashboard)
+    const { topProductsData, loadingTopsProducts } = useSelector(
+        (state) => state.dashboard
+    )
     const dispatch = useDispatch()
     const classes = useStyles()
     useEffect(() => {
@@ -42,8 +42,8 @@ export default function Dashboard() {
         }
         getData()
     }, [])
-    console.log("top products data", topProductsData);
-    console.log("top products isLoading", loadingTopsProducts);
+    console.log('top products data', topProductsData)
+    console.log('top products isLoading', loadingTopsProducts)
     return (
         <div>
             <PendingOrders />
@@ -100,7 +100,9 @@ export default function Dashboard() {
                         </CardHeader>
                         <CardBody>
                             {loadingTopsProducts && !topProductsData ? (
-                                <p>Cargando datos</p>
+                                <Box display="flex" justifyContent="center">
+                                    <CircularProgress />
+                                </Box>
                             ) : (
                                 <Table
                                     tableHeaderColor="warning"
@@ -110,12 +112,20 @@ export default function Dashboard() {
                                         'Precio',
                                         'Cantidad',
                                     ]}
-                                    tableData={
-                                        topProductsData.data.map(product =>{
+                                    tableData={topProductsData.data.map(
+                                        (product) => {
                                             const productData = product
-                                                return [productData.data._id, productData.data.name, "$" + formatNumber(productData.data.price), product.count]
-                                        })
-                                    }
+                                            return [
+                                                productData.data._id,
+                                                productData.data.name,
+                                                '$' +
+                                                    formatNumber(
+                                                        productData.data.price
+                                                    ),
+                                                product.count,
+                                            ]
+                                        }
+                                    )}
                                 />
                             )}
                         </CardBody>

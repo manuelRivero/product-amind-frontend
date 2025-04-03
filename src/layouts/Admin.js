@@ -14,9 +14,6 @@ import { dashboardRoutes } from 'routes.js'
 
 import styles from 'assets/jss/material-dashboard-react/layouts/adminStyle.js'
 
-import bgImage from 'assets/img/sidebar-2.jpg'
-import logo from 'assets/img/reactlogo.png'
-
 let ps
 
 const mainRoutes = dashboardRoutes.map((prop, key) => {
@@ -58,7 +55,6 @@ export default function Admin({ ...rest }) {
     const mainPanel = React.createRef()
     // states and functions
     const [tenant, setTenant] = React.useState(null)
-    const [image] = React.useState(bgImage)
     const [color] = React.useState('blue')
     const [mobileOpen, setMobileOpen] = React.useState(false)
 
@@ -118,9 +114,6 @@ export default function Admin({ ...rest }) {
         <div className={classes.wrapper}>
             <Sidebar
                 routes={dashboardRoutes}
-                logoText={'Creative Tim'}
-                logo={logo}
-                image={image}
                 handleDrawerToggle={handleDrawerToggle}
                 open={mobileOpen}
                 color={color}

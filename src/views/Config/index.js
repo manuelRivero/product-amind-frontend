@@ -1,4 +1,4 @@
-import { Box, makeStyles } from '@material-ui/core'
+import { Box, makeStyles, Tooltip } from '@material-ui/core'
 import React, { useCallback, useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import TextInput from '../../components/TextInput/Index'
@@ -14,6 +14,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { getConfigRequest } from '../../store/config'
 import { editConfig } from '../../api/config'
 import FontPicker from 'font-picker-react'
+import QuestionMarkIcon from '@material-ui/icons/Help'
 
 const schema = yup.object({
     titleFont: yup.string().required('Campo obligatorio'),
@@ -181,7 +182,7 @@ export default function ConfigPage() {
                 <h3>Personaliza tu tienda</h3>
                 <Box>
                     <form onSubmit={handleSubmit(onSubmit)}>
-                        <p>Logo</p>
+                        <p>Logo de tu tienda</p>
                         <Box
                             display="flex"
                             justifyContent="flex-start"
@@ -206,7 +207,7 @@ export default function ConfigPage() {
                                         />
                                     </Box>
                                 </Box>
-                            )}{' '}
+                            )}
                             <div
                                 {...getRootProps()}
                                 className={classes.dropZone}
@@ -230,7 +231,10 @@ export default function ConfigPage() {
                         </Box>
                         {errors.logo && (
                             <TextDanger>
-                                <p className={classes.errorText} style={{marginBottom: '1rem'}}>
+                                <p
+                                    className={classes.errorText}
+                                    style={{ marginBottom: '1rem' }}
+                                >
                                     {errors.logo.message}
                                 </p>
                             </TextDanger>
@@ -238,6 +242,7 @@ export default function ConfigPage() {
                         <Box
                             display="flex"
                             style={{ gap: '2rem', flexWrap: 'wrap' }}
+                            marginTop={4}
                         >
                             <Box marginBottom={2} flex={1} flexBasis={150}>
                                 <Controller
@@ -251,7 +256,7 @@ export default function ConfigPage() {
                                             }
                                             errorMessage={fieldState.error}
                                             icon={null}
-                                            label={'Nombre'}
+                                            label={'Nombre de la tienda'}
                                             value={field.value}
                                             onChange={field.onChange}
                                         />
@@ -270,7 +275,7 @@ export default function ConfigPage() {
                                             }
                                             errorMessage={fieldState.error}
                                             icon={null}
-                                            label={'Nombre'}
+                                            label={'Télefono de contacto'}
                                             value={field.value}
                                             onChange={(e) =>
                                                 field.onChange(
@@ -288,21 +293,33 @@ export default function ConfigPage() {
                         <Box
                             display="flex"
                             style={{ gap: '2rem', flexWrap: 'wrap' }}
+                            marginTop={2}
+
                         >
-                            <Box marginBottom={2} flexBasis={150}>
+                            <Box marginBottom={2} flexBasis={200}>
                                 <Controller
                                     name="primaryColor"
                                     control={control}
                                     render={({ field, fieldState }) => (
                                         <>
-                                            <p
-                                                style={{
-                                                    marginTop: 0,
-                                                    marginBottom: 0,
-                                                }}
-                                            >
-                                                Color principal
-                                            </p>
+                                             <Box display="flex">
+                                                <p
+                                                    style={{
+                                                        marginTop: 0,
+                                                        marginBottom: 0,
+                                                    }}
+                                                >
+                                                    Color principal
+                                                </p>
+                                                <Tooltip
+                                                    title="Este es el color principal de tu tienda, por ejemplo la cabecera y botónes tenndrán este color"
+                                                    placement="top"
+                                                >
+                                                    <Box ml={1}>
+                                                        <QuestionMarkIcon />
+                                                    </Box>
+                                                </Tooltip>
+                                            </Box>
                                             <input
                                                 type="color"
                                                 value={field.value}
@@ -326,20 +343,30 @@ export default function ConfigPage() {
                                     )}
                                 />
                             </Box>
-                            <Box marginBottom={2} flexBasis={150}>
+                            <Box marginBottom={2} flexBasis={200}>
                                 <Controller
                                     name="contrastTextColor"
                                     control={control}
                                     render={({ field, fieldState }) => (
                                         <>
-                                            <p
-                                                style={{
-                                                    marginTop: 0,
-                                                    marginBottom: 0,
-                                                }}
-                                            >
-                                                Color de contraste
-                                            </p>
+                                            <Box display="flex">
+                                                <p
+                                                    style={{
+                                                        marginTop: 0,
+                                                        marginBottom: 0,
+                                                    }}
+                                                >
+                                                    Color de contraste
+                                                </p>
+                                                <Tooltip
+                                                    title="Este es el color que tomaran todos los elementos que estén encima del color principal por ejemplo el texto de un botón"
+                                                    placement="top"
+                                                >
+                                                    <Box ml={1}>
+                                                        <QuestionMarkIcon />
+                                                    </Box>
+                                                </Tooltip>
+                                            </Box>
                                             <input
                                                 type="color"
                                                 value={field.value}
@@ -374,14 +401,24 @@ export default function ConfigPage() {
                                     control={control}
                                     render={({ field, fieldState }) => (
                                         <>
-                                            <p
-                                                style={{
-                                                    marginTop: 0,
-                                                    marginBottom: 0,
-                                                }}
-                                            >
-                                                Fuente para los títulos
-                                            </p>
+                                            <Box display="flex">
+                                                <p
+                                                    style={{
+                                                        marginTop: 0,
+                                                        marginBottom: 0,
+                                                    }}
+                                                >
+                                                    Fuente para los títulos
+                                                </p>
+                                                <Tooltip
+                                                    title="Esta es la fuente principal de tu tienda, se utiliza para titulos, subtitulos y textos principales."
+                                                    placement="top"
+                                                >
+                                                    <Box ml={1}>
+                                                        <QuestionMarkIcon />
+                                                    </Box>
+                                                </Tooltip>
+                                            </Box>
                                             <FontPicker
                                                 families={[
                                                     'Merriweather',
@@ -426,14 +463,25 @@ export default function ConfigPage() {
                                     control={control}
                                     render={({ field, fieldState }) => (
                                         <>
-                                            <p
-                                                style={{
-                                                    marginTop: 0,
-                                                    marginBottom: 0,
-                                                }}
-                                            >
-                                                Fuente para el cuerpo
-                                            </p>
+                                            {' '}
+                                            <Box display="flex">
+                                                <p
+                                                    style={{
+                                                        marginTop: 0,
+                                                        marginBottom: 0,
+                                                    }}
+                                                >
+                                                    Fuente para el cuerpo
+                                                </p>
+                                                <Tooltip
+                                                    title="Esta fuente se utiliza para el cuerpo en general y textos secundarios"
+                                                    placement="top"
+                                                >
+                                                    <Box ml={1}>
+                                                        <QuestionMarkIcon />
+                                                    </Box>
+                                                </Tooltip>
+                                            </Box>
                                             <FontPicker
                                                 pickerId="body"
                                                 families={[
@@ -455,7 +503,6 @@ export default function ConfigPage() {
                                             <p className="apply-font-body">
                                                 Cuerpo de Ejemplo.
                                             </p>
-
                                             {fieldState.error && (
                                                 <TextDanger>
                                                     <p
