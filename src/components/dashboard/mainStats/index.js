@@ -12,7 +12,7 @@ import CardHeader from 'components/Card/CardHeader'
 import CardIcon from 'components/Card/CardIcon'
 import GridContainer from 'components/Grid/GridContainer'
 import GridItem from 'components/Grid/GridItem'
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 //
 import { makeStyles } from '@material-ui/core/styles'
 
@@ -20,6 +20,7 @@ import styles from 'assets/jss/material-dashboard-react/views/dashboardStyle.js'
 import { useDispatch, useSelector } from 'react-redux'
 import { getStats } from 'store/dashboard'
 import TotalSalesSelect from '../totalSalesSelect'
+import moment from 'moment'
 // import io from 'socket.io-client'
 // import { userAdded } from 'store/dashboard'
 
@@ -28,17 +29,21 @@ import TotalSalesSelect from '../totalSalesSelect'
 const useStyles = makeStyles(styles)
 
 export default function MainStats() {
-    //redux
+
+    const classes = useStyles()
     const dispatch = useDispatch()
     const { user } = useSelector((state) => state.auth)
     const { salesStats } = useSelector((state) => state.dashboard)
-    //clasess
-    const classes = useStyles()
-    //states
-
+    
+const [date, setDate] = useState(moment(new Date()).format('DD-MM-YYYY'))
     useEffect(() => {
         dispatch(getStats({ access: user.token }))
     }, [])
+
+    const handleDaylySaleDate = (date) => {
+        console.log("date",date)
+        setDate(date.format('DD-MM-YYYY'))
+    }
 
     // useEffect(() => {
         
@@ -59,12 +64,12 @@ export default function MainStats() {
                         <CardIcon color="warning">
                             <Icon>content_copy</Icon>
                         </CardIcon>
-                        <p className={classes.cardCategory}>Ventas</p>
+                        <p className={classes.cardCategory}>Ventas para el {date}</p>
                         
                         <h3 className={classes.cardTitle}>${Number(salesStats).toFixed(1)}</h3>
                     </CardHeader>
                     <CardFooter stats>
-                        <TotalSalesSelect />
+                        <TotalSalesSelect onDateChange={handleDaylySaleDate} />
                     </CardFooter>
                 </Card>
             </GridItem>

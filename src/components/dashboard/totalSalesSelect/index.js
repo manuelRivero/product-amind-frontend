@@ -5,9 +5,10 @@ import { useDispatch, useSelector } from 'react-redux'
 import { getSalesByDate } from 'store/dashboard'
 import {
     MuiPickersUtilsProvider,
-    KeyboardDatePicker,
+    DatePicker 
 } from '@material-ui/pickers'
 import MomentUtils from '@date-io/moment'
+import PropTypes from 'prop-types'
 
 const useStyles = makeStyles({
     root: {
@@ -19,17 +20,16 @@ const useStyles = makeStyles({
     },
 })
 
-export default function TotalSalesSelect() {
+export default function TotalSalesSelect({onDateChange}) {
     const classes = useStyles()
-    //redux
+
     const dispatch = useDispatch()
     const { user } = useSelector((state) => state.auth)
-    //states
 
     const [selectedValue, setSelectedValue] = useState(new Date())
 
     const onChange = (value) => {
-        console.log('date value', value.toDate())
+        onDateChange(value)
         setSelectedValue(value)
         dispatch(getSalesByDate({ access: user.token, from: value.toDate() }))
 
@@ -38,7 +38,7 @@ export default function TotalSalesSelect() {
     return (
         <MuiPickersUtilsProvider utils={MomentUtils}>
             <Box className={classes.root}>
-                <KeyboardDatePicker
+                <DatePicker 
                     maxDate={new Date()}
                     onChange={onChange}
                     value={selectedValue}
@@ -46,4 +46,8 @@ export default function TotalSalesSelect() {
             </Box>
         </MuiPickersUtilsProvider>
     )
+}
+
+TotalSalesSelect.propTypes = {
+    onDateChange: PropTypes.function
 }
