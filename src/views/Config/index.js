@@ -239,290 +239,66 @@ export default function ConfigPage() {
                                 </p>
                             </TextDanger>
                         )}
-                        <Box
-                            display="flex"
-                            style={{ gap: '2rem', flexWrap: 'wrap' }}
-                            marginTop={4}
-                        >
-                            <Box marginBottom={2} flex={1} flexBasis={150}>
-                                <Controller
-                                    name="title"
-                                    control={control}
-                                    render={({ field, fieldState }) => (
-                                        <TextInput
-                                            className={classes.input}
-                                            error={
-                                                fieldState.error ? true : false
-                                            }
-                                            errorMessage={fieldState.error}
-                                            icon={null}
-                                            label={'Nombre de la tienda'}
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                        />
-                                    )}
-                                />
-                            </Box>
-                            <Box marginBottom={2} flex={1} flexBasis={150}>
-                                <Controller
-                                    name="phone"
-                                    control={control}
-                                    render={({ field, fieldState }) => (
-                                        <TextInput
-                                            className={classes.input}
-                                            error={
-                                                fieldState.error ? true : false
-                                            }
-                                            errorMessage={fieldState.error}
-                                            icon={null}
-                                            label={'Télefono de contacto'}
-                                            value={field.value}
-                                            onChange={(e) =>
-                                                field.onChange(
-                                                    e.target.value.replace(
-                                                        /[^\d]/g,
-                                                        ''
-                                                    )
-                                                )
-                                            }
-                                        />
-                                    )}
-                                />
-                            </Box>
-                        </Box>
-                        <Box
-                            display="flex"
-                            style={{ gap: '2rem', flexWrap: 'wrap' }}
-                            marginTop={2}
+                        <Box>
+                            <h4>Información de tu tienda</h4>
 
-                        >
-                            <Box marginBottom={2} flexBasis={200}>
-                                <Controller
-                                    name="primaryColor"
-                                    control={control}
-                                    render={({ field, fieldState }) => (
-                                        <>
-                                             <Box display="flex">
-                                                <p
-                                                    style={{
-                                                        marginTop: 0,
-                                                        marginBottom: 0,
-                                                    }}
-                                                >
-                                                    Color principal
-                                                </p>
-                                                <Tooltip
-                                                    title="Este es el color principal de tu tienda, por ejemplo la cabecera y botónes tenndrán este color"
-                                                    placement="top"
-                                                >
-                                                    <Box ml={1}>
-                                                        <QuestionMarkIcon />
-                                                    </Box>
-                                                </Tooltip>
-                                            </Box>
-                                            <input
-                                                type="color"
+                            <Box
+                                display="flex"
+                                style={{ gap: '2rem', flexWrap: 'wrap' }}
+                                marginTop={4}
+                            >
+                                <Box marginBottom={2} flex={1} flexBasis={150}>
+                                    <Controller
+                                        name="title"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <TextInput
+                                                className={classes.input}
+                                                error={
+                                                    fieldState.error
+                                                        ? true
+                                                        : false
+                                                }
+                                                errorMessage={fieldState.error}
+                                                icon={null}
+                                                label={'Nombre de la tienda'}
                                                 value={field.value}
                                                 onChange={field.onChange}
                                             />
-                                            {fieldState.error && (
-                                                <TextDanger>
-                                                    <p
-                                                        className={
-                                                            classes.errorText
-                                                        }
-                                                    >
-                                                        {
-                                                            fieldState.error
-                                                                .message
-                                                        }
-                                                    </p>
-                                                </TextDanger>
-                                            )}
-                                        </>
-                                    )}
-                                />
-                            </Box>
-                            <Box marginBottom={2} flexBasis={200}>
-                                <Controller
-                                    name="contrastTextColor"
-                                    control={control}
-                                    render={({ field, fieldState }) => (
-                                        <>
-                                            <Box display="flex">
-                                                <p
-                                                    style={{
-                                                        marginTop: 0,
-                                                        marginBottom: 0,
-                                                    }}
-                                                >
-                                                    Color de contraste
-                                                </p>
-                                                <Tooltip
-                                                    title="Este es el color que tomaran todos los elementos que estén encima del color principal por ejemplo el texto de un botón"
-                                                    placement="top"
-                                                >
-                                                    <Box ml={1}>
-                                                        <QuestionMarkIcon />
-                                                    </Box>
-                                                </Tooltip>
-                                            </Box>
-                                            <input
-                                                type="color"
-                                                value={field.value}
-                                                onChange={field.onChange}
-                                            />
-                                            {fieldState.error && (
-                                                <TextDanger>
-                                                    <p
-                                                        className={
-                                                            classes.errorText
-                                                        }
-                                                    >
-                                                        {
-                                                            fieldState.error
-                                                                .message
-                                                        }
-                                                    </p>
-                                                </TextDanger>
-                                            )}
-                                        </>
-                                    )}
-                                />
-                            </Box>
-                        </Box>
-                        <Box
-                            display="flex"
-                            style={{ gap: '2rem', flexWrap: 'wrap' }}
-                        >
-                            <Box marginBottom={2} flexBasis={150}>
-                                <Controller
-                                    name="titleFont"
-                                    control={control}
-                                    render={({ field, fieldState }) => (
-                                        <>
-                                            <Box display="flex">
-                                                <p
-                                                    style={{
-                                                        marginTop: 0,
-                                                        marginBottom: 0,
-                                                    }}
-                                                >
-                                                    Fuente para los títulos
-                                                </p>
-                                                <Tooltip
-                                                    title="Esta es la fuente principal de tu tienda, se utiliza para titulos, subtitulos y textos principales."
-                                                    placement="top"
-                                                >
-                                                    <Box ml={1}>
-                                                        <QuestionMarkIcon />
-                                                    </Box>
-                                                </Tooltip>
-                                            </Box>
-                                            <FontPicker
-                                                families={[
-                                                    'Merriweather',
-                                                    'Open Sans',
-                                                ]}
-                                                apiKey={
-                                                    process.env
-                                                        .REACT_APP_FONTS_KEY
+                                        )}
+                                    />
+                                </Box>
+                                <Box marginBottom={2} flex={1} flexBasis={150}>
+                                    <Controller
+                                        name="phone"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <TextInput
+                                                className={classes.input}
+                                                error={
+                                                    fieldState.error
+                                                        ? true
+                                                        : false
                                                 }
-                                                activeFontFamily={field.value}
-                                                onChange={(nextFont) =>
+                                                errorMessage={fieldState.error}
+                                                icon={null}
+                                                label={'Télefono de contacto'}
+                                                value={field.value}
+                                                onChange={(e) =>
                                                     field.onChange(
-                                                        nextFont.family
+                                                        e.target.value.replace(
+                                                            /[^\d]/g,
+                                                            ''
+                                                        )
                                                     )
                                                 }
                                             />
-                                            <p className="apply-font">
-                                                Título de Ejemplo.
-                                            </p>
-
-                                            {fieldState.error && (
-                                                <TextDanger>
-                                                    <p
-                                                        className={
-                                                            classes.errorText
-                                                        }
-                                                    >
-                                                        {
-                                                            fieldState.error
-                                                                .message
-                                                        }
-                                                    </p>
-                                                </TextDanger>
-                                            )}
-                                        </>
-                                    )}
-                                />
-                            </Box>
-                            <Box marginBottom={2} flexBasis={150}>
-                                <Controller
-                                    name="bodyFont"
-                                    control={control}
-                                    render={({ field, fieldState }) => (
-                                        <>
-                                            {' '}
-                                            <Box display="flex">
-                                                <p
-                                                    style={{
-                                                        marginTop: 0,
-                                                        marginBottom: 0,
-                                                    }}
-                                                >
-                                                    Fuente para el cuerpo
-                                                </p>
-                                                <Tooltip
-                                                    title="Esta fuente se utiliza para el cuerpo en general y textos secundarios"
-                                                    placement="top"
-                                                >
-                                                    <Box ml={1}>
-                                                        <QuestionMarkIcon />
-                                                    </Box>
-                                                </Tooltip>
-                                            </Box>
-                                            <FontPicker
-                                                pickerId="body"
-                                                families={[
-                                                    'Merriweather',
-                                                    'Open Sans',
-                                                ]}
-                                                apiKey={
-                                                    process.env
-                                                        .REACT_APP_FONTS_KEY
-                                                }
-                                                activeFontFamily={field.value}
-                                                value={field.value}
-                                                onChange={(nextFont) =>
-                                                    field.onChange(
-                                                        nextFont.family
-                                                    )
-                                                }
-                                            />
-                                            <p className="apply-font-body">
-                                                Cuerpo de Ejemplo.
-                                            </p>
-                                            {fieldState.error && (
-                                                <TextDanger>
-                                                    <p
-                                                        className={
-                                                            classes.errorText
-                                                        }
-                                                    >
-                                                        {
-                                                            fieldState.error
-                                                                .message
-                                                        }
-                                                    </p>
-                                                </TextDanger>
-                                            )}
-                                        </>
-                                    )}
-                                />
+                                        )}
+                                    />
+                                </Box>
                             </Box>
                         </Box>
-                        <Box marginBottom={2}>
+                        <Box marginBottom={2} marginTop={2}>
                             <Controller
                                 name="description"
                                 control={control}
@@ -541,6 +317,264 @@ export default function ConfigPage() {
                                     />
                                 )}
                             />
+                        </Box>
+                        <Box>
+                            <h4>Colores y tipografia</h4>
+                            <Box
+                                style={{
+                                    backgroundColor: '#fff',
+                                    padding: '1rem',
+                                    borderRadius: '16px',
+                                }}
+                                marginBottom={2}
+                            >
+                                <Box
+                                    display="flex"
+                                    style={{ gap: '2rem', flexWrap: 'wrap' }}
+                                    marginTop={2}
+                                >
+                                    <Box marginBottom={2} flexBasis={200}>
+                                        <Controller
+                                            name="primaryColor"
+                                            control={control}
+                                            render={({ field, fieldState }) => (
+                                                <>
+                                                    <Box display="flex">
+                                                        <p
+                                                            style={{
+                                                                marginTop: 0,
+                                                                marginBottom: 0,
+                                                            }}
+                                                        >
+                                                            Color principal
+                                                        </p>
+                                                        <Tooltip
+                                                            title="Este es el color principal de tu tienda, por ejemplo la cabecera y botónes tenndrán este color"
+                                                            placement="top"
+                                                        >
+                                                            <Box ml={1}>
+                                                                <QuestionMarkIcon />
+                                                            </Box>
+                                                        </Tooltip>
+                                                    </Box>
+                                                    <input
+                                                        type="color"
+                                                        value={field.value}
+                                                        onChange={
+                                                            field.onChange
+                                                        }
+                                                    />
+                                                    {fieldState.error && (
+                                                        <TextDanger>
+                                                            <p
+                                                                className={
+                                                                    classes.errorText
+                                                                }
+                                                            >
+                                                                {
+                                                                    fieldState
+                                                                        .error
+                                                                        .message
+                                                                }
+                                                            </p>
+                                                        </TextDanger>
+                                                    )}
+                                                </>
+                                            )}
+                                        />
+                                    </Box>
+                                    <Box marginBottom={2} flexBasis={200}>
+                                        <Controller
+                                            name="contrastTextColor"
+                                            control={control}
+                                            render={({ field, fieldState }) => (
+                                                <>
+                                                    <Box display="flex">
+                                                        <p
+                                                            style={{
+                                                                marginTop: 0,
+                                                                marginBottom: 0,
+                                                            }}
+                                                        >
+                                                            Color de contraste
+                                                        </p>
+                                                        <Tooltip
+                                                            title="Este es el color que tomaran todos los elementos que estén encima del color principal por ejemplo el texto de un botón"
+                                                            placement="top"
+                                                        >
+                                                            <Box ml={1}>
+                                                                <QuestionMarkIcon />
+                                                            </Box>
+                                                        </Tooltip>
+                                                    </Box>
+                                                    <input
+                                                        type="color"
+                                                        value={field.value}
+                                                        onChange={
+                                                            field.onChange
+                                                        }
+                                                    />
+                                                    {fieldState.error && (
+                                                        <TextDanger>
+                                                            <p
+                                                                className={
+                                                                    classes.errorText
+                                                                }
+                                                            >
+                                                                {
+                                                                    fieldState
+                                                                        .error
+                                                                        .message
+                                                                }
+                                                            </p>
+                                                        </TextDanger>
+                                                    )}
+                                                </>
+                                            )}
+                                        />
+                                    </Box>
+                                </Box>
+
+                                <Box
+                                    display="flex"
+                                    style={{ gap: '2rem', flexWrap: 'wrap' }}
+                                >
+                                    <Box marginBottom={2} flexBasis={150}>
+                                        <Controller
+                                            name="titleFont"
+                                            control={control}
+                                            render={({ field, fieldState }) => (
+                                                <>
+                                                    <Box display="flex">
+                                                        <p
+                                                            style={{
+                                                                marginTop: 0,
+                                                                marginBottom: 0,
+                                                            }}
+                                                        >
+                                                            Fuente para los
+                                                            títulos
+                                                        </p>
+                                                        <Tooltip
+                                                            title="Esta es la fuente principal de tu tienda, se utiliza para titulos, subtitulos y textos principales."
+                                                            placement="top"
+                                                        >
+                                                            <Box ml={1}>
+                                                                <QuestionMarkIcon />
+                                                            </Box>
+                                                        </Tooltip>
+                                                    </Box>
+                                                    <FontPicker
+                                                        families={[
+                                                            'Merriweather',
+                                                            'Open Sans',
+                                                        ]}
+                                                        apiKey={
+                                                            process.env
+                                                                .REACT_APP_FONTS_KEY
+                                                        }
+                                                        activeFontFamily={
+                                                            field.value
+                                                        }
+                                                        onChange={(nextFont) =>
+                                                            field.onChange(
+                                                                nextFont.family
+                                                            )
+                                                        }
+                                                    />
+                                                    <p className="apply-font">
+                                                        Título de Ejemplo.
+                                                    </p>
+
+                                                    {fieldState.error && (
+                                                        <TextDanger>
+                                                            <p
+                                                                className={
+                                                                    classes.errorText
+                                                                }
+                                                            >
+                                                                {
+                                                                    fieldState
+                                                                        .error
+                                                                        .message
+                                                                }
+                                                            </p>
+                                                        </TextDanger>
+                                                    )}
+                                                </>
+                                            )}
+                                        />
+                                    </Box>
+                                    <Box marginBottom={2} flexBasis={150}>
+                                        <Controller
+                                            name="bodyFont"
+                                            control={control}
+                                            render={({ field, fieldState }) => (
+                                                <>
+                                                    {' '}
+                                                    <Box display="flex">
+                                                        <p
+                                                            style={{
+                                                                marginTop: 0,
+                                                                marginBottom: 0,
+                                                            }}
+                                                        >
+                                                            Fuente para el
+                                                            cuerpo
+                                                        </p>
+                                                        <Tooltip
+                                                            title="Esta fuente se utiliza para el cuerpo en general y textos secundarios"
+                                                            placement="top"
+                                                        >
+                                                            <Box ml={1}>
+                                                                <QuestionMarkIcon />
+                                                            </Box>
+                                                        </Tooltip>
+                                                    </Box>
+                                                    <FontPicker
+                                                        pickerId="body"
+                                                        families={[
+                                                            'Merriweather',
+                                                            'Open Sans',
+                                                        ]}
+                                                        apiKey={
+                                                            process.env
+                                                                .REACT_APP_FONTS_KEY
+                                                        }
+                                                        activeFontFamily={
+                                                            field.value
+                                                        }
+                                                        value={field.value}
+                                                        onChange={(nextFont) =>
+                                                            field.onChange(
+                                                                nextFont.family
+                                                            )
+                                                        }
+                                                    />
+                                                    <p className="apply-font-body">
+                                                        Cuerpo de Ejemplo.
+                                                    </p>
+                                                    {fieldState.error && (
+                                                        <TextDanger>
+                                                            <p
+                                                                className={
+                                                                    classes.errorText
+                                                                }
+                                                            >
+                                                                {
+                                                                    fieldState
+                                                                        .error
+                                                                        .message
+                                                                }
+                                                            </p>
+                                                        </TextDanger>
+                                                    )}
+                                                </>
+                                            )}
+                                        />
+                                    </Box>
+                                </Box>
+                            </Box>
                         </Box>
                         {Object.keys(errors).length > 0 && (
                             <p>
