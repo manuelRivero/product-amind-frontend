@@ -17,7 +17,7 @@ import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
 import ChevronRightIcon from '@material-ui/icons/ChevronRight'
 
 // form
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 
@@ -31,12 +31,16 @@ import {
     DialogContentText,
     DialogTitle,
     Fade,
+    IconButton,
     MenuItem,
     MenuList,
     Popper,
 } from '@material-ui/core'
 import moment from 'moment-timezone'
 import ReactPaginate from 'react-paginate'
+import { formatNumber } from '../../helpers/product'
+import TextInput from '../../components/TextInput/Index'
+import { DeleteForever, Search } from '@material-ui/icons'
 
 const styles = {
     pagination: {
@@ -133,24 +137,61 @@ const styles = {
         display: 'flex',
         justifyContent: 'center',
     },
+    filterWrapper: {
+        marginTop: '1rem',
+        marginBottom: '1rem',
+        display: 'flex',
+        gap: '1rem',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+    },
 }
 
 const useStyles = makeStyles(styles)
+
+const schema = yup.object({
+    search: yup.string().nullable(),
+})
 
 export default function Sales() {
     const classes = useStyles()
     const dispatch = useDispatch()
     const { user } = useSelector((state) => state.auth)
     const { salesData, loadingSalesData } = useSelector((state) => state.sales)
+
+    const { control, handleSubmit, setValue, watch } = useForm({
+        resolver: yupResolver(schema),
+        defaultValues: {
+            search: null,
+        },
+    })
+    const watchSearch = watch('search')
     const [filter, setFilter] = useState(null)
     const [page, setPage] = useState(0)
 
     const handleFilter = (filter) => {
         setFilter(filter)
     }
+    const handleSearch = (values) => {
+        setFilter(null)
+        setPage(0)
+        dispatch(
+            getSales({
+                access: user.token,
+                filters: { search: values.search },
+                page: 0,
+            })
+        )
+    }
+    const handleDeleteSearch = () => {
+        dispatch(getSales({ access: user.token, filters: {} }))
+        setFilter(null)
+        setValue('search', '')
+        setPage(0)
+    }
     useEffect(() => {
-        console.log('use effect filter', filter)
         if (filter !== null) {
+            setValue('search', '')
             dispatch(
                 getSales({
                     access: user.token,
@@ -162,6 +203,7 @@ export default function Sales() {
             dispatch(getSales({ access: user.token, filters: {} }))
         }
     }, [filter])
+
     useEffect(() => {
         console.log('use effect filter', filter)
         if (filter !== null) {
@@ -176,7 +218,7 @@ export default function Sales() {
             dispatch(getSales({ access: user.token, filters: {}, page }))
         }
     }, [page])
-    console.log('page', page)
+
     return (
         <GridContainer>
             <GridItem xs={12} sm={12} md={12}>
@@ -191,43 +233,135 @@ export default function Sales() {
                         </p>
                     </CardHeader>
                     <CardBody>
+                        <Box mb={2}>
+                            <form onSubmit={handleSubmit(handleSearch)}>
+                                <Box className={classes.filterWrapper}>
+                                    <Box style={{ flexBasis: '300px' }}>
+                                        <Controller
+                                            name="search"
+                                            control={control}
+                                            render={({ field, fieldState }) => (
+                                                <TextInput
+                                                    error={
+                                                        fieldState.error
+                                                            ? true
+                                                            : false
+                                                    }
+                                                    errorMessage={
+                                                        fieldState.error
+                                                    }
+                                                    icon={null}
+                                                    label={'Id de la orden'}
+                                                    value={field.value}
+                                                    onChange={({ target }) => {
+                                                        field.onChange(
+                                                            target.value
+                                                        )
+                                                    }}
+                                                />
+                                            )}
+                                        />
+                                    </Box>
+                                    {watchSearch && (
+                                        <>
+                                            <IconButton
+                                                isLoading={false}
+                                                variant="contained"
+                                                color="primary"
+                                                type="submit"
+                                                style={{
+                                                    color: 'rgba(0,175,195, 1)',
+                                                }}
+                                            >
+                                                <Search />
+                                            </IconButton>
+                                            <IconButton
+                                                isLoading={false}
+                                                onClick={handleDeleteSearch}
+                                                variant="contained"
+                                                color="primary"
+                                                style={{ color: 'red' }}
+                                            >
+                                                <DeleteForever />
+                                            </IconButton>{' '}
+                                        </>
+                                    )}
+                                </Box>
+                            </form>
+                        </Box>
                         <Box className={classes.filtersWrapper}>
-                            <Button
-                                isLoading={false}
-                                variant="contained"
-                                color="primary"
-                                type="button"
-                                onClick={() => handleFilter(null)}
+                            <Box
+                                style={{
+                                    padding: '0 4px',
+                                    border:
+                                        filter === null ? 'solid 1px #c2c2c2' : '',
+                                    borderRadius: '8px',
+                                }}
                             >
-                                Todos
-                            </Button>
-                            <Button
-                                isLoading={false}
-                                variant="contained"
-                                color="primary"
-                                type="button"
-                                onClick={() => handleFilter(2)}
+                                <Button
+                                    isLoading={false}
+                                    variant="contained"
+                                    color="primary"
+                                    type="button"
+                                    onClick={() => handleFilter(null)}
+                                >
+                                    Todos
+                                </Button>
+                            </Box>
+                            <Box
+                                style={{
+                                    padding: '0 4px',
+                                    border:
+                                        filter === 1 ? 'solid 1px #c2c2c2' : '',
+                                    borderRadius: '8px',
+                                }}
                             >
-                                Pagado
-                            </Button>
-                            <Button
-                                isLoading={false}
-                                variant="contained"
-                                color="primary"
-                                type="button"
-                                onClick={() => handleFilter(3)}
+                                <Button
+                                    isLoading={false}
+                                    variant="contained"
+                                    color="primary"
+                                    type="button"
+                                    onClick={() => handleFilter(1)}
+                                >
+                                    Pagado
+                                </Button>
+                            </Box>
+                            <Box
+                                style={{
+                                    padding: '0 4px',
+                                    border:
+                                        filter === 2 ? 'solid 1px #c2c2c2' : '',
+                                    borderRadius: '8px',
+                                }}
                             >
-                                Enviado
-                            </Button>
-                            <Button
-                                isLoading={false}
-                                variant="contained"
-                                color="primary"
-                                type="button"
-                                onClick={() => handleFilter(5)}
+                                <Button
+                                    isLoading={false}
+                                    variant="contained"
+                                    color="primary"
+                                    type="button"
+                                    onClick={() => handleFilter(2)}
+                                >
+                                    Enviado
+                                </Button>
+                            </Box>
+                            <Box
+                                style={{
+                                    padding: '0 4px',
+                                    border:
+                                        filter === 3 ? 'solid 1px #c2c2c2' : '',
+                                    borderRadius: '8px',
+                                }}
                             >
-                                Cancelado
-                            </Button>
+                                <Button
+                                    isLoading={false}
+                                    variant="contained"
+                                    color="primary"
+                                    type="button"
+                                    onClick={() => handleFilter(3)}
+                                >
+                                    Cancelado
+                                </Button>
+                            </Box>
                         </Box>
                         {loadingSalesData ? (
                             <Box display="flex" justifyContent="center">
@@ -252,7 +386,7 @@ export default function Sales() {
                                                 {e._id}
                                             </p>,
                                             <p key={`sale-total-${e._id}`}>
-                                                {e.total}
+                                                ${formatNumber(e.total)}
                                             </p>,
                                             <p key={`sale-date-${e._id}`}>
                                                 {moment(e.createdAt)
@@ -368,7 +502,8 @@ const ChangeStatusDropdown = ({ sale }) => {
     return (
         <>
             <Box>
-                {(sale.status !== 'CANCELADO' && sale.status !== 'ENVIADO' || loadingChangeStatus === sale._id) && (
+                {((sale.status !== 'CANCELADO' && sale.status !== 'ENVIADO') ||
+                    loadingChangeStatus === sale._id) && (
                     <Button
                         isLoading={loadingChangeStatus === sale._id}
                         variant="contained"
