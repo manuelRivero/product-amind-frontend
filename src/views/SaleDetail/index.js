@@ -12,7 +12,22 @@ import { useDispatch, useSelector } from 'react-redux'
 import { getSale } from 'store/sales'
 
 import { useParams } from 'react-router-dom'
-import { Box, CircularProgress, Grid, IconButton } from '@material-ui/core'
+import {
+    Box,
+    CircularProgress,
+    ClickAwayListener,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
+    Fade,
+    Grid,
+    IconButton,
+    MenuItem,
+    MenuList,
+    Popper,
+} from '@material-ui/core'
 import moment from 'moment'
 
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
@@ -20,6 +35,12 @@ import { finalPrice, formatNumber } from '../../helpers/product'
 import { Link, useHistory } from 'react-router-dom'
 import Button from 'components/CustomButtons/Button'
 import { RemoveRedEye } from '@material-ui/icons'
+import { useForm } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
+import { saleStatus } from '../../const/sales'
+import PropTypes from 'prop-types'
+import { changeDetailSalesStatus } from '../../store/sales'
 
 const styles = {
     cardCategoryWhite: {
@@ -136,14 +157,17 @@ export default function SaleDetail() {
                                                     {saleData.postalCode}
                                                 </strong>
                                             </p>
-                                        </Grid>
-                                        <Grid item>
                                             <p>
                                                 Estatus:{' '}
                                                 <strong>
                                                     {saleData.status}
                                                 </strong>
                                             </p>
+                                            <ChangeStatusDropdown
+                                                sale={saleData}
+                                            />
+                                        </Grid>
+                                        <Grid item>
                                             <p>
                                                 Fecha:{' '}
                                                 <strong>
@@ -250,4 +274,178 @@ export default function SaleDetail() {
             </GridContainer>
         </>
     )
+}
+
+const paymentSchema = yup.object({
+    status: yup.string().required(),
+})
+
+const ChangeStatusDropdown = ({ sale }) => {
+    const statusOptions = ['PAGADO', 'ENVIADO', 'CANCELADO']
+    const dispatch = useDispatch()
+    const { loadingSaleDetailStatus } = useSelector((state) => state.sales)
+    const { user } = useSelector((state) => state.auth)
+
+    const classes = useStyles()
+
+    useForm({
+        resolver: yupResolver(paymentSchema),
+        defaultValues: {
+            status: saleStatus[sale.status],
+        },
+    })
+    const [confirmOpen, setConfirmOpen] = React.useState(false)
+    const [nextStatus, setNextStatus] = React.useState('')
+    const [anchorEl, setAnchorEl] = React.useState(null)
+    const [open, setOpen] = React.useState(false)
+
+    const handleClick = (event) => {
+        setOpen(!open)
+        setAnchorEl(anchorEl ? null : event.currentTarget)
+    }
+
+    const onStatusChange = async (status) => {
+        setOpen(false)
+        setAnchorEl(anchorEl ? null : event.currentTarget)
+        dispatch(
+            changeDetailSalesStatus({
+                access: user.token,
+                id: sale._id,
+                status,
+            })
+        )
+    }
+
+    return (
+        <>
+            <Box>
+                {(sale.status !== 'CANCELADO' && sale.status !== 'ENVIADO' || loadingSaleDetailStatus) && (
+                    <Button
+                        isLoading={loadingSaleDetailStatus}
+                        variant="contained"
+                        color="primary"
+                        type="button"
+                        onClick={handleClick}
+                    >
+                        Cambiar estatus
+                    </Button>
+                )}
+                <Popper
+                    open={open}
+                    anchorEl={anchorEl}
+                    transition
+                    style={{
+                        backgroundColor: 'white',
+                        boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+                    }}
+                    placement={'top-start'}
+                    modifiers={{
+                        preventOverflow: {
+                            enabled: true,
+                            boundariesElement: 'scrollParent',
+                        },
+                        flip: {
+                            enabled: false,
+                        },
+                    }}
+                >
+                    {({ TransitionProps }) => (
+                        <Fade {...TransitionProps}>
+                            <ClickAwayListener
+                                onClickAway={() => {
+                                    setOpen(false)
+                                    setAnchorEl(null)
+                                }}
+                            >
+                                <div className={classes.dropdown}>
+                                    <MenuList role="menu">
+                                        {statusOptions
+                                            .filter((option, _, array) => {
+                                                const currentIndex = array.findIndex(
+                                                    (element) =>
+                                                        element === sale.status
+                                                )
+                                                const optionIndex = array.indexOf(
+                                                    option
+                                                )
+
+                                                const isAfterCurrent =
+                                                    optionIndex > currentIndex
+
+                                                const isCancelOption =
+                                                    option === 'CANCELADO'
+                                                const isCurrentEnviado =
+                                                    sale.status === 'ENVIADO'
+
+                                                // Solo mostrar opciones después de la actual
+                                                // Y si el estado actual es ENVIADO, ocultar la opción CANCELADO
+                                                return (
+                                                    isAfterCurrent &&
+                                                    !(
+                                                        isCurrentEnviado &&
+                                                        isCancelOption
+                                                    )
+                                                )
+                                            })
+                                            .map((status, index) => (
+                                                <MenuItem
+                                                    key={index}
+                                                    onClick={() => {
+                                                        setNextStatus(status)
+                                                        setConfirmOpen(true)
+                                                    }}
+                                                    className={
+                                                        sale.status === status
+                                                            ? classes.activeStatus
+                                                            : ''
+                                                    }
+                                                >
+                                                    {status}
+                                                </MenuItem>
+                                            ))}
+                                    </MenuList>
+                                </div>
+                            </ClickAwayListener>
+                        </Fade>
+                    )}
+                </Popper>
+            </Box>
+            <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+                <DialogTitle>Confirmar cambio de estado</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        ¿Estás seguro de que deseas cambiar el estado a{' '}
+                        <strong>{nextStatus}</strong>?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={() => setConfirmOpen(false)}
+                        color="secondary"
+                    >
+                        Cancelar
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            const index =
+                                statusOptions.findIndex(
+                                    (option) => option === nextStatus
+                                ) + 1
+                            onStatusChange(index)
+                            setConfirmOpen(false)
+                            setOpen(false)
+                        }}
+                        color="primary"
+                        variant="contained"
+                    >
+                        Confirmar
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </>
+    )
+}
+
+ChangeStatusDropdown.propTypes = {
+    sale: PropTypes.object,
 }

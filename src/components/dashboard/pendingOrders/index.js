@@ -8,13 +8,21 @@ import CardHeader from 'components/Card/CardHeader.js'
 import CardBody from 'components/Card/CardBody.js'
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { changePendingSalesStatus, getPendingOrders } from '../../../store/dashboard'
+import {
+    changePendingSalesStatus,
+    getPendingOrders,
+} from '../../../store/dashboard'
 import { useForm } from 'react-hook-form'
 import Button from 'components/CustomButtons/Button'
 import {
     Box,
     CircularProgress,
     ClickAwayListener,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
     Fade,
     MenuItem,
     MenuList,
@@ -160,7 +168,11 @@ export default function PendingOrders() {
                         </CardHeader>
                         <CardBody>
                             {loadingPendingOrders ? (
-                                <Box display="flex" justifyContent="center" padding={4}>
+                                <Box
+                                    display="flex"
+                                    justifyContent="center"
+                                    padding={4}
+                                >
                                     <CircularProgress />
                                 </Box>
                             ) : (
@@ -220,7 +232,6 @@ export default function PendingOrders() {
                                                         >
                                                             <RemoveRedEye />
                                                         </Button>
-                                                        
                                                     </Link>,
                                                 ]
                                             }
@@ -276,6 +287,8 @@ const paymentSchema = yup.object({
     status: yup.string().required(),
 })
 const ChangeStatusDropdown = ({ sale }) => {
+    const statusOptions = ['PAGADO', 'ENVIADO', 'CANCELADO']
+
     const dispatch = useDispatch()
     const { loadingChangeStatus } = useSelector((state) => state.dashboard)
     const { user } = useSelector((state) => state.auth)
@@ -285,9 +298,11 @@ const ChangeStatusDropdown = ({ sale }) => {
     useForm({
         resolver: yupResolver(paymentSchema),
         defaultValues: {
-            status: saleStatus[sale.status]
+            status: saleStatus[sale.status],
         },
     })
+    const [confirmOpen, setConfirmOpen] = React.useState(false)
+    const [nextStatus, setNextStatus] = React.useState('')
     const [anchorEl, setAnchorEl] = React.useState(null)
     const [open, setOpen] = React.useState(false)
 
@@ -300,84 +315,139 @@ const ChangeStatusDropdown = ({ sale }) => {
         setOpen(false)
         setAnchorEl(anchorEl ? null : event.currentTarget)
         dispatch(
-            changePendingSalesStatus({ access: user.token, id: sale._id, status })
+            changePendingSalesStatus({
+                access: user.token,
+                id: sale._id,
+                status,
+            })
         )
     }
 
+    console.log()
 
     return (
-        <Box>
-            <Button
-                isLoading={loadingChangeStatus === sale._id}
-                variant="contained"
-                color="primary"
-                type="button"
-                onClick={handleClick}
-            >
-                Cambiar status
-            </Button>
-            <Popper
-                open={open}
-                anchorEl={anchorEl}
-                transition
-                placement={'top-start'}
-                modifiers={{
-                    preventOverflow: {
-                        enabled: true,
-                        boundariesElement: 'scrollParent',
-                    },
-                    flip: {
-                        enabled: false,
-                    },
-                }}
-            >
-                {({ TransitionProps }) => (
-                    <Fade {...TransitionProps}>
-                        <ClickAwayListener
-                            onClickAway={() => {
-                                setOpen(false)
-                                setAnchorEl(null)
-                            }}
-                        >
-                            <div className={classes.dropdown}>
-                                <MenuList role="menu">
-                                    <MenuItem
-                                        onClick={() => onStatusChange(1)}
-                                        className={
-                                            sale.status === 'PAGADO'
-                                                ? classes.activeStatus
-                                                : ''
-                                        }
-                                    >
-                                        Pagado
-                                    </MenuItem>
-                                    <MenuItem
-                                        onClick={() => onStatusChange(2)}
-                                        className={
-                                            sale.status === 'ENVIADO'
-                                                ? classes.activeStatus
-                                                : ''
-                                        }
-                                    >
-                                        Enviado
-                                    </MenuItem>
-                                    <MenuItem
-                                        onClick={() => onStatusChange(3)}
-                                        className={
-                                            sale.status === 'CANCELADO'
-                                                ? classes.activeStatus
-                                                : ''
-                                        }
-                                    >
-                                        Cancelado
-                                    </MenuItem>
-                                </MenuList>
-                            </div>
-                        </ClickAwayListener>
-                    </Fade>
+        <>
+            <Box>
+                {(sale.status !== 'CANCELADO' && sale.status !== 'ENVIADO' || loadingChangeStatus === sale._id) && (
+                    <Button
+                        isLoading={loadingChangeStatus === sale._id}
+                        variant="contained"
+                        color="primary"
+                        type="button"
+                        onClick={handleClick}
+                    >
+                        Cambiar estatus
+                    </Button>
                 )}
-            </Popper>
-        </Box>
+                <Popper
+                    open={open}
+                    anchorEl={anchorEl}
+                    transition
+                    placement={'top-start'}
+                    modifiers={{
+                        preventOverflow: {
+                            enabled: true,
+                            boundariesElement: 'scrollParent',
+                        },
+                        flip: {
+                            enabled: false,
+                        },
+                    }}
+                >
+                    {({ TransitionProps }) => (
+                        <Fade {...TransitionProps}>
+                            <ClickAwayListener
+                                onClickAway={() => {
+                                    setOpen(false)
+                                    setAnchorEl(null)
+                                }}
+                            >
+                                <div className={classes.dropdown}>
+                                    <MenuList role="menu">
+                                        {statusOptions
+                                            .filter((option, _, array) => {
+                                                const currentIndex = array.findIndex(
+                                                    (element) =>
+                                                        element === sale.status
+                                                )
+                                                const optionIndex = array.indexOf(
+                                                    option
+                                                )
+
+                                                const isAfterCurrent =
+                                                    optionIndex > currentIndex
+
+                                                const isCancelOption =
+                                                    option === 'CANCELADO'
+                                                const isCurrentEnviado =
+                                                    sale.status === 'ENVIADO'
+
+                                                // Solo mostrar opciones después de la actual
+                                                // Y si el estado actual es ENVIADO, ocultar la opción CANCELADO
+                                                return (
+                                                    isAfterCurrent &&
+                                                    !(
+                                                        isCurrentEnviado &&
+                                                        isCancelOption
+                                                    )
+                                                )
+                                            })
+                                            .map((status, index) => (
+                                                <MenuItem
+                                                    key={index}
+                                                    onClick={() => {
+                                                        setNextStatus(status)
+                                                        setConfirmOpen(true)
+                                                    }}
+                                                    className={
+                                                        sale.status === status
+                                                            ? classes.activeStatus
+                                                            : ''
+                                                    }
+                                                >
+                                                    {status}
+                                                </MenuItem>
+                                            ))}
+                                    </MenuList>
+                                </div>
+                            </ClickAwayListener>
+                        </Fade>
+                    )}
+                </Popper>
+            </Box>
+            <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+                <DialogTitle>Confirmar cambio de estado</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        ¿Estás seguro de que deseas cambiar el estado a{' '}
+                        <strong>{nextStatus}</strong>?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={() => setConfirmOpen(false)}
+                        color="secondary"
+                    >
+                        Cancelar
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            const index =
+                                statusOptions.findIndex(
+                                    (option) => option === nextStatus
+                                ) + 1
+                            onStatusChange(index)
+                            setConfirmOpen(false)
+                            setOpen(false)
+                        }}
+                        color="primary"
+                        variant="contained"
+                    >
+                        Confirmar
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </>
     )
 }
 

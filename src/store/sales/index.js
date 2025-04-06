@@ -13,7 +13,8 @@ const initialState = {
     loadingCreateSale: false,
     createSaleSuccess: false,
     saleData:null,
-    loadingSaleData:true
+    loadingSaleData:true,
+    loadingSaleDetailStatus: false
 }
 
 export const getSales = createAsyncThunk(
@@ -43,6 +44,24 @@ export const getSale = createAsyncThunk(
 )
 
 export const changeSalesStatus = createAsyncThunk(
+    'put/sales',
+    async (args, { rejectWithValue }) => {
+        try {
+            console.log("put sales")
+            const response = await changeSaleStatusRequest(
+                args.access,
+                args.id,
+                args.status,
+                args.paymentMethod
+            )
+            return response
+        } catch (error) {
+            return rejectWithValue(error.response.data)
+        }
+    }
+)
+
+export const changeDetailSalesStatus = createAsyncThunk(
     'put/sales',
     async (args, { rejectWithValue }) => {
         try {
@@ -120,6 +139,17 @@ export const salesSlice = createSlice({
         },
         [changeSalesStatus.rejected]: (state) => {
             state.loadingChangeStatus = null
+        },
+        [changeDetailSalesStatus.pending]: (state) => {
+            state.loadingSaleDetailStatus = true
+        },
+        [changeDetailSalesStatus.fulfilled]: (state, action) => {
+            state.loadingSaleDetailStatus = false
+            const { status } = action.payload.data
+            state.saleData.status = status
+        },
+        [changeDetailSalesStatus.rejected]: (state) => {
+            state.loadingSaleDetailStatus = false
         },
         [createSale.pending]: (state) => {
             state.loadingCreateSale = true
