@@ -21,7 +21,7 @@ export const getSales = createAsyncThunk(
     'get/sales',
     async (args, { rejectWithValue }) => {
         try {
-            const response = await getSalesRequest(args.access, args.filters, args.page)
+            const response = await getSalesRequest(args.access, args.filters, args.page, args.dateFrom, args.dateTo)
             return response
         } catch (error) {
             console.log('error', error)

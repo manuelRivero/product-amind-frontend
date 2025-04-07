@@ -41,6 +41,10 @@ import ReactPaginate from 'react-paginate'
 import { formatNumber } from '../../helpers/product'
 import TextInput from '../../components/TextInput/Index'
 import { DeleteForever, Search } from '@material-ui/icons'
+import { useLocation } from 'react-router-dom'
+import { DatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers'
+import MomentUtils from '@date-io/moment'
+import EmptyTablePlaceholder from '../../components/EmptyTablePlaceholder'
 
 const styles = {
     pagination: {
@@ -100,6 +104,7 @@ const styles = {
         },
     },
     filtersWrapper: {
+        marginTop: '1rem',
         display: 'flex',
         flexWrap: 'wrap',
         gap: '1rem',
@@ -159,309 +164,419 @@ export default function Sales() {
     const { user } = useSelector((state) => state.auth)
     const { salesData, loadingSalesData } = useSelector((state) => state.sales)
 
-    const { control, handleSubmit, setValue, watch } = useForm({
+    const location = useLocation()
+    const queryParams = new URLSearchParams(location.search)
+    const dateFrom = queryParams.get('from')
+    const dateTo = queryParams.get('to')
+    const { control, handleSubmit, setValue, watch, reset } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
             search: null,
+            start: moment(dateFrom, 'DD-MM-YYYY').toDate() ?? new Date(),
+            end: moment(dateTo, 'DD-MM-YYYY').toDate() ?? new Date(),
         },
     })
+
     const watchSearch = watch('search')
+    const watchStartDate = watch('start')
+    const watchEndDate = watch('end')
     const [filter, setFilter] = useState(null)
     const [page, setPage] = useState(0)
+    const [searchType, setSearchType] = useState(
+        dateFrom && dateTo ? 'date' : 'id'
+    )
 
-    const handleFilter = (filter) => {
-        setFilter(filter)
-    }
-    const handleSearch = (values) => {
-        setFilter(null)
-        setPage(0)
+    // Helpers
+    const fetchSales = (params = {}) => {
+        console.log('fetch', params)
         dispatch(
             getSales({
                 access: user.token,
-                filters: { search: values.search },
-                page: 0,
+                page,
+                ...params,
             })
         )
     }
+
+    const handleFilter = (newFilter) => {
+        setFilter(newFilter)
+        setValue('search', '')
+        setPage(0)
+    }
+
+    const handleSearch = ({ search }) => {
+        setFilter(null)
+        setPage(0)
+        fetchSales({ filters: { search }, page: 0 })
+    }
+
+    const handleSearchByDate = ({ start, end }) => {
+        fetchSales({
+            filters: {},
+            page: 0,
+            dateFrom: moment(start).format('DD-MM-YYYY'),
+            dateTo: moment(end).format('DD-MM-YYYY'),
+        })
+    }
+
     const handleDeleteSearch = () => {
-        dispatch(getSales({ access: user.token, filters: {} }))
+        fetchSales({ filters: {}, page: 0 })
         setFilter(null)
         setValue('search', '')
         setPage(0)
     }
+
+    const handleDeleteDateSearch = () => {
+        console.log('reset')
+        reset({ start: null, end: null })
+        fetchSales({
+            filters: {},
+            page: 0,
+        })
+    }
+
+    const handleChangeSearch = (type) => {
+        setSearchType(type)
+        setFilter(null)
+        setValue('search', '')
+        setPage(0)
+        reset({ start: null, end: null })
+        fetchSales({
+            filters: {},
+            page: 0,
+        })
+    }
+
     useEffect(() => {
-        if (filter !== null) {
-            setValue('search', '')
-            dispatch(
-                getSales({
-                    access: user.token,
-                    filters: { status: filter },
-                    page: 0,
-                })
-            )
-        } else {
-            dispatch(getSales({ access: user.token, filters: {} }))
+        const params = {
+            filters: { status: filter, search: watchSearch },
+            page,
         }
+        if (watchStartDate && watchEndDate) {
+            console.log('params', watchStartDate, watchEndDate)
+            params.dateFrom = moment(watchStartDate).format('DD-MM-YYYY')
+            params.dateTo = moment(watchEndDate).format('DD-MM-YYYY')
+        }
+        fetchSales({
+            ...params,
+        })
     }, [filter])
 
-    useEffect(() => {
-        console.log('use effect filter', filter)
-        if (filter !== null) {
-            dispatch(
-                getSales({
-                    access: user.token,
-                    filters: { status: filter },
-                    page,
-                })
-            )
-        } else {
-            dispatch(getSales({ access: user.token, filters: {}, page }))
-        }
-    }, [page])
+    // Render
+    const renderTableRows = () =>
+        salesData.sales.map((e) => [
+            <p key={`sale-id-${e._id}`}>{e._id}</p>,
+            <p key={`sale-total-${e._id}`}>${formatNumber(e.total)}</p>,
+            <p key={`sale-date-${e._id}`}>
+                {moment(e.createdAt).utc().format('DD-MM-YYYY HH:mm:ss A')}
+            </p>,
+            <p key={`sale-status-${e._id}`}>{e.status}</p>,
+            <ChangeStatusDropdown key={e._id} sale={e} />,
+            <Link
+                key={`detail-button-${e._id}`}
+                to={`/admin/orders/detail/${e._id}`}
+            >
+                <Button variant="contained" color="primary">
+                    Ver detalle
+                </Button>
+            </Link>,
+        ])
 
+    const handleTableContent = () => {
+        return salesData.sales.length === 0 ? (
+            <EmptyTablePlaceholder title="No hay datos para la busqueda seleccionada" />
+        ) : (
+            <>
+            <Table
+                tableHeaderColor="primary"
+                tableHead={[
+                    'Id',
+                    'Total',
+                    'Fecha',
+                    'Estatus',
+                    'Cambiar estatus',
+                    'Acciones',
+                ]}
+                tableData={renderTableRows()}
+            />
+            <ReactPaginate
+                forcePage={page}
+                pageClassName={classes.page}
+                containerClassName={classes.pagination}
+                activeClassName={classes.activePage}
+                breakLabel="..."
+                nextLabel={
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        justIcon
+                    >
+                        <ChevronRightIcon />
+                    </Button>
+                }
+                previousLabel={
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        justIcon
+                    >
+                        <ChevronLeftIcon />
+                    </Button>
+                }
+                onPageChange={(e) =>
+                    setPage(e.selected)
+                }
+                pageRangeDisplayed={5}
+                pageCount={Math.ceil(
+                    salesData.total / 10
+                )}
+                renderOnZeroPageCount={null}
+            />
+        </>
+        )
+    }
     return (
-        <GridContainer>
-            <GridItem xs={12} sm={12} md={12}>
-                <Card>
-                    <CardHeader color="primary">
-                        <h4 className={classes.cardTitleWhite}>
-                            Tabla de ordenes
-                        </h4>
-                        <p className={classes.cardCategoryWhite}>
-                            Aquí podras visualizar todas tus ordenes, cambiar su
-                            estatus y acceder al detalle de cada orden
-                        </p>
-                    </CardHeader>
-                    <CardBody>
-                        <Box mb={2}>
-                            <form onSubmit={handleSubmit(handleSearch)}>
-                                <Box className={classes.filterWrapper}>
-                                    <Box style={{ flexBasis: '300px' }}>
-                                        <Controller
-                                            name="search"
-                                            control={control}
-                                            render={({ field, fieldState }) => (
-                                                <TextInput
-                                                    error={
-                                                        fieldState.error
-                                                            ? true
-                                                            : false
-                                                    }
-                                                    errorMessage={
-                                                        fieldState.error
-                                                    }
-                                                    icon={null}
-                                                    label={'Id de la orden'}
-                                                    value={field.value}
-                                                    onChange={({ target }) => {
-                                                        field.onChange(
-                                                            target.value
-                                                        )
-                                                    }}
+        <MuiPickersUtilsProvider locale={'es'} utils={MomentUtils}>
+            <GridContainer>
+                <GridItem xs={12} sm={12} md={12}>
+                    <Card>
+                        <CardHeader color="primary">
+                            <h4 className={classes.cardTitleWhite}>
+                                Tabla de órdenes
+                            </h4>
+                            <p className={classes.cardCategoryWhite}>
+                                Aquí podrás visualizar todas tus órdenes,
+                                cambiar su estatus y acceder al detalle de cada
+                                una.
+                            </p>
+                        </CardHeader>
+                        <CardBody>
+                            <Box marginBottom={2}>
+                                {searchType === 'date' && (
+                                    <h5>Estas buscando por fecha y estatus</h5>
+                                )}
+                                {searchType === 'id' && (
+                                    <h5>Estas buscando por el id de orden</h5>
+                                )}
+                                {searchType === 'date' && (
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        onClick={() => handleChangeSearch('id')}
+                                    >
+                                        Buscar por id
+                                    </Button>
+                                )}
+                                {searchType === 'id' && (
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        onClick={() =>
+                                            handleChangeSearch('date')
+                                        }
+                                    >
+                                        Buscar por fecha o estatus
+                                    </Button>
+                                )}
+                            </Box>
+                            {searchType === 'id' ? (
+                                <Box mb={2}>
+                                    <form onSubmit={handleSubmit(handleSearch)}>
+                                        <Box className={classes.filterWrapper}>
+                                            <Box style={{ flexBasis: '300px' }}>
+                                                <Controller
+                                                    name="search"
+                                                    control={control}
+                                                    render={({
+                                                        field,
+                                                        fieldState,
+                                                    }) => (
+                                                        <TextInput
+                                                            error={
+                                                                !!fieldState.error
+                                                            }
+                                                            errorMessage={
+                                                                fieldState.error
+                                                            }
+                                                            label="Id de la orden"
+                                                            value={field.value}
+                                                            onChange={(e) =>
+                                                                field.onChange(
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            }
+                                                        />
+                                                    )}
                                                 />
+                                            </Box>
+                                            {watchSearch && (
+                                                <>
+                                                    <IconButton
+                                                        variant="contained"
+                                                        color="primary"
+                                                        type="submit"
+                                                        style={{
+                                                            color:
+                                                                'rgba(0,175,195, 1)',
+                                                        }}
+                                                    >
+                                                        <Search />
+                                                    </IconButton>
+                                                    <IconButton
+                                                        onClick={
+                                                            handleDeleteSearch
+                                                        }
+                                                        variant="contained"
+                                                        color="primary"
+                                                        style={{ color: 'red' }}
+                                                    >
+                                                        <DeleteForever />
+                                                    </IconButton>
+                                                </>
                                             )}
-                                        />
-                                    </Box>
-                                    {watchSearch && (
-                                        <>
-                                            <IconButton
-                                                isLoading={false}
-                                                variant="contained"
-                                                color="primary"
-                                                type="submit"
+                                        </Box>
+                                    </form>
+                                </Box>
+                            ) : (
+                                <Box>
+                                    <form
+                                        onSubmit={handleSubmit(
+                                            handleSearchByDate
+                                        )}
+                                    >
+                                        <Box
+                                            display="flex"
+                                            style={{ gap: '1rem' }}
+                                        >
+                                            <Controller
+                                                name="start"
+                                                control={control}
+                                                render={({ field }) => (
+                                                    <DatePicker
+                                                        lang="es"
+                                                        maxDate={new Date()}
+                                                        onChange={
+                                                            field.onChange
+                                                        }
+                                                        value={field.value}
+                                                        variant="outline"
+                                                        format="DD-MM-YYYY"
+                                                        openTo="date"
+                                                        views={[
+                                                            'year',
+                                                            'month',
+                                                            'date',
+                                                        ]}
+                                                        label="Fecha de inicio"
+                                                        helperText="Seleccione una fecha"
+                                                    />
+                                                )}
+                                            />
+                                            <Controller
+                                                name="end"
+                                                control={control}
+                                                render={({ field }) => (
+                                                    <DatePicker
+                                                        lang="es"
+                                                        minDate={watchStartDate}
+                                                        maxDate={new Date()}
+                                                        onChange={
+                                                            field.onChange
+                                                        }
+                                                        value={field.value}
+                                                        variant="outlined"
+                                                        format="DD-MM-YYYY"
+                                                        openTo="date"
+                                                        views={[
+                                                            'year',
+                                                            'month',
+                                                            'date',
+                                                        ]}
+                                                        label="Fecha fin"
+                                                        helperText="Seleccione una fecha"
+                                                    />
+                                                )}
+                                            />
+                                            {watchStartDate && watchEndDate && (
+                                                <>
+                                                    <IconButton
+                                                        variant="contained"
+                                                        color="primary"
+                                                        type="submit"
+                                                        style={{
+                                                            alignSelf: 'center',
+                                                            color:
+                                                                'rgba(0,175,195, 1)',
+                                                        }}
+                                                    >
+                                                        <Search />
+                                                    </IconButton>
+                                                    <IconButton
+                                                        onClick={
+                                                            handleDeleteDateSearch
+                                                        }
+                                                        variant="contained"
+                                                        color="primary"
+                                                        style={{
+                                                            alignSelf: 'center',
+                                                            color: 'red',
+                                                        }}
+                                                    >
+                                                        <DeleteForever />
+                                                    </IconButton>
+                                                </>
+                                            )}
+                                        </Box>
+                                    </form>
+                                    <Box className={classes.filtersWrapper}>
+                                        {[
+                                            { label: 'Todos', value: null },
+                                            { label: 'Pagado', value: 1 },
+                                            { label: 'Enviado', value: 2 },
+                                            { label: 'Cancelado', value: 3 },
+                                        ].map(({ label, value }) => (
+                                            <Box
+                                                key={label}
                                                 style={{
-                                                    color: 'rgba(0,175,195, 1)',
+                                                    padding: '0 4px',
+                                                    border:
+                                                        filter === value
+                                                            ? 'solid 1px #c2c2c2'
+                                                            : '',
+                                                    borderRadius: '8px',
                                                 }}
                                             >
-                                                <Search />
-                                            </IconButton>
-                                            <IconButton
-                                                isLoading={false}
-                                                onClick={handleDeleteSearch}
-                                                variant="contained"
-                                                color="primary"
-                                                style={{ color: 'red' }}
-                                            >
-                                                <DeleteForever />
-                                            </IconButton>{' '}
-                                        </>
-                                    )}
-                                </Box>
-                            </form>
-                        </Box>
-                        <Box className={classes.filtersWrapper}>
-                            <Box
-                                style={{
-                                    padding: '0 4px',
-                                    border:
-                                        filter === null ? 'solid 1px #c2c2c2' : '',
-                                    borderRadius: '8px',
-                                }}
-                            >
-                                <Button
-                                    isLoading={false}
-                                    variant="contained"
-                                    color="primary"
-                                    type="button"
-                                    onClick={() => handleFilter(null)}
-                                >
-                                    Todos
-                                </Button>
-                            </Box>
-                            <Box
-                                style={{
-                                    padding: '0 4px',
-                                    border:
-                                        filter === 1 ? 'solid 1px #c2c2c2' : '',
-                                    borderRadius: '8px',
-                                }}
-                            >
-                                <Button
-                                    isLoading={false}
-                                    variant="contained"
-                                    color="primary"
-                                    type="button"
-                                    onClick={() => handleFilter(1)}
-                                >
-                                    Pagado
-                                </Button>
-                            </Box>
-                            <Box
-                                style={{
-                                    padding: '0 4px',
-                                    border:
-                                        filter === 2 ? 'solid 1px #c2c2c2' : '',
-                                    borderRadius: '8px',
-                                }}
-                            >
-                                <Button
-                                    isLoading={false}
-                                    variant="contained"
-                                    color="primary"
-                                    type="button"
-                                    onClick={() => handleFilter(2)}
-                                >
-                                    Enviado
-                                </Button>
-                            </Box>
-                            <Box
-                                style={{
-                                    padding: '0 4px',
-                                    border:
-                                        filter === 3 ? 'solid 1px #c2c2c2' : '',
-                                    borderRadius: '8px',
-                                }}
-                            >
-                                <Button
-                                    isLoading={false}
-                                    variant="contained"
-                                    color="primary"
-                                    type="button"
-                                    onClick={() => handleFilter(3)}
-                                >
-                                    Cancelado
-                                </Button>
-                            </Box>
-                        </Box>
-                        {loadingSalesData ? (
-                            <Box display="flex" justifyContent="center">
-                                <CircularProgress />
-                            </Box>
-                        ) : (
-                            <>
-                                <Table
-                                    tableHeaderColor="primary"
-                                    tableHead={[
-                                        'Id',
-                                        'Total',
-                                        'Fecha',
-                                        'Estatus',
-                                        'Cambiar estatus',
-                                        'Acciones',
-                                    ]}
-                                    tableData={salesData.sales.map((e) => {
-                                        console.log('e', e)
-                                        return [
-                                            <p key={`sale-id-${e._id}`}>
-                                                {e._id}
-                                            </p>,
-                                            <p key={`sale-total-${e._id}`}>
-                                                ${formatNumber(e.total)}
-                                            </p>,
-                                            <p key={`sale-date-${e._id}`}>
-                                                {moment(e.createdAt)
-                                                    .utc()
-                                                    .format(
-                                                        'DD-MM-YYYY HH:mm:ss A'
-                                                    )}
-                                            </p>,
-                                            <p key={`sale-status-${e._id}`}>
-                                                {e.status}
-                                            </p>,
-                                            <ChangeStatusDropdown
-                                                key={e._id}
-                                                sale={e}
-                                            />,
-                                            <Link
-                                                key={`detail-button-${e._id}`}
-                                                to={`/admin/orders/detail/${e._id}`}
-                                            >
                                                 <Button
-                                                    isLoading={false}
                                                     variant="contained"
                                                     color="primary"
-                                                    type="button"
+                                                    onClick={() =>
+                                                        handleFilter(value)
+                                                    }
                                                 >
-                                                    Ver detalle
+                                                    {label}
                                                 </Button>
-                                                ,
-                                            </Link>,
-                                        ]
-                                    })}
-                                />
-                                <ReactPaginate
-                                    forcePage={page}
-                                    pageClassName={classes.page}
-                                    containerClassName={classes.pagination}
-                                    activeClassName={classes.activePage}
-                                    breakLabel="..."
-                                    nextLabel={
-                                        <Button
-                                            isLoading={false}
-                                            variant="contained"
-                                            color="primary"
-                                            type="button"
-                                            justIcon
-                                        >
-                                            <ChevronRightIcon />
-                                        </Button>
-                                    }
-                                    onPageChange={(e) => {
-                                        setPage(e.selected)
-                                    }}
-                                    pageRangeDisplayed={5}
-                                    pageCount={Math.ceil(salesData.total / 10)}
-                                    previousLabel={
-                                        <Button
-                                            isLoading={false}
-                                            variant="contained"
-                                            color="primary"
-                                            type="button"
-                                            justIcon
-                                        >
-                                            <ChevronLeftIcon />
-                                        </Button>
-                                    }
-                                    renderOnZeroPageCount={null}
-                                />
-                            </>
-                        )}
-                    </CardBody>
-                </Card>
-            </GridItem>
-        </GridContainer>
+                                            </Box>
+                                        ))}
+                                    </Box>
+                                </Box>
+                            )}
+
+                            {loadingSalesData ? (
+                                <Box display="flex" justifyContent="center">
+                                    <CircularProgress />
+                                </Box>
+                            ) : (
+                                handleTableContent()
+                            )}
+                        </CardBody>
+                    </Card>
+                </GridItem>
+            </GridContainer>
+        </MuiPickersUtilsProvider>
     )
 }
+
 const paymentSchema = yup.object({
     status: yup.string().required(),
 })

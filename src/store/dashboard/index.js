@@ -95,7 +95,7 @@ export const getTopProducts = createAsyncThunk(
     async (args, { rejectWithValue }) => {
         try {
             const [monthlySales] = await Promise.all([
-                getTopProductsRequest(args.access, args.page),
+                getTopProductsRequest(args.access, args.page, args.date),
             ])
             return monthlySales
         } catch (error) {

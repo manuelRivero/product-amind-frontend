@@ -28,8 +28,8 @@ export const getMonthlySales = (access, date) => {
     })
 }
 
-export const getTopProducts = (access, page) => {
-    return client.get(`api/products/topProducts?page=${page}`, {
+export const getTopProducts = (access, page, date) => {
+    return client.get(`api/products/topProducts?page=${page}&date=${date}`, {
         headers: {
             'x-token': access,
         },

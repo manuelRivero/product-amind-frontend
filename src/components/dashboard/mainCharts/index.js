@@ -19,6 +19,7 @@ import ChartistTooltip from 'chartist-plugin-tooltips-updated'
 import 'chartist-plugin-tooltips-updated/dist/chartist-plugin-tooltip.css'
 import 'moment/locale/es' // without this line it didn't work
 import { Box } from '@material-ui/core'
+import { useHistory } from 'react-router-dom/cjs/react-router-dom.min'
 
 moment.locale('es')
 // console.log('dailySalesChart', dailySalesChart)
@@ -26,11 +27,12 @@ const useStyles = makeStyles(styles)
 
 export default function MainCharts() {
     const classes = useStyles()
-    //redux
+
     const dispatch = useDispatch()
     const { user } = useSelector((state) => state.auth)
 
-    //states
+    const history = useHistory()
+
     const [chartData, setChartData] = useState(null)
     const [chartLabels, setChartLabels] = useState(null)
     const [sales, setSales] = useState([])
@@ -97,68 +99,114 @@ export default function MainCharts() {
         }
         getData()
     }, [sales])
-    // console.log('sales', sales)
+
+    useEffect(() => {
+        const handleClick = (e) => {
+            const point = e.target
+            const points = Array.from(document.querySelectorAll('.ct-point'))
+            const index = points.indexOf(point)
+
+            if (index >= 0) {
+                const tooltip = document.querySelector('.chartist-tooltip')
+                if (tooltip) tooltip.style.display = 'none'
+                const base = moment(selectedDate, 'DD-MM-YYYY');
+                const date = moment()
+                    .set({
+                        date: index + 1,
+                        month: base.month(),
+                        year: base.year(),
+                    })
+                    .format('DD-MM-YYYY');
+                // console.log('chartLabels', chartLabels[index])
+                history.push(`/admin/orders?from=${date}&to=${date}`)
+            }
+        }
+
+        // Esperamos a que Chartist dibuje los puntos
+        setTimeout(() => {
+            const points = document.querySelectorAll('.ct-point')
+            points.forEach((point) => {
+                point.addEventListener('click', handleClick)
+            })
+        }, 500)
+
+        return () => {
+            const points = document.querySelectorAll('.ct-point')
+            points.forEach((point) => {
+                point.removeEventListener('click', handleClick)
+            })
+        }
+    }, [chartLabels])
+
+    useEffect(() => {
+        const tooltip = document.querySelector('.chartist-tooltip')
+        if (tooltip) tooltip.style.display = 'initial'
+    }, [])
+
     return (
         <MuiPickersUtilsProvider locale={'es'} utils={MomentUtils}>
             <Box style={{ width: '100%', overflow: 'auto' }}>
-            <GridContainer style={{ minWidth: 1000 }}>
-                <GridItem xs={12} sm={12} md={12} >
-                    {chartData && (
-                        <Card chart>
-                            <CardHeader color="success">
-                                <ChartistGraph
-                                    className="ct-chart"
-                                    data={{
-                                        labels: chartLabels,
-                                        series: [chartData],
-                                    }}
-                                    type="Line"
-                                    options={{
-                                        ...dailySalesChart.options,
-                                        high:
-                                            Math.max.apply(Math, chartData) + 5,
-                                        plugins: [
-                                            ChartistTooltip({
-                                                transformTooltipTextFnc: (
-                                                    value
-                                                ) =>
-                                                    `$${Number(value).toFixed(
-                                                        1
-                                                    )}`, // Agrega el prefijo $
-                                                appendToBody: true, // Adjuntar el tooltip al body para evitar problemas de posicionamiento
-                                                anchorToPoint: true, // Mostrar el tooltip en el punto exacto
-                                            }),
-                                        ],
-                                    }}
-                                    listener={dailySalesChart.animation}
-                                />
-                            </CardHeader>
-                            <CardBody>
-                                <h4 className={classes.cardTitle}>
-                                    Ventas mensuales
-                                </h4>
-                                {/* {console.log("selected date",new Date(moment(selectedDate, "DD-MM-YYYY")))} */}
-                                <DatePicker
-                                    lang="es"
-                                    onChange={(e) => dateChangeHandler(e)}
-                                    value={
-                                        new Date(
-                                            moment(selectedDate, 'DD-MM-YYYY')
-                                        )
-                                    }
-                                    variant="inline"
-                                    openTo="year"
-                                    views={['year', 'month']}
-                                    label="Mes y año"
-                                    helperText="Seleccione el mes y el año"
-                                    autoOk={true}
-                                />
-                            </CardBody>
-                        </Card>
-                    )}
-                </GridItem>
-            </GridContainer>
-
+                <GridContainer style={{ minWidth: 1000 }}>
+                    <GridItem xs={12} sm={12} md={12}>
+                        {chartData && (
+                            <Card chart>
+                                <CardHeader color="success">
+                                    <ChartistGraph
+                                        className="ct-chart"
+                                        data={{
+                                            labels: chartLabels,
+                                            series: [chartData],
+                                        }}
+                                        type="Line"
+                                        options={{
+                                            ...dailySalesChart.options,
+                                            high:
+                                                Math.max.apply(
+                                                    Math,
+                                                    chartData
+                                                ) + 5,
+                                            plugins: [
+                                                ChartistTooltip({
+                                                    transformTooltipTextFnc: (
+                                                        value
+                                                    ) =>
+                                                        `$${Number(
+                                                            value
+                                                        ).toFixed(1)}`, // Agrega el prefijo $
+                                                }),
+                                            ],
+                                        }}
+                                        listener={dailySalesChart.animation}
+                                    />
+                                </CardHeader>
+                                <CardBody>
+                                    <h4 className={classes.cardTitle}>
+                                        Ventas mensuales
+                                    </h4>
+                                    {/* {console.log("selected date",new Date(moment(selectedDate, "DD-MM-YYYY")))} */}
+                                    <DatePicker
+                                        lang="es"
+                                        onChange={(e) => dateChangeHandler(e)}
+                                        value={
+                                            new Date(
+                                                moment(
+                                                    selectedDate,
+                                                    'DD-MM-YYYY'
+                                                )
+                                            )
+                                        }
+                                        variant="inline"
+                                        openTo="year"
+                                        views={['year', 'month']}
+                                        label="Mes y año"
+                                        helperText="Seleccione el mes y el año"
+                                        autoOk={true}
+                                    />
+                                </CardBody>
+                            </Card>
+                        )}
+                    </GridItem>
+                </GridContainer>
             </Box>
         </MuiPickersUtilsProvider>
     )
