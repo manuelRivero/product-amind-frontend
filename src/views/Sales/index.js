@@ -172,8 +172,8 @@ export default function Sales() {
         resolver: yupResolver(schema),
         defaultValues: {
             search: null,
-            start: moment(dateFrom, 'DD-MM-YYYY').toDate() ?? new Date(),
-            end: moment(dateTo, 'DD-MM-YYYY').toDate() ?? new Date(),
+            start: dateFrom ? moment(dateFrom, 'DD-MM-YYYY').toDate() : '',
+            end: dateTo ? moment(dateTo, 'DD-MM-YYYY').toDate() : '',
         },
     })
 
@@ -447,7 +447,7 @@ export default function Sales() {
                                     >
                                         <Box
                                             display="flex"
-                                            style={{ gap: '1rem' }}
+                                            style={{ gap: '1rem', flexWrap:'wrap' }}
                                         >
                                             <Controller
                                                 name="start"
@@ -498,8 +498,13 @@ export default function Sales() {
                                                     />
                                                 )}
                                             />
+                                        </Box>
                                             {watchStartDate && watchEndDate && (
-                                                <>
+                                                <Box
+                                                display="flex"
+                                                flex={1}
+                                                style={{ gap: '1rem', flexWrap:'wrap' }}
+                                            >
                                                     <IconButton
                                                         variant="contained"
                                                         color="primary"
@@ -525,9 +530,8 @@ export default function Sales() {
                                                     >
                                                         <DeleteForever />
                                                     </IconButton>
-                                                </>
+                                                </Box>
                                             )}
-                                        </Box>
                                     </form>
                                     <Box className={classes.filtersWrapper}>
                                         {[

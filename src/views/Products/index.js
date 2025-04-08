@@ -92,7 +92,6 @@ const useStyles = makeStyles({
         marginTop: '1rem',
         display: 'flex',
         gap: '1rem',
-        flexWrap: 'wrap',
     },
 })
 
