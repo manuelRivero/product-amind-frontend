@@ -1,5 +1,10 @@
 import React from 'react'
-import { Box, CircularProgress, makeStyles } from '@material-ui/core'
+import {
+    Box,
+    CircularProgress,
+    IconButton,
+    makeStyles,
+} from '@material-ui/core'
 import Card from 'components/Card/Card'
 import CardBody from 'components/Card/CardBody'
 import CardHeader from 'components/Card/CardHeader'
@@ -27,11 +32,11 @@ import { useForm, Controller } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { finalPrice, formatNumber } from '../../helpers/product'
-import { getCategories } from 'store/categories'
-import { RemoveRedEye } from '@material-ui/icons'
+import { DeleteForever, RemoveRedEye, Search } from '@material-ui/icons'
+import { getCategories } from '../../store/categories'
 
 const schema = yup.object({
-    search: yup.string().nullable(),
+    search: yup.string(),
 })
 
 const useStyles = makeStyles({
@@ -106,40 +111,20 @@ export default function Products() {
     const [page, setPage] = useState(0)
 
     //form
-    const { control, handleSubmit, watch } = useForm({
+    const { control, handleSubmit, watch, reset } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
-            search: null,
+            search: '',
         },
     })
+
+    const watchSearch = watch('search')
 
     const handlePageClick = ({ selected }) => {
         console.log('selected', selected)
         setPage(selected)
         const element = document.getElementById('table-header')
         element.scrollIntoView()
-    }
-
-    const handleFilters = () => {
-        const filters = watch()
-        let activefilters = {}
-        Object.keys(filters).forEach((key) => {
-            if (filters[key] !== null) {
-                switch (key) {
-                    case 'tags':
-                        activefilters[key] = filters[key]
-                            .replace(/\s/g, '')
-                            .toLowerCase()
-                        break
-
-                    default:
-                        activefilters[key] = filters[key]
-
-                        break
-                }
-            }
-        })
-        return activefilters
     }
 
     const productCategory = (categoryId) => {
@@ -158,32 +143,56 @@ export default function Products() {
         }
     }
 
-    const submit = () => {
+    const handleDeleteSearch = () => {
+        setPage(0)
+        reset({
+            search: '',
+        })
         dispatch(
             getProducts({
                 access: user.token,
-                filters: { ...handleFilters(), page },
+                filters: { page: 0 },
+            })
+        )
+    }
+
+    const submit = () => {
+        setPage(0)
+        dispatch(
+            getProducts({
+                access: user.token,
+                filters: { search: watchSearch, page:0 },
             })
         )
     }
 
     useEffect(() => {
-        dispatch(
-            getProducts({
-                access: user.token,
-                filters: { ...handleFilters(), page },
-            })
-        )
-    }, [page])
-
+        if (productsData) {
+            dispatch(
+                getCategories({
+                    access: user.token,
+                    filters: {
+                        page: 0,
+                        ids: productsData.data.products.map(
+                            (product) => product.category
+                        ),
+                    },
+                })
+            )
+        }
+    }, [productsData])
     useEffect(() => {
-        dispatch(
-            getCategories({
-                access: user.token,
-                filters: { page: 1 },
-            })
-        )
-    }, [])
+        const params = {
+            access: user.token,
+            filters: {
+                page,
+            },
+        }
+        if (watchSearch) {
+            params.filters.search = watchSearch
+        }
+        dispatch(getProducts(params))
+    }, [page])
 
     return (
         <GridContainer>
@@ -301,38 +310,33 @@ export default function Products() {
                                         )}
                                     />
                                 </Box>
-                                {/* <Box>
-                                    <Controller
-                                        name="tags"
-                                        control={control}
-                                        render={({ field, fieldState }) => (
-                                            <TextInput
-                                                helperText="Busca por una etiqueta o varias separadas por comas"
-                                                error={
-                                                    fieldState.error
-                                                        ? true
-                                                        : false
-                                                }
-                                                errorMessage={fieldState.error}
-                                                icon={null}
-                                                label={'Etiquetas del producto'}
-                                                value={field.value}
-                                                onChange={({ target }) => {
-                                                    field.onChange(target.value)
-                                                }}
-                                            />
-                                        )}
-                                    />
-                                </Box> */}
+                                {watchSearch && (
+                                    <Box display="flex" flex={1}>
+                                        <IconButton
+                                            variant="contained"
+                                            color="primary"
+                                            type="submit"
+                                            style={{
+                                                alignSelf: 'center',
+                                                color: 'rgba(0,175,195, 1)',
+                                            }}
+                                        >
+                                            <Search />
+                                        </IconButton>
+                                        <IconButton
+                                            onClick={handleDeleteSearch}
+                                            variant="contained"
+                                            color="primary"
+                                            style={{
+                                                alignSelf: 'center',
+                                                color: 'red',
+                                            }}
+                                        >
+                                            <DeleteForever />
+                                        </IconButton>
+                                    </Box>
+                                )}
                             </Box>
-                            <Button
-                                isLoading={false}
-                                variant="contained"
-                                color="primary"
-                                type="Submit"
-                            >
-                                Buscar
-                            </Button>
                         </form>
                         {loadingProductsData || loadingCategoriesData ? (
                             <Box display="flex" justifyContent="center">

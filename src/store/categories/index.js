@@ -21,7 +21,7 @@ export const getCategories = createAsyncThunk(
     '/get/categories',
     async (args) => {
         const [categories] = await Promise.all([
-            getCategoriesRequest(args.access, args.filters, args.limit),
+            getCategoriesRequest(args.access, args.filters, args.limit, args.ids),
         ])
         return categories
     }

@@ -1,5 +1,10 @@
 import React from 'react'
-import { Box, CircularProgress, makeStyles } from '@material-ui/core'
+import {
+    Box,
+    CircularProgress,
+    IconButton,
+    makeStyles,
+} from '@material-ui/core'
 import Card from 'components/Card/Card'
 import CardBody from 'components/Card/CardBody'
 import CardHeader from 'components/Card/CardHeader'
@@ -26,9 +31,11 @@ import { useForm, Controller } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { getCategories } from 'store/categories'
+import { DeleteForever, Search } from '@material-ui/icons'
+import EmptyTablePlaceholder from '../../components/EmptyTablePlaceholder'
 
 const schema = yup.object({
-    search: yup.string().nullable(),
+    search: yup.string(),
 })
 
 const useStyles = makeStyles({
@@ -98,15 +105,17 @@ export default function Categories() {
     // styles
     const classes = useStyles()
     // states
-    const [page, setPage] = useState(1)
+    const [page, setPage] = useState(0)
 
     //form
-    const { control, handleSubmit, watch } = useForm({
+    const { control, handleSubmit, watch, reset } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
-            search: null,
+            search: '',
         },
     })
+
+    const watchSearch = watch('search')
 
     const handlePageClick = ({ selected }) => {
         setPage(selected)
@@ -114,44 +123,95 @@ export default function Categories() {
         element.scrollIntoView()
     }
 
-    const handleFilters = () => {
-        const filters = watch()
-        let activefilters = {}
-        Object.keys(filters).forEach((key) => {
-            if (filters[key] !== null) {
-                switch (key) {
-                    case 'tags':
-                        activefilters[key] = filters[key]
-                            .replace(/\s/g, '')
-                            .toLowerCase()
-                        break
-
-                    default:
-                        activefilters[key] = filters[key]
-
-                        break
-                }
-            }
-        })
-        return activefilters
-    }
-
-    const submit = () => {
+    const submit = (values) => {
+        setPage(0)
         dispatch(
             getCategories({
                 access: user.token,
-                filters: { ...handleFilters(), page },
+                filters: { search: values.search, page: 0 },
             })
+        )
+    }
+
+    const handleDeleteSearch = () => {
+        reset({ search: '' })
+        setPage(0)
+        dispatch(
+            getCategories({
+                access: user.token,
+                filters: { search: '', page: 0 },
+            })
+        )
+    }
+
+    const handleContent = () => {
+        return categoriesData.data.length > 0 ? (
+            <>
+                <Table
+                    tableHeaderColor="primary"
+                    tableHead={['id', 'Nombre', 'Acciones']}
+                    tableData={categoriesData.data.map((e) => {
+                        return [
+                            e._id,
+                            e.name,
+                            <ActionGroup
+                                category={e}
+                                key={`action-group-${e._d}`}
+                            />,
+                        ]
+                    })}
+                />
+
+                <ReactPaginate
+                    forcePage={page}
+                    pageClassName={classes.page}
+                    containerClassName={classes.pagination}
+                    activeClassName={classes.activePage}
+                    breakLabel="..."
+                    nextLabel={
+                        <Button
+                            isLoading={false}
+                            variant="contained"
+                            color="primary"
+                            type="button"
+                            justIcon
+                        >
+                            <ChevronRightIcon />
+                        </Button>
+                    }
+                    onPageChange={(e) => handlePageClick(e)}
+                    pageRangeDisplayed={5}
+                    pageCount={Math.ceil(categoriesData.data.length / 10)}
+                    previousLabel={
+                        <Button
+                            isLoading={false}
+                            variant="contained"
+                            color="primary"
+                            type="button"
+                            justIcon
+                        >
+                            <ChevronLeftIcon />
+                        </Button>
+                    }
+                    renderOnZeroPageCount={null}
+                />
+            </>
+        ) : (
+            <EmptyTablePlaceholder title={'No hay categorías para mostrar'} />
         )
     }
 
     useEffect(() => {
-        dispatch(
-            getCategories({
-                access: user.token,
-                filters: { ...handleFilters(), page },
-            })
-        )
+        const params = {
+            access: user.token,
+            filters: {
+                page,
+            },
+        }
+        if (watchSearch) {
+            params.filters.search = watchSearch
+        }
+        dispatch(getCategories(params))
     }, [page])
 
     return (
@@ -222,96 +282,40 @@ export default function Categories() {
                                         )}
                                     />
                                 </Box>
-                                {/* <Box>
-                                    <Controller
-                                        name="tags"
-                                        control={control}
-                                        render={({ field, fieldState }) => (
-                                            <TextInput
-                                                helperText="Busca por una etiqueta o varias separadas por comas"
-                                                error={
-                                                    fieldState.error
-                                                        ? true
-                                                        : false
-                                                }
-                                                errorMessage={fieldState.error}
-                                                icon={null}
-                                                label={'Etiquetas del producto'}
-                                                value={field.value}
-                                                onChange={({ target }) => {
-                                                    field.onChange(target.value)
-                                                }}
-                                            />
-                                        )}
-                                    />
-                                </Box> */}
+                                {watchSearch && (
+                                    <Box display="flex" flex={1}>
+                                        <IconButton
+                                            variant="contained"
+                                            color="primary"
+                                            type="submit"
+                                            style={{
+                                                alignSelf: 'center',
+                                                color: 'rgba(0,175,195, 1)',
+                                            }}
+                                        >
+                                            <Search />
+                                        </IconButton>
+                                        <IconButton
+                                            onClick={handleDeleteSearch}
+                                            variant="contained"
+                                            color="primary"
+                                            style={{
+                                                alignSelf: 'center',
+                                                color: 'red',
+                                            }}
+                                        >
+                                            <DeleteForever />
+                                        </IconButton>
+                                    </Box>
+                                )}
                             </Box>
-                            <Button
-                                isLoading={false}
-                                variant="contained"
-                                color="primary"
-                                type="Submit"
-                            >
-                                Buscar
-                            </Button>
                         </form>
                         {loadingCategoriesData ? (
                             <Box display="flex" justifyContent="center">
                                 <CircularProgress />
                             </Box>
                         ) : (
-                            <>
-                                <Table
-                                    tableHeaderColor="primary"
-                                    tableHead={['id', 'Nombre', 'Acciones']}
-                                    tableData={categoriesData.data.map((e) => {
-                                        return [
-                                            e._id,
-                                            e.name,
-                                            <ActionGroup
-                                                category={e}
-                                                key={`action-group-${e._d}`}
-                                            />,
-                                        ]
-                                    })}
-                                />
-
-                                <ReactPaginate
-                                    forcePage={page}
-                                    pageClassName={classes.page}
-                                    containerClassName={classes.pagination}
-                                    activeClassName={classes.activePage}
-                                    breakLabel="..."
-                                    nextLabel={
-                                        <Button
-                                            isLoading={false}
-                                            variant="contained"
-                                            color="primary"
-                                            type="button"
-                                            justIcon
-                                        >
-                                            <ChevronRightIcon />
-                                        </Button>
-                                    }
-                                    onPageChange={(e) => handlePageClick(e)}
-                                    pageRangeDisplayed={5}
-                                    pageCount={Math.ceil(
-                                        categoriesData.data.length / 10
-                                    )}
-                                    previousLabel={
-                                        <Button
-                                            isLoading={false}
-                                            variant="contained"
-                                            color="primary"
-                                            type="button"
-                                            justIcon
-                                        >
-                                            <ChevronLeftIcon />
-                                        </Button>
-                                    }
-                                    renderOnZeroPageCount={null}
-                                />
-                            </>
+                            handleContent()
                         )}
                     </CardBody>
                 </Card>
