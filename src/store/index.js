@@ -6,6 +6,7 @@ import products from './products'
 import sales from './sales'
 import categories from './categories'
 import config from './config'
+import offers from './offers'
 
 export const store = configureStore({
     reducer: {
@@ -14,7 +15,8 @@ export const store = configureStore({
         products,
         sales,
         categories,
-        config
+        config,
+        offers
     },
 })
 

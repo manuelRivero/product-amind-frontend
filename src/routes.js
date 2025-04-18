@@ -40,6 +40,8 @@ import Categories from 'views/Categories'
 import AddCategories from 'views/AddCategories'
 import ProductDetail from './views/productDetail'
 import ConfigPage from './views/Config'
+import Offers from './views/Offers';
+import AddOffer from './views/AddOffer';
 
 const dashboardRoutes = [
     {
@@ -49,6 +51,40 @@ const dashboardRoutes = [
         icon: Dashboard,
         component: DashboardPage,
         layout: '/admin',
+    },
+    {
+        path: '/orders',
+        name: 'Ordenes',
+        icon: ListAltIcon,
+        component: Sales,
+        layout: '/admin',
+        childrens: [
+            {
+                noshow: true,
+                path: '/detail/:id',
+                name: 'Detalle de la orden',
+                component: SaleDetail,
+            },
+        ],
+    },
+    {
+        path: '/offers',
+        name: 'Promociones',
+        icon: ListAltIcon,
+        component: Offers,
+        layout: '/admin',
+        childrens: [
+            {
+                path: '/add-offers',
+                name: 'Agregar promoción',
+                component: AddOffer,
+            },
+            {
+                path: '/admin-offerss',
+                name: 'Administrar promoción',
+                component: null,
+            },
+        ],
     },
     {
         path: '/banners',
@@ -143,21 +179,7 @@ const dashboardRoutes = [
     //     component: CreateSale,
     //     layout: '/admin',
     // },
-    {
-        path: '/orders',
-        name: 'Ordenes',
-        icon: ListAltIcon,
-        component: Sales,
-        layout: '/admin',
-        childrens: [
-            {
-                noshow: true,
-                path: '/detail/:id',
-                name: 'Detalle de la orden',
-                component: SaleDetail,
-            },
-        ],
-    },
+  
 ]
 const authRoutes = [
     {
