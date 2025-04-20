@@ -21,8 +21,8 @@ import Dashboard from '@material-ui/icons/Dashboard'
 import StorefrontIcon from '@material-ui/icons/Storefront'
 import CategoryIcon from '@material-ui/icons/Category'
 import ListAltIcon from '@material-ui/icons/ListAlt'
-import ImageIcon from '@material-ui/icons/Image';
-import SettingsIcon from '@material-ui/icons/Settings';
+import ImageIcon from '@material-ui/icons/Image'
+import SettingsIcon from '@material-ui/icons/Settings'
 // core components/views for Admin layout
 import DashboardPage from 'views/Dashboard/Dashboard.js'
 
@@ -40,8 +40,8 @@ import Categories from 'views/Categories'
 import AddCategories from 'views/AddCategories'
 import ProductDetail from './views/productDetail'
 import ConfigPage from './views/Config'
-import Offers from './views/Offers';
-import AddOffer from './views/AddOffer';
+import Offers from './views/Offers'
+import AddOffer from './views/AddOffer'
 
 const dashboardRoutes = [
     {
@@ -75,17 +75,21 @@ const dashboardRoutes = [
         layout: '/admin',
         childrens: [
             {
-                path: '/add-offers',
+                path: '/add-offers/:id',
                 name: 'Agregar promoción',
+                noshow: true,
                 component: AddOffer,
             },
             {
-                path: '/admin-offerss',
-                name: 'Administrar promoción',
-                component: null,
+                path: '/add-offers',
+                name: 'Agregar promoción',
+                noshow: true,
+
+                component: AddOffer,
             },
         ],
     },
+
     {
         path: '/banners',
         name: 'Banners',
@@ -105,6 +109,7 @@ const dashboardRoutes = [
             },
         ],
     },
+
     {
         path: '/categories',
         name: 'Categorías',
@@ -179,7 +184,6 @@ const dashboardRoutes = [
     //     component: CreateSale,
     //     layout: '/admin',
     // },
-  
 ]
 const authRoutes = [
     {

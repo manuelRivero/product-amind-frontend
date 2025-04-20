@@ -5,6 +5,7 @@ import {
     DialogActions,
     IconButton,
     makeStyles,
+    Switch,
 } from '@material-ui/core'
 import Table from 'components/Table/Table.js'
 import React, { useEffect, useState } from 'react'
@@ -20,6 +21,7 @@ import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
 import ChevronRightIcon from '@material-ui/icons/ChevronRight'
 import { DatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers'
 import Button from 'components/CustomButtons/Button.js'
+import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 
 import MomentUtils from '@date-io/moment'
 import { DeleteForever, Search } from '@material-ui/icons'
@@ -27,9 +29,15 @@ import TextInput from '../../components/TextInput/Index'
 import Card from '../../components/Card/Card'
 import EmptyTablePlaceholder from '../../components/EmptyTablePlaceholder'
 import moment from 'moment'
-import { addOffer, resetSuccess } from '../../store/offers'
+import {
+    addOffer,
+    checkProductInOffer,
+    getOfferDetail,
+    resetOfferDetail,
+    updateOffer,
+} from '../../store/offers'
 import CustomModal from '../../components/CustomModal'
-import { useHistory } from 'react-router-dom'
+import { useHistory, useParams } from 'react-router-dom'
 
 const schema = yup.object({
     search: yup.string(),
@@ -112,6 +120,7 @@ const useStyles = makeStyles({
 export default function AddOffer() {
     const dispatch = useDispatch()
     const history = useHistory()
+    const params = useParams()
 
     const { user } = useSelector((state) => state.auth)
     const { productsData, loadingProductsData } = useSelector(
@@ -120,16 +129,10 @@ export default function AddOffer() {
     const { categoriesData, loadingCategoriesData } = useSelector(
         (state) => state.categories
     )
-    const { loadingAddOffer, successAddOffer } = useSelector(
+    const { loadingOfferDetail, offerDetail } = useSelector(
         (state) => state.offers
     )
     const classes = useStyles()
-
-    console.log(
-        'loadingAddOffer, successAddOffer',
-        loadingAddOffer,
-        successAddOffer
-    )
 
     const [selectedProducts, setSelectedProducts] = useState([])
     const [openProductModal, setOpenProductModal] = useState(false)
@@ -137,7 +140,13 @@ export default function AddOffer() {
     const [startDate, setStartDate] = useState(null)
     const [endDate, setEndDate] = useState(null)
     const [discount, setDiscount] = useState(null)
+    const [isActive, setIsActive] = useState(false)
     const [page, setPage] = useState(0)
+    const [loadingProduct, setLoadingProduct] = useState(null)
+    const [checkProductError, setCheckProductError] = useState(false)
+    const [loadingSubmit, setLoadingSubmit] = useState(false)
+    const [errorSubmit, setErrorSubmit] = useState(false)
+    const [successSubmit, setSuccessSubmit] = useState(false)
 
     //form
     const { watch, reset, handleSubmit, control } = useForm({
@@ -195,26 +204,77 @@ export default function AddOffer() {
         )
     }
 
-    const submit = () => {
-        dispatch(
-            addOffer({
-                name,
-                startDate: startDate.toDate(),
-                endDate: endDate.toDate(),
-                products: selectedProducts.map((product) => product._id),
-                discount,
-            })
-        )
+    const submit = async () => {
+        try {
+            setLoadingSubmit(true)
+            if (params.id) {
+                await dispatch(
+                    updateOffer({
+                        data: {
+                            name,
+                            startDate: moment(startDate).toDate(),
+                            endDate: moment(endDate).toDate(),
+                            products: selectedProducts.map(
+                                (product) => product._id
+                            ),
+                            isActive,
+                            discount,
+                        },
+                        id: params.id,
+                    })
+                ).unwrap()
+                setSuccessSubmit(true)
+            } else {
+                await dispatch(
+                    addOffer({
+                        name,
+                        startDate: startDate.toDate(),
+                        endDate: endDate.toDate(),
+                        products: selectedProducts.map(
+                            (product) => product._id
+                        ),
+                        discount,
+                    })
+                ).unwrap()
+                setSuccessSubmit(true)
+            }
+        } catch (error) {
+            console.log('submit error', error)
+            setErrorSubmit(true)
+        } finally {
+            setLoadingSubmit(false)
+        }
     }
 
-    const addProducts = (product) => {
-        setSelectedProducts((prev) => [...prev, product])
+    const addProducts = async (product) => {
+        console.log('add product', product._id)
+        try {
+            setLoadingProduct(product._id)
+            const { data } = await dispatch(
+                checkProductInOffer({ id: product._id })
+            ).unwrap()
+            console.log('request data', data)
+            if (!data.exists) {
+                console.log('data', data)
+                setSelectedProducts((prev) => [...prev, product])
+            } else {
+                setCheckProductError(true)
+            }
+        } catch (error) {
+            console.log('error', error)
+        } finally {
+            setLoadingProduct(null)
+        }
     }
     const removeProduct = (productId) => {
         console.log('productId', productId)
         setSelectedProducts((prev) =>
             prev.filter((product) => product._id !== productId)
         )
+    }
+
+    const checkSelected = (productId) => {
+        return selectedProducts.find((product) => product._id === productId)
     }
 
     useEffect(() => {
@@ -233,23 +293,62 @@ export default function AddOffer() {
         }
     }, [productsData])
     useEffect(() => {
-        const params = {
-            access: user.token,
-            filters: {
-                page,
-            },
+        if (openProductModal) {
+            const params = {
+                access: user.token,
+                filters: {
+                    page,
+                },
+            }
+            if (watchSearch) {
+                params.filters.search = watchSearch
+            }
+            dispatch(getProducts(params))
         }
-        if (watchSearch) {
-            params.filters.search = watchSearch
+    }, [page, openProductModal])
+    useEffect(() => {
+        if (params.id) {
+            dispatch(getOfferDetail(params.id))
         }
-        dispatch(getProducts(params))
-    }, [page])
+        return () => {
+            dispatch(resetOfferDetail())
+            console.log('reset')
+        }
+    }, [params])
+
+    useEffect(() => {
+        if (offerDetail) {
+            setStartDate(offerDetail.startDate)
+            setEndDate(offerDetail.endDate)
+            setName(offerDetail.name)
+            setDiscount(offerDetail.discount)
+            setSelectedProducts(offerDetail.products.map((product) => product))
+            setIsActive(offerDetail.isActive)
+        }
+    }, [offerDetail])
+    console.log('params', params)
     const datesValidation = startDate && endDate
     const productsValidation = selectedProducts.length > 0
-    return (
+    return loadingOfferDetail ? (
+        <Box display="flex" justifyContent="center">
+            <CircularProgress />
+        </Box>
+    ) : (
         <>
+            <IconButton
+                className={classes.backButton}
+                onClick={() => history.push('/admin/offers')}
+            >
+                <ArrowBackIcon />
+            </IconButton>
             <MuiPickersUtilsProvider locale={'es'} utils={MomentUtils}>
-                <h3 style={{ marginBottom: '2rem' }}>Crear nueva promoción</h3>
+                {!params.id ? (
+                    <h3 style={{ marginBottom: '2rem' }}>
+                        Crear nueva promoción
+                    </h3>
+                ) : (
+                    <h3 style={{ marginBottom: '2rem' }}>Editar promoción</h3>
+                )}
                 <form autoComplete="off">
                     <Box
                         display="flex"
@@ -270,6 +369,7 @@ export default function AddOffer() {
                                     onChange={(date) => {
                                         setStartDate(date)
                                     }}
+                                    disabled={params.id}
                                     value={startDate}
                                     className={classes.datePicker}
                                     inputVariant="outlined"
@@ -323,7 +423,7 @@ export default function AddOffer() {
                                     }
                                 />
                             </Box>
-                        </Box>
+                       
                         <Box width={250}>
                             <TextInput
                                 icon={null}
@@ -331,6 +431,20 @@ export default function AddOffer() {
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                             />
+                        </Box>
+                        <Box width={250}>
+                                <label htmlFor={`status`}>
+                                    Activar promoción
+                                    <Switch
+                                        id={`status`}
+                                        checked={isActive}
+                                        onChange={(_, checked) => setIsActive(checked)}
+                                        inputProps={{
+                                            'aria-label': 'primary checkbox',
+                                        }}
+                                    />
+                                </label>
+                            </Box>
                         </Box>
                     </Box>
                 </form>
@@ -413,7 +527,7 @@ export default function AddOffer() {
                     <Box display="flex" justifyContent="center">
                         <Button
                             onClick={submit}
-                            isLoading={loadingAddOffer}
+                            isLoading={loadingSubmit}
                             color="primary"
                             type="button"
                         >
@@ -533,14 +647,23 @@ export default function AddOffer() {
                                                     ? 'Disponible'
                                                     : 'No disponible'
                                                 : 'Sin información',
-                                            <Button
-                                                type="button"
-                                                color="primary"
-                                                key={e._id}
-                                                onClick={() => addProducts(e)}
-                                            >
-                                                Agregar
-                                            </Button>,
+                                            !checkSelected(e._id) ? (
+                                                <Button
+                                                    type="button"
+                                                    color="primary"
+                                                    key={e._id}
+                                                    onClick={() =>
+                                                        addProducts(e)
+                                                    }
+                                                    isLoading={
+                                                        loadingProduct === e._id
+                                                    }
+                                                >
+                                                    Agregar
+                                                </Button>
+                                            ) : (
+                                                'Producto agregado'
+                                            ),
                                         ]
                                     }
                                 )}
@@ -596,11 +719,9 @@ export default function AddOffer() {
             </Dialog>
 
             <CustomModal
-                open={successAddOffer}
+                open={successSubmit}
                 handleClose={() => {
                     history.push('/admin/offers')
-
-                    dispatch(resetSuccess())
                 }}
                 icon={'success'}
                 title="¡Listo!"
@@ -610,7 +731,36 @@ export default function AddOffer() {
                 cancelCb={() => {}}
                 confirmCb={() => {
                     history.push('/admin/offers')
-                    dispatch(resetSuccess())
+                }}
+            />
+            <CustomModal
+                open={errorSubmit}
+                handleClose={() => {
+                    setErrorSubmit(false)
+                }}
+                icon={'error'}
+                title="¡Error al guardar!"
+                subTitle="No se pudieron guardar los cambios realizados"
+                hasCancel={false}
+                hasConfirm={true}
+                cancelCb={() => {}}
+                confirmCb={() => {
+                    setErrorSubmit(false)
+                }}
+            />
+            <CustomModal
+                open={checkProductError}
+                handleClose={() => {
+                    setCheckProductError(false)
+                }}
+                icon={'error'}
+                title="¡Producto no disponible!"
+                subTitle="El producto ya se encuentra dentro de otra promoción"
+                hasCancel={false}
+                hasConfirm={true}
+                cancelCb={() => {}}
+                confirmCb={() => {
+                    setCheckProductError(false)
                 }}
             />
         </>
