@@ -17,7 +17,7 @@ export const addOffer = createAsyncThunk(
             const response = await addOfferRequest(args)
             return response
         } catch (error) {
-            console.log('thunk error')
+            console.log('thunk error', error)
             return rejectWithValue(error.response.data)
         }
     }
@@ -30,7 +30,7 @@ export const updateOffer = createAsyncThunk(
             const response = await updateOfferRequest(args.data, args.id)
             return response
         } catch (error) {
-            console.log('thunk error')
+            console.log('thunk error', error)
             return rejectWithValue(error.response.data)
         }
     }
@@ -42,20 +42,20 @@ export const getOffers = createAsyncThunk(
             const response = await getOfferRequest()
             return response
         } catch (error) {
-            console.log('thunk error')
+            console.log('thunk error', error)
             return rejectWithValue(error.response.data)
         }
     }
 )
 
 export const getOfferDetail = createAsyncThunk(
-    'get/offers-detail',
+    'get/offer-detail',
     async (args, { rejectWithValue }) => {
         try {
             const response = await getOfferRequest(args.id)
             return response
         } catch (error) {
-            console.log('thunk error')
+            console.log('thunk error', error)
             return rejectWithValue(error.response.data)
         }
     }
@@ -68,7 +68,7 @@ export const checkProductInOffer = createAsyncThunk(
             const response = await checkProduct(args.id)
             return response
         } catch (error) {
-            console.log('thunk error')
+            console.log('thunk error', error)
             return rejectWithValue(error.response.data)
         }
     }
@@ -81,7 +81,7 @@ export const finishOffer = createAsyncThunk(
             const response = await finishOfferRequest(args.id)
             return response
         } catch (error) {
-            console.log('thunk error')
+            console.log('thunk error', error)
             return rejectWithValue(error.response.data)
         }
     }
@@ -94,7 +94,7 @@ export const deleteOffer = createAsyncThunk(
             const response = await deleteOfferRequest(args.id)
             return response
         } catch (error) {
-            console.log('thunk error')
+            console.log('thunk error', error)
             return rejectWithValue(error.response.data)
         }
     }

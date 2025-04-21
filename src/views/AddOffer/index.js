@@ -321,15 +321,16 @@ export default function AddOffer() {
             setStartDate(offerDetail.startDate)
             setEndDate(offerDetail.endDate)
             setName(offerDetail.name)
-            setDiscount(offerDetail.discount)
+            setDiscount(String(offerDetail.discount))
             setSelectedProducts(offerDetail.products.map((product) => product))
             setIsActive(offerDetail.isActive)
         }
     }, [offerDetail])
-    console.log('params', params)
+    console.log()
+
     const datesValidation = startDate && endDate
     const productsValidation = selectedProducts.length > 0
-    return loadingOfferDetail ? (
+    return params.id && loadingOfferDetail ? (
         <Box display="flex" justifyContent="center">
             <CircularProgress />
         </Box>
@@ -364,7 +365,7 @@ export default function AddOffer() {
                         >
                             <Box width={250}>
                                 <DatePicker
-                                    minDate={new Date()}
+                                    minDate={params.id ? undefined : new Date()}
                                     lang="es"
                                     onChange={(date) => {
                                         setStartDate(date)
@@ -423,22 +424,29 @@ export default function AddOffer() {
                                     }
                                 />
                             </Box>
-                       
-                        <Box width={250}>
-                            <TextInput
-                                icon={null}
-                                label={'Nombre de la promoción'}
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                            />
-                        </Box>
-                        <Box width={250}>
+
+                            <Box width={250}>
+                                <TextInput
+                                    helperText={
+                                        <small>
+                                            Nombre de la promoción visible en tu tienda
+                                        </small>
+                                    }
+                                    icon={null}
+                                    label={'Nombre de la promoción'}
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                />
+                            </Box>
+                            <Box width={250}>
                                 <label htmlFor={`status`}>
                                     Activar promoción
                                     <Switch
                                         id={`status`}
                                         checked={isActive}
-                                        onChange={(_, checked) => setIsActive(checked)}
+                                        onChange={(_, checked) =>
+                                            setIsActive(checked)
+                                        }
                                         inputProps={{
                                             'aria-label': 'primary checkbox',
                                         }}
@@ -485,10 +493,11 @@ export default function AddOffer() {
                                         'Acciones',
                                     ]}
                                     tableData={selectedProducts.map((e) => {
+                                        console.log('selectedProducts', e)
                                         return [
                                             e._id,
                                             e.name,
-                                            productCategory(e.category),
+                                            e.categoryDetail[0].name,
                                             `$${formatNumber(
                                                 e.price.toFixed(1)
                                             )}`,

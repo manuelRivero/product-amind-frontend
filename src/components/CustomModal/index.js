@@ -5,12 +5,14 @@ import PropTypes from 'prop-types'
 
 import Success from 'assets/img/success-icon.png'
 import Error from 'assets/img/error-icon.png'
+import Warning from 'assets/img/alert-icon.jpg'
 
 icons
 
 const icons = {
     success: Success,
     error: Error,
+    warning: Warning,
 }
 
 const useStyles = makeStyles({
@@ -38,14 +40,15 @@ const useStyles = makeStyles({
         '& h4, & p': {
             margin: 0,
             marginBottom: '5px',
+            textAlign: 'center',
         },
     },
-    buttonsWrapper:{
+    buttonsWrapper: {
         display: 'flex',
         justifyContent: 'center',
         gap: '1rem',
-        marginTop: '1rem'
-    }
+        marginTop: '1rem',
+    },
 })
 
 export default function CustomModal({
@@ -80,17 +83,6 @@ export default function CustomModal({
                     <p>{subTitle}</p>
                 </Box>
                 <Box className={classes.buttonsWrapper}>
-                    {hasConfirm && (
-                        <Button
-                            isLoading={false}
-                            variant="contained"
-                            color="primary"
-                            type="button"
-                            onClick={() => confirmCb()}
-                        >
-                            Aceptar
-                        </Button>
-                    )}
                     {hasCancel && (
                         <Button
                             isLoading={false}
@@ -98,6 +90,17 @@ export default function CustomModal({
                             color="primary"
                             type="button"
                             onClick={() => cancelCb()}
+                        >
+                            Cancelar
+                        </Button>
+                    )}
+                    {hasConfirm && (
+                        <Button
+                            isLoading={false}
+                            variant="contained"
+                            color="primary"
+                            type="button"
+                            onClick={() => confirmCb()}
                         >
                             Aceptar
                         </Button>
