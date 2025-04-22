@@ -361,7 +361,7 @@ export default function AddOffer() {
                         >
                             <Box width={250}>
                                 <DatePicker
-                                    minDate={params.id ? undefined : new Date()}
+                                    minDate={params.id ? undefined : new Date(moment().add(1, 'day'))}
                                     lang="es"
                                     onChange={(date) => {
                                         setStartDate(date)
@@ -384,7 +384,7 @@ export default function AddOffer() {
                             <Box width={250}>
                                 <DatePicker
                                     TextFieldProps={{ variant: 'outlined' }}
-                                    minDate={new Date(moment().add(1, 'day'))}
+                                    minDate={new Date(moment().add(2, 'day'))}
                                     lang="es"
                                     onChange={(date) => {
                                         setEndDate(date)
