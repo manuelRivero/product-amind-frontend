@@ -13,6 +13,7 @@ import { deleteOffer, getOffers } from '../../store/offers'
 import moment from 'moment'
 import { Delete, Edit } from '@material-ui/icons'
 import CustomModal from '../../components/CustomModal'
+import { formatNumber } from '../../helpers/product'
 // import { Edit } from '@material-ui/icons'
 // import moment from 'moment'
 // import { finalPrice, formatNumber } from '../../helpers/product'
@@ -106,7 +107,7 @@ export default function Offers() {
                                     moment(offer.startDate).format(
                                         'DD-MM-YYYY'
                                     ),
-                                    offer.discount,
+                                    `${formatNumber(offer.discount)}%`,
                                     `${ moment(offer.startDate).diff(
                                         moment(),
                                         'hour'
