@@ -106,10 +106,11 @@ export default function Offers() {
                                     moment(offer.startDate).format(
                                         'DD-MM-YYYY'
                                     ),
+                                    offer.discount,
                                     `${moment(offer.endDate).diff(
-                                        moment(),
+                                        moment(offer.startDate),
                                         'hour'
-                                    )}%`,
+                                    ) > 0}%`,
                                     <Box
                                         display="flex"
                                         style={{ gap: '1rem' }}
