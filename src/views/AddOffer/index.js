@@ -5,7 +5,6 @@ import {
     DialogActions,
     IconButton,
     makeStyles,
-    Switch,
 } from '@material-ui/core'
 import Table from 'components/Table/Table.js'
 import React, { useEffect, useState } from 'react'
@@ -140,7 +139,6 @@ export default function AddOffer() {
     const [startDate, setStartDate] = useState(null)
     const [endDate, setEndDate] = useState(null)
     const [discount, setDiscount] = useState(null)
-    const [isActive, setIsActive] = useState(false)
     const [page, setPage] = useState(0)
     const [loadingProduct, setLoadingProduct] = useState(null)
     const [checkProductError, setCheckProductError] = useState(false)
@@ -217,7 +215,6 @@ export default function AddOffer() {
                             products: selectedProducts.map(
                                 (product) => product._id
                             ),
-                            isActive,
                             discount,
                         },
                         id: params.id,
@@ -323,7 +320,6 @@ export default function AddOffer() {
             setName(offerDetail.name)
             setDiscount(String(offerDetail.discount))
             setSelectedProducts(offerDetail.products.map((product) => product))
-            setIsActive(offerDetail.isActive)
         }
     }, [offerDetail])
     console.log()
@@ -437,21 +433,6 @@ export default function AddOffer() {
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                 />
-                            </Box>
-                            <Box width={250}>
-                                <label htmlFor={`status`}>
-                                    Activar promoción
-                                    <Switch
-                                        id={`status`}
-                                        checked={isActive}
-                                        onChange={(_, checked) =>
-                                            setIsActive(checked)
-                                        }
-                                        inputProps={{
-                                            'aria-label': 'primary checkbox',
-                                        }}
-                                    />
-                                </label>
                             </Box>
                         </Box>
                     </Box>

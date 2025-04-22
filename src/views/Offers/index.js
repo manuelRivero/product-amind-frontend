@@ -11,7 +11,6 @@ import AddIcon from '@material-ui/icons/Add'
 
 import { deleteOffer, getOffers } from '../../store/offers'
 import moment from 'moment'
-import { formatNumber } from '../../helpers/product'
 import { Delete, Edit } from '@material-ui/icons'
 import CustomModal from '../../components/CustomModal'
 // import { Edit } from '@material-ui/icons'
@@ -104,9 +103,13 @@ export default function Offers() {
                                     moment(offer.startDate).format(
                                         'DD-MM-YYYY'
                                     ),
-                                    moment(offer.endDate).format('DD-MM-YYYY'),
-                                    `${formatNumber(offer.discount)}%`,
-                                    offer.isActive ? 'Activa' : 'Inactiva',
+                                    moment(offer.startDate).format(
+                                        'DD-MM-YYYY'
+                                    ),
+                                    `${moment(offer.endDate).diff(
+                                        moment(),
+                                        'hour'
+                                    )}%`,
                                     <Box
                                         display="flex"
                                         style={{ gap: '1rem' }}
@@ -132,7 +135,7 @@ export default function Offers() {
                                                 </Button>
                                             </Box>
                                         </Tooltip>
-                                        {offer.isActive && (
+                                      
                                             <Tooltip
                                                 title="Eliminar promoción"
                                                 placement="top"
@@ -156,7 +159,6 @@ export default function Offers() {
                                                     </Button>
                                                 </Box>
                                             </Tooltip>
-                                        )}
                                     </Box>,
                                 ])}
                             />
