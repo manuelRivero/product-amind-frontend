@@ -144,6 +144,7 @@ const useStyles = makeStyles({
         maxWidth: '220px',
         height: '220px',
         width: '100%',
+        background: '#fff',
     },
     productImage: {
         borderRadius: '16px',
@@ -180,8 +181,6 @@ export default function AddProducts() {
         productSuccess,
         productError,
         loadingProductDetail,
-        productDetail,
-        productDetailError,
         loadingEditProduct,
         editProductError,
         editProductSuccess,
@@ -189,8 +188,9 @@ export default function AddProducts() {
     const dispatch = useDispatch()
     const classes = useStyles()
     const [deleteImages, setDeleteImages] = useState([])
-    const [selectedCategory, setSelectedCategory] = useState(null)
     const [openConfirmUnique, setOpenConfirmUnique] = useState(false)
+    const [productDetail, setProductDetail] = useState(null)
+    const [productDetailError, setProductDetailError] = useState(false)
     //form
     const {
         control,
@@ -246,7 +246,7 @@ export default function AddProducts() {
 
         // Agregar datos básicos del producto
         data.append('name', values.name || '')
-        data.append('category', selectedCategory || '')
+        data.append('category', values.category || '')
         data.append(
             'price',
             values.price.replace('$', '').replace(',', '') || 0
@@ -263,7 +263,7 @@ export default function AddProducts() {
         }
 
         // Agregar características (features)
-        if (values.featuresArray.length > 0) {
+        if (values.featuresArray?.length > 0) {
             data.append('features', JSON.stringify(values.featuresArray))
         }
         if (values.unique) {
@@ -301,16 +301,28 @@ export default function AddProducts() {
         setDeleteImages([...deleteImages, index])
         remove(index)
     }
-    useEffect(async () => {
-        dispatch(
-            getCategories({
-                access: user.token,
-                filters: { page: 0, limit: 50 },
-            })
-        )
-        if (params.id) {
-            dispatch(getProductDetail({ access: user.token, id: params.id }))
+    useEffect(() => {
+        const getData = async () => {
+            dispatch(
+                getCategories({
+                    access: user.token,
+                    filters: { page: 0, limit: 50 },
+                })
+            )
+            if (params.id) {
+                try {
+                    const { data } = await dispatch(
+                        getProductDetail({ access: user.token, id: params.id })
+                    ).unwrap()
+                    setProductDetail(data.product)
+                } catch (error) {
+                    console.log('error en el catch', error)
+                    setProductDetailError(false)
+                } 
+            }
         }
+
+        getData()
     }, [])
     useEffect(async () => {
         if (!params.id) {
@@ -338,12 +350,23 @@ export default function AddProducts() {
                     : '',
             })
             if (productDetail.features.length > 0) {
-                productDetail.features.map((feature) =>
-                    featuresArray.append({
-                        ...feature,
-                        hasSize: feature.size,
+                setValue('unique', false)
+
+                productDetail.features
+                    .filter((feature) => feature.color || feature.size)
+                    .map((feature) =>
+                        featuresArray.append({
+                            ...feature,
+                            hasSize: feature.size,
+                        })
+                    )
+                productDetail.features
+                    .filter((feature) => !feature.color && !feature.size)
+                    .map((feature) => {
+                        setValue('stock', feature.stock)
+                        setValue('unique', true)
+                        
                     })
-                )
             }
         } else {
             reset({
@@ -554,7 +577,8 @@ export default function AddProducts() {
                                                         key={category._id}
                                                         value={category._id}
                                                         onClick={() =>
-                                                            setSelectedCategory(
+                                                            setValue(
+                                                                'category',
                                                                 category._id
                                                             )
                                                         }

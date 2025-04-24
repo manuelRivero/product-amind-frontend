@@ -194,7 +194,9 @@ export default function ProductDetail() {
                     <div>
                         <p>Categoría</p>
                         <p>
-                            <strong>{productDetail.categoryDetail[0]?.name}</strong>
+                            <strong>
+                                {productDetail.categoryDetail[0]?.name}
+                            </strong>
                         </p>
                     </div>
                     <div>
@@ -215,6 +217,16 @@ export default function ProductDetail() {
                             </strong>
                         </p>
                     </div>
+                    {productDetail.features.filter((feature) => !feature.color && !feature.size).length > 0 && (
+                        <Box marginBottom={2}>
+                            <p>Stock</p>
+                            <p>
+                                <strong>
+                                    {productDetail.features[0].stock}
+                                </strong>
+                            </p>
+                        </Box>
+                    )}  
                 </Box>
                 <Box marginBottom={4}>
                     <p>Descripción</p>
@@ -223,62 +235,80 @@ export default function ProductDetail() {
                     </p>
                 </Box>
             </Box>
-            <Box
-                padding={2}
-                mt={4}
-                style={{ background: '#fff', borderRadius: '16px' }}
-            >
-                <Box>
-                    <h3>Variantes de tu producto</h3>
+            {productDetail.features.filter((feature) => feature.color || feature.size).length > 0 && (
+                <Box
+                    padding={2}
+                    mt={4}
+                    style={{ background: '#fff', borderRadius: '16px' }}
+                >
+                    <Box>
+                        <h3>Variantes de tu producto</h3>
+                    </Box>
+                    <>
+                        {productDetail.features
+                            .filter((feature) => feature.color || feature.size)
+                            .map((feature, index) => {
+                                return (
+                                    <>
+                                        <div key={feature._id}>
+                                            <p>
+                                                <strong>
+                                                    Variante #{index + 1}
+                                                </strong>
+                                            </p>
+                                            {feature.color && (
+                                                <Box
+                                                    marginBottom={2}
+                                                    className={classes.inputRow}
+                                                >
+                                                    <p style={{ margin: 0 }}>
+                                                        Color:
+                                                    </p>
+                                                    <p style={{ margin: 0 }}>
+                                                        <strong>
+                                                            {feature.color}
+                                                        </strong>
+                                                    </p>
+                                                </Box>
+                                            )}
+                                            {feature.size && (
+                                                <Box
+                                                    marginBottom={2}
+                                                    className={classes.inputRow}
+                                                >
+                                                    <p style={{ margin: 0 }}>
+                                                        Talla:
+                                                    </p>
+                                                    <p style={{ margin: 0 }}>
+                                                        <strong>
+                                                            {feature.size}
+                                                        </strong>
+                                                    </p>
+                                                </Box>
+                                            )}
+                                            {feature.stock && (
+                                                <Box
+                                                    marginBottom={2}
+                                                    className={classes.inputRow}
+                                                >
+                                                    <p style={{ margin: 0 }}>
+                                                        Stock
+                                                    </p>
+                                                    <p style={{ margin: 0 }}>
+                                                        <strong>
+                                                            {feature.stock}
+                                                        </strong>
+                                                    </p>
+                                                </Box>
+                                            )}
+                                        </div>
+                                        <Divider />
+                                    </>
+                                )
+                            })}
+                    </>
                 </Box>
-                <>
-                    {productDetail.features.map((feature, index) => {
-                        return (
-                            <>
-                                <div key={feature._id}>
-                                    <p>
-                                        <strong>Variante #{index + 1}</strong>
-                                    </p>
-                                    {feature.color && (
-                                        <Box
-                                            marginBottom={2}
-                                            className={classes.inputRow}
-                                        >
-                                            <p style={{ margin: 0 }}>Color:</p>
-                                            <p style={{ margin: 0 }}>
-                                                <strong>{feature.color}</strong>
-                                            </p>
-                                        </Box>
-                                    )}
-                                    {feature.size && (
-                                        <Box
-                                            marginBottom={2}
-                                            className={classes.inputRow}
-                                        >
-                                            <p style={{ margin: 0 }}>Talla:</p>
-                                            <p style={{ margin: 0 }}>
-                                                <strong>{feature.size}</strong>
-                                            </p>
-                                        </Box>
-                                    )}
-                                    {feature.stock && (
-                                        <Box
-                                            marginBottom={2}
-                                            className={classes.inputRow}
-                                        >
-                                            <p style={{ margin: 0 }}>Stock</p>
-                                            <p style={{ margin: 0 }}>
-                                                <strong>{feature.stock}</strong>
-                                            </p>
-                                        </Box>
-                                    )}
-                                </div>
-                                <Divider />
-                            </>
-                        )
-                    })}
-                </>
-            </Box>
+            )}
         </section>
     )
 }
