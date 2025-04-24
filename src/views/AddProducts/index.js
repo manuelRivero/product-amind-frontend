@@ -149,7 +149,7 @@ const useStyles = makeStyles({
         borderRadius: '16px',
         width: '100%',
         height: '100%',
-        objectFit: 'cover',
+        objectFit: 'contain',
     },
     trashICon: {
         position: 'absolute',

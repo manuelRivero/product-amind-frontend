@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect } from 'react'
 
 import { makeStyles } from '@material-ui/core/styles'
 import { Box, Divider, IconButton } from '@material-ui/core'
@@ -70,12 +70,13 @@ const useStyles = makeStyles({
         maxWidth: '220px',
         height: '220px',
         width: '100%',
+        background: '#fff',
     },
     productImage: {
         borderRadius: '16px',
         width: '100%',
         height: '100%',
-        objectFit: 'cover',
+        objectFit: 'contain',
     },
     trashICon: {
         position: 'absolute',
@@ -105,20 +106,20 @@ export default function ProductDetail() {
         (state) => state.categories
     )
 
-    const category = useMemo(() => {
-        if (categoriesData && productDetail) {
-            const target = categoriesData.data.find(
-                (category) => category._id === productDetail.category
-            )
-            if (target) {
-                return target
-            } else {
-                return null
-            }
-        } else {
-            return null
-        }
-    }, [categoriesData, productDetail])
+    // const category = useMemo(() => {
+    //     if (categoriesData && productDetail) {
+    //         const target = categoriesData.data.find(
+    //             (category) => category._id === productDetail.category
+    //         )
+    //         if (target) {
+    //             return target
+    //         } else {
+    //             return null
+    //         }
+    //     } else {
+    //         return null
+    //     }
+    // }, [categoriesData, productDetail])
     console.log('category data', categoriesData?.data)
     const dispatch = useDispatch()
     const classes = useStyles()
@@ -193,7 +194,7 @@ export default function ProductDetail() {
                     <div>
                         <p>Categoría</p>
                         <p>
-                            <strong>{category?.name}</strong>
+                            <strong>{productDetail.categoryDetail[0]?.name}</strong>
                         </p>
                     </div>
                     <div>
