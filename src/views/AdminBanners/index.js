@@ -4,11 +4,11 @@ import {
     CircularProgress,
     IconButton,
     makeStyles,
+    Select,
     Switch,
-    Typography,
 } from '@material-ui/core'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
-import { changeBannerStatus, deleteBanner, getBanners } from '../../api/banners'
+import { changeBannerSection, changeBannerStatus, deleteBanner, getBanners } from '../../api/banners'
 import { DeleteForever } from '@material-ui/icons'
 import { useSelector } from 'react-redux'
 import { useHistory } from 'react-router-dom'
@@ -43,12 +43,12 @@ export default function AdminBanners() {
     const classes = useStyles()
     const [banners, setBanners] = useState([])
     const [loading, setLoading] = useState(true)
-    const [loadingBanner, setLoadingBanner] = useState(undefined)
+    const [loadingBannerStatusChange, setLoadingBannerStatusChange] = useState(undefined)
     const [loadingDeleteBanner, setLoadingDeleteBanner] = useState(undefined)
 
-    const handleChange = async (id) => {
+    const handleStatusChange = async (id) => {
         try {
-            setLoadingBanner(id)
+            setLoadingBannerStatusChange(id)
 
             // Llamada al backend para cambiar el estado del banner
             const response = await changeBannerStatus(id, user.token)
@@ -65,7 +65,20 @@ export default function AdminBanners() {
         } catch (error) {
             console.log('banner status error', error)
         } finally {
-            setLoadingBanner(undefined)
+            setLoadingBannerStatusChange(undefined)
+        }
+    }
+
+    const handleTargetSectionChange = async (id, targetSection) => {
+        try {
+            // Llamada al backend para cambiar el estado del banner
+            const response = await changeBannerSection(id, targetSection, user.token)
+            console.log('response', response)
+
+        } catch (error) {
+            console.log('banner status error', error)
+        } finally {
+            setLoadingBannerStatusChange(undefined)
         }
     }
 
@@ -145,37 +158,81 @@ export default function AdminBanners() {
                                 style={{ width: '100%' }}
                                 className={classes.banner}
                             />
-                            <Box
-                                display="flex"
-                                flexDirection="column"
-                                justifyContent="center"
-                                alignItems="flex-start"
-                            >
-                                {loadingBanner === banner._id ? (
+                            <Box>
+                                {loadingBannerStatusChange === banner._id ? (
                                     <CircularProgress />
                                 ) : (
-                                    <>
-                                        <Typography>
-                                            {banner.active
-                                                ? 'Desactivar banner'
-                                                : 'Activar banner'}
-                                        </Typography>
-                                        <Switch
-                                            disabled={
-                                                loadingDeleteBanner ===
-                                                banner._id
-                                            }
-                                            id={`banner-${index}`}
-                                            defaultChecked={banner.active}
-                                            onChange={() =>
-                                                handleChange(banner._id)
-                                            }
-                                            inputProps={{
-                                                'aria-label':
-                                                    'primary checkbox',
-                                            }}
-                                        />
-                                    </>
+                                    <Box
+                                        display="flex"
+                                        flexDirection={{
+                                            xs: 'column',
+                                            md: 'row',
+                                        }}
+                                    >
+                                        <Box flexBasis={{xs:"auto", md:200}}>
+                                            <p>
+                                                {banner.active
+                                                    ? 'Desactivar banner'
+                                                    : 'Activar banner'}
+                                            </p>
+                                            <Switch
+                                                disabled={
+                                                    loadingDeleteBanner ===
+                                                    banner._id
+                                                }
+                                                id={`banner-${index}`}
+                                                defaultChecked={banner.active}
+                                                onChange={() =>
+                                                    handleStatusChange(
+                                                        banner._id
+                                                    )
+                                                }
+                                                inputProps={{
+                                                    'aria-label':
+                                                        'primary checkbox',
+                                                }}
+                                            />
+                                        </Box>
+                                        <Box
+                                            flexBasis={{xs:"auto", md:350}}
+                                            display="flex"
+                                            alignItems="end"
+                                            style={{ gap: '1rem' }}
+                                        >
+                                            <Box>
+                                                <p>Sección de destino</p>
+                                                <Select
+                                                    native
+                                                    defaultValue={
+                                                        banner.section || 'NONE'
+                                                    }
+                                                    onChange={(event) =>{
+                                                        if(
+                                                            event.target.value !== 'NONE'
+                                                        ){
+                                                            handleTargetSectionChange(
+                                                                banner._id, event.target.value
+                                                            )
+
+                                                    }}}
+                                                    variant="outlined"
+                                                    style={{
+                                                        width: '100%',
+                                                    }}
+                                                >
+                                                     <option value="NONE">
+                                                        Seleccione una sección
+                                                    </option>
+                                                    <option value="HOME-HERO">
+                                                        Sección de bienvedida
+                                                    </option>
+                                                    <option value="HOME-FOOTER">
+                                                        Píe de pagina
+                                                    </option>
+                                                </Select>
+                                            </Box>
+                                        </Box>
+                                    </Box>
                                 )}
                             </Box>
                         </Box>

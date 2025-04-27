@@ -41,3 +41,11 @@ export const editCategory = (access, data, id) => {
         },
     })
 }
+
+export const getCategoryDetail = (access, id) => {
+    return client.get(`api/categories/get-category-detail-admin/${id}`, {
+        headers: {
+            'x-token': access,
+        },
+    })
+}

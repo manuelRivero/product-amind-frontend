@@ -111,7 +111,7 @@ export default function Offers() {
                                     `${ moment(offer.startDate).diff(
                                         moment(),
                                         'hour'
-                                    ) <= 0 ? "Activa" : "Inactiva"}`,
+                                    ) > 0 ? "Activa" : "Inactiva"}`,
                                     <Box
                                         display="flex"
                                         style={{ gap: '1rem' }}

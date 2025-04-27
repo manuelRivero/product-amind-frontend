@@ -20,6 +20,18 @@ export const changeBannerStatus = (id, access) => {
     )
 }
 
+export const changeBannerSection = (id, section, access) => {
+    return client.put(
+        `api/banners/change-section`,
+        { id, section },
+        {
+            headers: {
+                'x-token': access,
+            },
+        }
+    )
+}
+
 export const getBanners = (access) => {
     return client.get(`api/banners/get-banners`, {
         headers: {

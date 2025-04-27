@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 
 import { makeStyles } from '@material-ui/core/styles'
 import { Box, IconButton } from '@material-ui/core'
 import TextInput from 'components/TextInput/Index'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, Controller, useFieldArray } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import Button from 'components/CustomButtons/Button'
@@ -18,9 +18,20 @@ import { editCategory } from 'store/categories'
 import { postCategories } from 'store/categories'
 import { resetEditCategorySuccess } from 'store/categories'
 import { resetCategorySuccess } from 'store/categories'
+import { useDropzone } from 'react-dropzone/.'
+import { DeleteForever } from '@material-ui/icons'
+import uploadImage from 'assets/img/upload-cloud.png'
+import TextDanger from 'components/Typography/Danger'
+import { getCategoryDetail } from '../../api/categories'
+import LoadinScreen from '../../components/LoadingScreen'
 
 const schema = yup.object({
     name: yup.string().required('Campo obligatorio'),
+    images: yup
+        .array()
+        .min(1, 'Campo obligatorio')
+        .max(1, 'Máximo 1 imágenes')
+        .required('Campo obligatorio'),
 })
 
 const useStyles = makeStyles({
@@ -41,6 +52,7 @@ const useStyles = makeStyles({
     imagesRow: {
         display: 'flex',
         gap: '1.5rem',
+        flexWrap: 'wrap',
     },
     inputRow: {
         margin: '1rem 0',
@@ -78,6 +90,8 @@ const useStyles = makeStyles({
         position: 'relative',
         maxWidth: '220px',
         height: '220px',
+        width: '100%',
+        background: '#fff',
     },
     productImage: {
         borderRadius: '16px',
@@ -117,18 +131,50 @@ export default function AddCategories() {
     } = useSelector((state) => state.categories)
     const dispatch = useDispatch()
     const classes = useStyles()
+    const [loading, setLoading] = useState(false)
     //form
-    const { control, handleSubmit, reset } = useForm({
+    const {
+        control,
+        handleSubmit,
+        reset,
+        formState: { errors },
+    } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
             name: '',
+            images: [],
+        },
+    })
+
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: 'images',
+    })
+    const onDrop = useCallback((acceptedFiles) => {
+        // Do something with the files
+        console.log('ondrop')
+        acceptedFiles.forEach((e) => {
+            append({
+                file: e,
+                preview: URL.createObjectURL(e),
+            })
+        })
+    }, [])
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+        onDrop,
+        maxFiles: 1,
+        accept: {
+            'image/*': [],
         },
     })
 
     const submit = async (values) => {
         const data = new FormData()
 
-        data.append('name', values.name || '')
+        data.append('name', values.name)
+        if (values.images[0].file) {
+            data.append('image', values.images[0].file)
+        }
         if (params.id) {
             // Despachar acción de edición
             dispatch(editCategory({ access: user.token, data, id: params.id }))
@@ -138,17 +184,42 @@ export default function AddCategories() {
         }
     }
 
-    useEffect(async () => {
-        if (params.id && params.name) {
-            reset({
-                name: params.name,
-            })
-        } else {
-            reset({
-                name: '',
-            })
+    const handleDeleteImage = (index) => {
+        remove(index)
+    }
+
+    useEffect(() => {
+        const getData = async () => {
+            if (params.id) {
+                try {
+                    setLoading(true)
+                    const { data } = await getCategoryDetail(
+                        user.token,
+                        params.id
+                    )
+                    console.log('data', data)
+                    reset({
+                        name: data.category.name,
+                        images: [
+                            {
+                                file: null,
+                                preview: data.category.image.url,
+                            },
+                        ],
+                    })
+                } catch (error) {
+                    console.log("error", error)
+                } finally {
+                    setLoading(false)
+                }
+            }
         }
-    }, [])
+        getData()
+    }, [params.id])
+
+    if (loading) {
+        return <LoadinScreen />
+    }
 
     return (
         <section>
@@ -161,6 +232,59 @@ export default function AddCategories() {
             <form onSubmit={handleSubmit(submit)}>
                 <Box>
                     <h3>Información de la categoría</h3>
+                </Box>
+                <Box>
+                    <p>Imágen de la categoría</p>
+                </Box>
+                <div className={classes.imagesRow}>
+                    {fields.map((file, index) => {
+                        return (
+                            <div
+                                className={classes.imagesWrapper}
+                                key={`file-${index}`}
+                            >
+                                <IconButton
+                                    className={classes.trashICon}
+                                    onClick={() => handleDeleteImage(index)}
+                                >
+                                    <DeleteForever />
+                                </IconButton>
+                                <img
+                                    className={classes.productImage}
+                                    src={file.preview}
+                                    alt="product-image"
+                                />
+                            </div>
+                        )
+                    })}
+                    {fields.length < 1 && (
+                        <div {...getRootProps()} className={classes.dropZone}>
+                            <img
+                                src={uploadImage}
+                                alt="Subir archivo"
+                                className={classes.uploadImage}
+                            />
+                            <input {...getInputProps()} />
+
+                            {isDragActive ? (
+                                <p>Suelta tu archivo aquí</p>
+                            ) : (
+                                <p>
+                                    Arrastra tu archivo o has click para
+                                    seleccionar desde tu ordenador
+                                </p>
+                            )}
+                        </div>
+                    )}
+                </div>
+                <Box>
+                    {errors.images && (
+                        <TextDanger>
+                            <p className={classes.errorText}>
+                                {errors.images.message}
+                            </p>
+                        </TextDanger>
+                    )}
                 </Box>
                 <Box className={classes.inputRow}>
                     <Controller
