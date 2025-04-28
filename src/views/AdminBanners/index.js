@@ -22,6 +22,11 @@ const useStyles = makeStyles({
         maxWidth: '1150px',
         padding: '2rem',
     },
+    imagesWrapperResponsive: {
+        position: 'relative',
+        maxWidth: '400px',
+        width: '100%',
+    },
     banner: {
         aspectRatio: '3/1',
         width: '100%',
@@ -34,6 +39,12 @@ const useStyles = makeStyles({
         '& img': {
             width: '24px',
         },
+    },
+    bannerResponsive: {
+        borderRadius: '16px',
+        width: '100%',
+        aspectRatio: '1/1',
+        objectFit: 'contain',
     },
 })
 
@@ -130,11 +141,13 @@ export default function AdminBanners() {
                 </Box>
             ) : (
                 <Box>
-                    {banners.map((banner, index) => (
+                    {banners.map((banner, index) => {
+                        console.log('banner', banner.type)
+                        return (
                         <Box
                             position="relative"
                             key={banner._id}
-                            className={classes.imagesWrapper}
+                            className={banner.type === '0' ? classes.imagesWrapperResponsive : classes.imagesWrapper}
                         >
                             {loadingDeleteBanner === banner._id ? (
                                 <Box
@@ -156,7 +169,7 @@ export default function AdminBanners() {
                                 src={banner.url}
                                 alt="banner"
                                 style={{ width: '100%' }}
-                                className={classes.banner}
+                                className={banner.type === '0' ? classes.bannerResponsive : classes.banner}
                             />
                             <Box>
                                 {loadingBannerStatusChange === banner._id ? (
@@ -236,7 +249,7 @@ export default function AdminBanners() {
                                 )}
                             </Box>
                         </Box>
-                    ))}
+                    )})}
                 </Box>
             )}
         </Box>

@@ -1,8 +1,15 @@
 import { yupResolver } from '@hookform/resolvers/yup'
-import { Box, IconButton, makeStyles } from '@material-ui/core'
+import {
+    Box,
+    Checkbox,
+    IconButton,
+    makeStyles,
+    Select,
+    Switch,
+} from '@material-ui/core'
 import { DeleteForever } from '@material-ui/icons'
 import React, { useCallback, useState } from 'react'
-import { useFieldArray, useForm } from 'react-hook-form'
+import { Controller, useFieldArray, useForm } from 'react-hook-form'
 import * as yup from 'yup'
 import { primaryColor } from '../../assets/jss/material-dashboard-react'
 import { useDropzone } from 'react-dropzone'
@@ -62,10 +69,21 @@ const useStyles = makeStyles({
         maxWidth: '1150px',
         width: '100%',
     },
+    imagesWrapperResponsive: {
+        position: 'relative',
+        maxWidth: '400px',
+        width: '100%',
+    },
     productImage: {
         borderRadius: '16px',
         width: '100%',
         aspectRatio: '3/1',
+    },
+    productImageResponsive: {
+        borderRadius: '16px',
+        width: '100%',
+        aspectRatio: '1/1',
+        objectFit: 'contain',
     },
     trashICon: {
         position: 'absolute',
@@ -92,10 +110,14 @@ export default function AddBannersPage() {
         formState: { errors },
         handleSubmit,
         reset,
+        watch,
     } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
             images: [],
+            type: '0',
+            status: true,
+            section: '',
         },
     })
 
@@ -126,7 +148,8 @@ export default function AddBannersPage() {
     const [loading, setLoading] = useState(false)
     const [showFormAlert, setShowFormAlert] = useState(undefined)
     const [showModal, setShowModal] = useState(false)
-
+    const watchType = watch('type')
+    console.log('watchType', watchType)
     const handleDeleteImage = (index) => {
         setDeleteImages([...deleteImages, index])
         remove(index)
@@ -145,6 +168,9 @@ export default function AddBannersPage() {
                     }
                 })
             }
+            data.append('type', values.type)
+            data.append('section', values.section)
+            data.append('active', values.active)
             await createBanner(data, user.token)
             setShowModal(true)
         } catch (error) {
@@ -159,6 +185,11 @@ export default function AddBannersPage() {
         }
     }
     console.log('fields', fields)
+    const formValidation = Object.values(watch()).every(
+        (value) => value !== '' && value !== undefined && value !== null
+    )
+
+    console.log('formValidation', formValidation)   
 
     return (
         <>
@@ -181,7 +212,11 @@ export default function AddBannersPage() {
                         console.log('file', file)
                         return (
                             <div
-                                className={classes.imagesWrapper}
+                                className={
+                                    watchType === '0'
+                                        ? classes.imagesWrapperResponsive
+                                        : classes.imagesWrapper
+                                }
                                 key={`file-${index}`}
                             >
                                 <IconButton
@@ -191,7 +226,11 @@ export default function AddBannersPage() {
                                     <DeleteForever />
                                 </IconButton>
                                 <img
-                                    className={classes.productImage}
+                                    className={
+                                        watchType === '0'
+                                            ? classes.productImageResponsive
+                                            : classes.productImage
+                                    }
                                     src={file.preview}
                                     alt="product-image"
                                 />
@@ -220,6 +259,161 @@ export default function AddBannersPage() {
                     </div>
                 )}
                 <Box>
+                    <Box mt={2}>
+                        <p style={{ margin: 0 }}>Tipo de banner</p>
+                        <Box>
+                            <Controller
+                                name="type"
+                                control={control}
+                                render={({ field }) => (
+                                    <label htmlFor="available">
+                                        Banner para movil
+                                        <Checkbox
+                                            id="available"
+                                            classes={{
+                                                checked: classes.checked,
+                                            }}
+                                            checked={
+                                                field.value === '0'
+                                                    ? true
+                                                    : false
+                                            }
+                                            onChange={() => field.onChange('0')}
+                                            inputProps={{
+                                                'aria-label':
+                                                    'primary checkbox',
+                                            }}
+                                        />
+                                    </label>
+                                )}
+                            />
+
+                            <Controller
+                                name="type"
+                                control={control}
+                                render={({ field }) => (
+                                    <label htmlFor="disabled">
+                                        Banner para escritorio
+                                        <Checkbox
+                                            id="disabled"
+                                            checked={
+                                                field.value === '1'
+                                                    ? true
+                                                    : false
+                                            }
+                                            onChange={() => field.onChange('1')}
+                                            inputProps={{
+                                                'aria-label':
+                                                    'primary checkbox',
+                                            }}
+                                        />
+                                    </label>
+                                )}
+                            />
+                            <Box>
+                                <Controller
+                                    name="active"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Box
+                                            display="flex"
+                                            flexDirection={{
+                                                xs: 'column',
+                                                md: 'row',
+                                            }}
+                                        >
+                                            <Box
+                                                flexBasis={{
+                                                    xs: 'auto',
+                                                    md: 200,
+                                                }}
+                                            >
+                                                <p>Activar banner</p>
+                                                <Switch
+                                                    defaultChecked={field.value}
+                                                    onChange={(event) =>
+                                                        field.onChange(
+                                                            event.target.checked
+                                                        )
+                                                    }
+                                                    inputProps={{
+                                                        'aria-label':
+                                                            'primary checkbox',
+                                                    }}
+                                                />
+                                            </Box>
+                                        </Box>
+                                    )}
+                                />
+                                <Controller
+                                    name="section"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Box
+                                            display="flex"
+                                            flexDirection={{
+                                                xs: 'column',
+                                                md: 'row',
+                                            }}
+                                        >
+                                            <Box
+                                                flexBasis={{
+                                                    xs: 'auto',
+                                                    md: 350,
+                                                }}
+                                                display="flex"
+                                                alignItems="end"
+                                                style={{ gap: '1rem' }}
+                                            >
+                                                <Box>
+                                                    <p>Sección de destino</p>
+                                                    <Select
+                                                        native
+                                                        defaultValue={''}
+                                                        value={field.value}
+                                                        onChange={(event) =>
+                                                            field.onChange(
+                                                                event.target
+                                                                    .value
+                                                            )
+                                                        }
+                                                        variant="outlined"
+                                                        style={{
+                                                            width: '100%',
+                                                        }}
+                                                    >
+                                                        <option value="">
+                                                            Seleccione una
+                                                            sección
+                                                        </option>
+                                                        <option value="HOME-HERO">
+                                                            Sección de
+                                                            bienvedida
+                                                        </option>
+                                                        <option value="HOME-FOOTER">
+                                                            Píe de pagina
+                                                        </option>
+                                                    </Select>
+                                                </Box>
+                                            </Box>
+                                        </Box>
+                                    )}
+                                />
+                            </Box>
+                            <Box>
+                                {console.log('errors', errors)}
+                                {errors.status && (
+                                    <TextDanger>
+                                        <p className={classes.errorText}>
+                                            {errors.status.message}
+                                        </p>
+                                    </TextDanger>
+                                )}
+                            </Box>
+                        </Box>
+                    </Box>
+                </Box>
+                <Box>
                     {errors.images && (
                         <TextDanger>
                             <p className={classes.errorText}>
@@ -238,7 +432,7 @@ export default function AddBannersPage() {
                 <Box className={classes.buttonsRow}>
                     <Button
                         isLoading={loading}
-                        disabled={Boolean(fields.length === 0)}
+                        disabled={!formValidation}
                         variant="contained"
                         color="primary"
                         type="button"
