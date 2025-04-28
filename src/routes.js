@@ -42,6 +42,7 @@ import ProductDetail from './views/productDetail'
 import ConfigPage from './views/Config'
 import Offers from './views/Offers'
 import AddOffer from './views/AddOffer'
+import Activation from './views/Activation'
 
 const dashboardRoutes = [
     {
@@ -174,6 +175,13 @@ const dashboardRoutes = [
         name: 'Configuración',
         icon: SettingsIcon,
         component: ConfigPage,
+        layout: '/admin',
+    },
+    {
+        path: '/mercado-pago',
+        name: 'Activación de tu cuenta',
+        icon: Dashboard,
+        component: Activation,
         layout: '/admin',
     },
     // {

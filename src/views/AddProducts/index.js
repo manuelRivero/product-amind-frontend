@@ -41,7 +41,7 @@ const featureSchema = yup.object({
     color: yup
         .string()
         .defined()
-        .matches(/^[a-zA-Z]+$/, 'El color solo puede contener letras')
+        .matches(/^[a-zA-Z\s]+$/, 'El color solo puede contener letras')
         .required('Campo obligatorio'), // Validación de letras
     size: yup
         .string()
