@@ -82,7 +82,6 @@ const useStyles = makeStyles({
     productImageResponsive: {
         borderRadius: '16px',
         width: '100%',
-        aspectRatio: '1/1',
         objectFit: 'contain',
     },
     trashICon: {
@@ -189,7 +188,7 @@ export default function AddBannersPage() {
         (value) => value !== '' && value !== undefined && value !== null
     )
 
-    console.log('formValidation', formValidation)   
+    console.log('formValidation', formValidation)
 
     return (
         <>
@@ -200,13 +199,23 @@ export default function AddBannersPage() {
                 >
                     <ArrowBackIcon />
                 </IconButton>
-                <Box>
-                    <h3>Cargar un nuevo banner</h3>
-                    <p>
-                        Las medidas recomendadas para un banner son de 2000px de
-                        ancho por 600px de alto o un spect ratio de 2/1
-                    </p>
-                </Box>
+                {watchType === '0' ? (
+                    <Box>
+                        <h3>Cargar un nuevo banner</h3>
+                        <p>
+                            Las medidas recomendadas para un banner para celular son de
+                            500px de ancho por 500px de alto
+                        </p>
+                    </Box>
+                ) : (
+                    <Box>
+                        <h3>Cargar un nuevo banner</h3>
+                        <p>
+                            Las medidas recomendadas para un banner para computadoras son de
+                            2000px de ancho por 600px de alto
+                        </p>
+                    </Box>
+                )}
                 <div className={classes.imagesRow}>
                     {fields.map((file, index) => {
                         console.log('file', file)
