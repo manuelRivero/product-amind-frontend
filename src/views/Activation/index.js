@@ -4,6 +4,9 @@ import React from 'react'
 import { Button, Card, CardContent, Typography } from '@material-ui/core'
 
 import { makeStyles } from '@material-ui/core/styles'
+import { useSelector } from 'react-redux'
+
+import Success from 'assets/img/success-icon.png'
 
 const useStyles = makeStyles((theme) => ({
     card: {
@@ -27,6 +30,7 @@ const useStyles = makeStyles((theme) => ({
 }))
 
 const Activation = () => {
+    const { configDetail } = useSelector((state) => state.config)
     const classes = useStyles()
     const subdomain = window.location.hostname
         .split('.')[0]
@@ -36,25 +40,31 @@ const Activation = () => {
         const authUrl = `${process.env.REACT_APP_API_KEY}/api/mercado-pago/auth?tenant=${subdomain}`
         window.open(authUrl, '_blank', 'noopener,noreferrer')
     }
-
+    const isActivate = configDetail?.mercadoPagoConfigured
+    console.log('configDetail', configDetail)
     return (
         <Card className={classes.card}>
             <CardContent>
-                <Typography variant="h5" gutterBottom>
-                    Conectar Mercado Pago
-                </Typography>
+                {!isActivate && (
+                    <Typography variant="h5" gutterBottom>
+                        Conectar Mercado Pago
+                    </Typography>
+                )}
 
-                {/* {status === 'success' && (
+                {isActivate && (
                     <>
-                        <CheckCircleIcon
-                            className={classes.success}
-                            fontSize="large"
+                        <img
+                            src={Success}
+                            alt="Success"
+                            style={{ width: 100 }}
                         />
-                        <Typography variant="h6" color="primary">
-                            ¡Cuenta conectada exitosamente!
-                        </Typography>
+                        <h6>¡Cuenta conectada exitosamente!</h6>
+                        <p>
+                            Ahora puedes empezar a recibir pagos a través de
+                            Mercado Pago.
+                        </p>
                     </>
-                )} */}
+                )}
 
                 {/* {status === 'error' && (
                     <>
@@ -83,14 +93,16 @@ const Activation = () => {
                     </Box>
                 )} */}
 
-                <Button
-                    variant="contained"
-                    color="primary"
-                    className={classes.button}
-                    onClick={handleConnect}
-                >
-                    Conectar cuenta
-                </Button>
+                {!isActivate && (
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        className={classes.button}
+                        onClick={handleConnect}
+                    >
+                        Conectar cuenta
+                    </Button>
+                )}
             </CardContent>
         </Card>
     )

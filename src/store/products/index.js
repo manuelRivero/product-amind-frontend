@@ -6,7 +6,8 @@ import {
     uploadProduct,
     getProductDetail as getProductsDetailRequest,
     editProduct as editProductRequest,
-    getProductsTemplateExcel as getProductsTemplateExcelRequest
+    getProductsTemplateExcel as getProductsTemplateExcelRequest,
+    deleteProduct as deleteProductRequest
 } from 'api/products'
 
 const initialState = {
@@ -86,6 +87,16 @@ export const postImagesFromZip = createAsyncThunk(
     async (args) => {
         const [response] = await Promise.all([
             uploadZip(args.access, args.form),
+        ])
+        return response
+    }
+)
+
+export const deleteProduct = createAsyncThunk(
+    '/delete/deleteProduct',
+    async (args) => {
+        const [response] = await Promise.all([
+            deleteProductRequest(args.access, args.id),
         ])
         return response
     }
@@ -188,6 +199,12 @@ export const productsSlice = createSlice({
         },
         [getProductsTemplateExcel.rejected]: (state) => {
             state.loadingTemplateExcel = false
+        },
+        [deleteProduct.fulfilled]: (state, action) => {
+            const {id} = action.payload.data
+            console.log('deleteProduct', id)
+            const products = state.productsData.data.products.filter((product) => product._id !== id)
+            state.productsData.data.products = products
         },
     },
 })

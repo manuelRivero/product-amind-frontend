@@ -27,6 +27,14 @@ export const getProductDetail = (access, id) => {
     })
 }
 
+export const deleteProduct = (access, id) => {
+    return client.delete(`api/products/delete/${id}`, {
+        headers: {
+            'x-token': access,
+        },
+    })
+}
+
 export const getProductsTemplateExcel = (access) => {
     // console.log("getProductsTemplateExcel")
     return client.get(`api/products/get-excel-template`, {

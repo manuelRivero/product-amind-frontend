@@ -1,5 +1,5 @@
 import React from 'react'
-import { Switch, Route, Redirect } from 'react-router-dom'
+import { Switch, Route } from 'react-router-dom'
 // creates a beautiful scrollbar
 import PerfectScrollbar from 'perfect-scrollbar'
 import 'perfect-scrollbar/css/perfect-scrollbar.css'
@@ -13,6 +13,8 @@ import Sidebar from 'components/Sidebar/Sidebar.js'
 import { dashboardRoutes } from 'routes.js'
 
 import styles from 'assets/jss/material-dashboard-react/layouts/adminStyle.js'
+import { getConfigRequest } from '../store/config'
+import { useDispatch, useSelector } from 'react-redux'
 
 let ps
 
@@ -48,7 +50,9 @@ const childRoutes = dashboardRoutes.map((prop) => {
 const useStyles = makeStyles(styles)
 
 export default function Admin({ ...rest }) {
-    console.log('admin routes')
+    const dispatch = useDispatch()
+    const { user } = useSelector((state) => state.auth)
+    const { configDetail } = useSelector((state) => state.config)
     // styles
     const classes = useStyles()
     // ref to help us initialize PerfectScrollbar on windows devices
@@ -67,7 +71,16 @@ export default function Admin({ ...rest }) {
             setMobileOpen(false)
         }
     }
-    // initialize and destroy the PerfectScrollbar plugin
+    const handleDashboardRoutes = () => {
+        return dashboardRoutes.filter((prop) => {
+          const isActivate =configDetail?.mercadoPagoConfigured
+      
+          return (
+            prop.layout === '/admin' &&
+            (!prop.needConfig || (prop.needConfig && isActivate))
+          );
+        });
+      };
     React.useEffect(() => {
         if (navigator.platform.indexOf('Win') > -1) {
             ps = new PerfectScrollbar(mainPanel.current, {
@@ -87,20 +100,21 @@ export default function Admin({ ...rest }) {
     }, [mainPanel])
 
     React.useEffect(() => {
-        const verifyTenant = async ()=>{
+        const verifyTenant = async () => {
             try {
                 // Use fetch to verify if the subdomain exists
-                const response = await fetch(`/tenant/verify-tenat-admin?subdomain=${subdomain}`);
+                const response = await fetch(
+                    `/tenant/verify-tenat-admin?subdomain=${subdomain}`
+                )
                 console.log('parseResponse', response)
                 if (response.ok) {
-                  console.log('valid subdomain');
-                  setTenant(subdomain)
+                    console.log('valid subdomain')
+                    setTenant(subdomain)
                 }
-              } catch (error) {
-                console.error('Error fetching tenant:', error);
+            } catch (error) {
+                console.error('Error fetching tenant:', error)
                 setTenant(null)
-
-              }
+            }
         }
         const subdomain = window.location.hostname.split('.')[0]
         if (subdomain) {
@@ -110,10 +124,22 @@ export default function Admin({ ...rest }) {
         }
     }, [])
 
+    React.useEffect(() => {
+        const getConfig = async () => {
+            try {
+                dispatch(getConfigRequest({ access: user.token }))
+            } catch (error) {
+                console.error('Error fetching config:', error)
+            }
+        }
+
+        getConfig()
+    }, [])
+
     return (
         <div className={classes.wrapper}>
             <Sidebar
-                routes={dashboardRoutes}
+                routes={handleDashboardRoutes()}
                 handleDrawerToggle={handleDrawerToggle}
                 open={mobileOpen}
                 color={color}
@@ -121,7 +147,7 @@ export default function Admin({ ...rest }) {
             />
             <div className={classes.mainPanel} ref={mainPanel}>
                 <Navbar
-                    routes={dashboardRoutes}
+                    routes={handleDashboardRoutes()}
                     handleDrawerToggle={handleDrawerToggle}
                     {...rest}
                 />
@@ -133,7 +159,6 @@ export default function Admin({ ...rest }) {
                             <Switch>
                                 {mainRoutes}
                                 {childRoutes}
-                                <Redirect from="/admin" to="/admin/dashboard" />
                             </Switch>
                         )}
                     </div>

@@ -2,6 +2,11 @@ import React from 'react'
 import {
     Box,
     CircularProgress,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
     IconButton,
     makeStyles,
 } from '@material-ui/core'
@@ -32,8 +37,13 @@ import { useForm, Controller } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { finalPrice, formatNumber } from '../../helpers/product'
-import { DeleteForever, RemoveRedEye, Search } from '@material-ui/icons'
-import { getCategories } from '../../store/categories'
+import {
+    DeleteForever,
+    RemoveRedEye,
+    Search,
+    DeleteForeverOutlined,
+} from '@material-ui/icons'
+import { deleteProduct } from '../../store/products'
 
 const schema = yup.object({
     search: yup.string(),
@@ -101,9 +111,7 @@ export default function Products() {
     const { productsData, loadingProductsData } = useSelector(
         (state) => state.products
     )
-    const { categoriesData, loadingCategoriesData } = useSelector(
-        (state) => state.categories
-    )
+
     // styles
     const classes = useStyles()
     // states
@@ -126,22 +134,6 @@ export default function Products() {
         element.scrollIntoView()
     }
 
-    const productCategory = (categoryId) => {
-        if (categoriesData.data) {
-            const hasCategory = categoriesData.data.some(
-                (category) => category._id === categoryId
-            )
-
-            const categoryName = hasCategory
-                ? categoriesData.data.find(
-                      (category) => category._id === categoryId
-                  ).name
-                : 'N/A'
-
-            return categoryName
-        }
-    }
-
     const handleDeleteSearch = () => {
         setPage(0)
         reset({
@@ -160,26 +152,11 @@ export default function Products() {
         dispatch(
             getProducts({
                 access: user.token,
-                filters: { search: watchSearch, page:0 },
+                filters: { search: watchSearch, page: 0 },
             })
         )
     }
 
-    useEffect(() => {
-        if (productsData) {
-            dispatch(
-                getCategories({
-                    access: user.token,
-                    filters: {
-                        page: 0,
-                        ids: productsData.data.products.map(
-                            (product) => product.category
-                        ),
-                    },
-                })
-            )
-        }
-    }, [productsData])
     useEffect(() => {
         const params = {
             access: user.token,
@@ -337,7 +314,7 @@ export default function Products() {
                                 )}
                             </Box>
                         </form>
-                        {loadingProductsData || loadingCategoriesData ? (
+                        {loadingProductsData ? (
                             <Box display="flex" justifyContent="center">
                                 <CircularProgress />
                             </Box>
@@ -360,7 +337,7 @@ export default function Products() {
                                             return [
                                                 e._id,
                                                 e.name,
-                                                productCategory(e.category),
+                                                e.categoryDetail[0]?.name ?? "N/A",
                                                 `$${formatNumber(
                                                     e.price.toFixed(1)
                                                 )}`,
@@ -432,53 +409,106 @@ export default function Products() {
 }
 
 const ActionGroup = ({ product }) => {
+    const dispatch = useDispatch()
+    const { user } = useSelector((state) => state.auth)
     const classes = useStyles()
-    // const [isLoading, setIsLoading] = useState(false)
-    // const deleteHandler = () => {
-    //     try {
-    //         console.log('product', product)
-    //         setIsLoading(true)
-    //     } catch (error) {
-    //         console.log('deleteHandler error', error)
-    //     } finally {
-    //         setIsLoading(false)
-    //     }
-    // }
+    const [isLoading, setIsLoading] = useState(false)
+    const [confirmOpen, setConfirmOpen] = useState(false)
+    const [success, setSuccess] = useState(false)
+    const deleteHandler = async () => {
+        try {
+            setConfirmOpen(false)
+            setIsLoading(true)
+            await dispatch(
+                deleteProduct({ access: user.token, id: product._id })
+            ).unwrap()
+            setSuccess(true)
+        } catch (error) {
+            console.log('deleteHandler error', error)
+        } finally {
+            setIsLoading(false)
+        }
+    }
     return (
-        <Box className={classes.actionWrapper}>
-            <Link to={`/admin/products/edit-product/${product._id}`}>
+        <>
+            <Box className={classes.actionWrapper}>
+                <Link to={`/admin/products/edit-product/${product._id}`}>
+                    <Button
+                        isLoading={false}
+                        variant="contained"
+                        color="primary"
+                        type="submit"
+                        justIcon
+                    >
+                        <EditIcon />
+                    </Button>
+                </Link>
+                <Link to={`/admin/product-detail/${product._id}`}>
+                    <Button
+                        isLoading={false}
+                        variant="contained"
+                        color="primary"
+                        type="submit"
+                        justIcon
+                    >
+                        <RemoveRedEye />
+                    </Button>
+                </Link>
                 <Button
-                    isLoading={false}
+                    isLoading={isLoading}
                     variant="contained"
                     color="primary"
                     type="submit"
                     justIcon
+                    onClick={() => setConfirmOpen(true)}
                 >
-                    <EditIcon />
+                    <DeleteForeverOutlined />
                 </Button>
-            </Link>
-            <Link to={`/admin/product-detail/${product._id}`}>
-                <Button
-                    isLoading={false}
-                    variant="contained"
-                    color="primary"
-                    type="submit"
-                    justIcon
-                >
-                    <RemoveRedEye />
-                </Button>
-            </Link>
-            {/* <Button
-                isLoading={isLoading}
-                variant="contained"
-                color="primary"
-                type="submit"
-                justIcon
-                onClick={deleteHandler}
-            >
-                <DeleteIcon />
-            </Button> */}
-        </Box>
+            </Box>
+            <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+                <DialogTitle>Confirmar cambio de estado</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        ¿Estás seguro de que deseas eliminar este producto? Esta
+                        acción no se puede deshacer.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        disabled={isLoading}
+                        onClick={() => setConfirmOpen(false)}
+                        color="secondary"
+                    >
+                        Cancelar
+                    </Button>
+                    <Button
+                        isLoading={isLoading}
+                        onClick={deleteHandler}
+                        color="primary"
+                        variant="contained"
+                    >
+                        Confirmar
+                    </Button>
+                </DialogActions>
+            </Dialog>
+            <Dialog open={success} onClose={() => setSuccess(false)}>
+                <DialogTitle>¡Exito!</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Producto eliminado correctamente.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={() => setSuccess(false)}
+                        color="primary"
+                        variant="contained"
+                    >
+                        Aceptar
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </>
     )
 }
 

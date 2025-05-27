@@ -242,6 +242,7 @@ export default function AddProducts() {
     })
 
     const submit = async (values) => {
+        console.log("values", values)
         const data = new FormData()
 
         // Agregar datos básicos del producto
@@ -363,6 +364,7 @@ export default function AddProducts() {
                 productDetail.features
                     .filter((feature) => !feature.color && !feature.size)
                     .map((feature) => {
+                        console.log("feature", feature)
                         setValue('stock', feature.stock)
                         setValue('unique', true)
                         

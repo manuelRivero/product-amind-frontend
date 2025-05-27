@@ -43,8 +43,18 @@ import ConfigPage from './views/Config'
 import Offers from './views/Offers'
 import AddOffer from './views/AddOffer'
 import Activation from './views/Activation'
+import Home from './views/Home'
 
 const dashboardRoutes = [
+    {
+        path: '/',
+        name: 'Inicio',
+        icon: Dashboard,
+        component:  Home,
+        layout: '/admin',
+        needConfig: false,
+        hidden: true,
+    },
     {
         path: '/dashboard',
         name: 'Dashboard',
@@ -52,6 +62,7 @@ const dashboardRoutes = [
         icon: Dashboard,
         component: DashboardPage,
         layout: '/admin',
+        needConfig: true,
     },
     {
         path: '/orders',
@@ -59,6 +70,8 @@ const dashboardRoutes = [
         icon: ListAltIcon,
         component: Sales,
         layout: '/admin',
+        needConfig: true,
+
         childrens: [
             {
                 noshow: true,
@@ -74,6 +87,8 @@ const dashboardRoutes = [
         icon: ListAltIcon,
         component: Offers,
         layout: '/admin',
+        needConfig: true,
+
         childrens: [
             {
                 path: '/add-offers/:id',
@@ -90,13 +105,14 @@ const dashboardRoutes = [
             },
         ],
     },
-
     {
         path: '/banners',
         name: 'Banners',
         icon: ImageIcon,
         component: Banners,
         layout: '/admin',
+        needConfig: true,
+
         childrens: [
             {
                 path: '/add-banner',
@@ -110,13 +126,13 @@ const dashboardRoutes = [
             },
         ],
     },
-
     {
         path: '/categories',
         name: 'Categorías',
         icon: CategoryIcon,
         component: Categories,
         layout: '/admin',
+        needConfig: true,
         childrens: [
             {
                 path: '/add-category',
@@ -137,6 +153,7 @@ const dashboardRoutes = [
         icon: StorefrontIcon,
         component: ProductDetail,
         layout: '/admin',
+        needConfig: true,
         childrens: [],
         hidden: true,
     },
@@ -146,6 +163,7 @@ const dashboardRoutes = [
         icon: StorefrontIcon,
         component: Products,
         layout: '/admin',
+        needConfig: true,
         childrens: [
             {
                 path: '/add-product',
@@ -176,6 +194,7 @@ const dashboardRoutes = [
         icon: SettingsIcon,
         component: ConfigPage,
         layout: '/admin',
+        needConfig: true,
     },
     {
         path: '/mercado-pago',
@@ -183,7 +202,9 @@ const dashboardRoutes = [
         icon: Dashboard,
         component: Activation,
         layout: '/admin',
+        needConfig: false,
     },
+    
     // {
     //     path: '/create-sale',
     //     name: 'Crear orden',
