@@ -10,6 +10,7 @@ const switchRoutes = (
     <Switch>
         {authRoutes.map((prop, key) => {
             if (prop.layout === '/auth') {
+                console.log("auth route", prop)
                 return (
                     <Route
                         path={prop.layout + prop.path}

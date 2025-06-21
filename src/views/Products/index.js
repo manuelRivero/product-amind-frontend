@@ -42,6 +42,7 @@ import {
     RemoveRedEye,
     Search,
     DeleteForeverOutlined,
+    Share,
 } from '@material-ui/icons'
 import { deleteProduct } from '../../store/products'
 
@@ -169,7 +170,6 @@ export default function Products() {
         }
         dispatch(getProducts(params))
     }, [page])
-
     return (
         <GridContainer>
             {/* <GridItem xs={12} sm={12} md={6}>
@@ -337,7 +337,8 @@ export default function Products() {
                                             return [
                                                 e._id,
                                                 e.name,
-                                                e.categoryDetail[0]?.name ?? "N/A",
+                                                e.categoryDetail[0]?.name ??
+                                                    'N/A',
                                                 `$${formatNumber(
                                                     e.price.toFixed(1)
                                                 )}`,
@@ -410,6 +411,8 @@ export default function Products() {
 
 const ActionGroup = ({ product }) => {
     const dispatch = useDispatch()
+    const { tenant } = useSelector((state) => state.config)
+    const tenantUrl = tenant.split('-admin')[0] + "." + "tiendapro.com.ar"
     const { user } = useSelector((state) => state.auth)
     const classes = useStyles()
     const [isLoading, setIsLoading] = useState(false)
@@ -463,6 +466,22 @@ const ActionGroup = ({ product }) => {
                     onClick={() => setConfirmOpen(true)}
                 >
                     <DeleteForeverOutlined />
+                </Button>
+                <Button
+                    isLoading={isLoading}
+                    variant="contained"
+                    color="primary"
+                    type="submit"
+                    justIcon
+                    onClick={() =>
+                        window.open(
+                            `https://www.facebook.com/sharer/sharer.php?u=https://${tenantUrl}/detalle-producto/${product._id}`,
+                            '_blank',
+                            'noreferrer'
+                        )
+                    }
+                >
+                    <Share />
                 </Button>
             </Box>
             <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>

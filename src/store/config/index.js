@@ -5,6 +5,7 @@ const initialState = {
     loadingConfig: true,
     configDetail: null,
     error: false,
+    tenant: null,
 }
 
 export const getConfigRequest = createAsyncThunk(
@@ -23,7 +24,11 @@ export const getConfigRequest = createAsyncThunk(
 export const configSlice = createSlice({
     name: 'config',
     initialState,
-    reducers: {},
+    reducers: {
+        setStoreTenant: (state, action) => {
+            state.tenant = action.payload
+        }
+    },
     extraReducers: {
         [getConfigRequest.pending]: (state) => {
             state.loadingConfig = true
@@ -38,5 +43,7 @@ export const configSlice = createSlice({
         },
     },
 })
+
+export const { setStoreTenant } = configSlice.actions
 
 export default configSlice.reducer

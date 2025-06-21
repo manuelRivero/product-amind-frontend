@@ -76,6 +76,7 @@ export default function Login() {
             setLoadingSubmit(false)
         }
     }
+    console.log("login")
     return (
         <div className={classes.wrapper}>
             <div className={classes.content}>

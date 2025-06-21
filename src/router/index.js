@@ -13,6 +13,7 @@ export default function Router() {
             {user ? (
                 <>
                     <Route path="/admin" component={Admin} />
+                    <Redirect from="/" to="/admin" />
                 </>
             ) : (
                 <>

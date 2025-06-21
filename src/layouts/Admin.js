@@ -13,7 +13,7 @@ import Sidebar from 'components/Sidebar/Sidebar.js'
 import { dashboardRoutes } from 'routes.js'
 
 import styles from 'assets/jss/material-dashboard-react/layouts/adminStyle.js'
-import { getConfigRequest } from '../store/config'
+import { getConfigRequest, setStoreTenant } from '../store/config'
 import { useDispatch, useSelector } from 'react-redux'
 
 let ps
@@ -73,14 +73,15 @@ export default function Admin({ ...rest }) {
     }
     const handleDashboardRoutes = () => {
         return dashboardRoutes.filter((prop) => {
-          const isActivate =configDetail?.mercadoPagoConfigured
-      
-          return (
-            prop.layout === '/admin' &&
-            (!prop.needConfig || (prop.needConfig && isActivate))
-          );
-        });
-      };
+            const isActivate =
+                configDetail?.subscriptionDetail?.hasActiveSubscription ?? false
+
+            return (
+                prop.layout === '/admin' &&
+                (!prop.needConfig || (prop.needConfig && isActivate))
+            )
+        })
+    }
     React.useEffect(() => {
         if (navigator.platform.indexOf('Win') > -1) {
             ps = new PerfectScrollbar(mainPanel.current, {
@@ -110,6 +111,7 @@ export default function Admin({ ...rest }) {
                 if (response.ok) {
                     console.log('valid subdomain')
                     setTenant(subdomain)
+                    dispatch(setStoreTenant(subdomain))
                 }
             } catch (error) {
                 console.error('Error fetching tenant:', error)
