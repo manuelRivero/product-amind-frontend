@@ -55,11 +55,10 @@ const Activation = () => {
         .split('.')[0]
         .replace('-admin', '')
 
-    const handleConnect = async () => {
+    const handleConnect = async (card_token) => {
         console.log('send')
         try {
             setLoading(true)
-            const card_token = '881285f6e759c1dd08fb36a4ac84a2ed'
             const response = await axios.post(
                 `${process.env.REACT_APP_API_KEY}/api/mercado-pago/subscribe-user?tenant=${subdomain}`,
                 {
