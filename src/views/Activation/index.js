@@ -71,6 +71,7 @@ const Activation = () => {
                 `${process.env.REACT_APP_API_KEY}/api/mercado-pago/subscribe-user?tenant=${subdomain}`,
                 {
                     card_token,
+                    preapproval_plan_id: selectedPlan._id,
                 },
                 {
                     headers: {
