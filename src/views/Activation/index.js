@@ -8,6 +8,7 @@ import {
     Dialog,
     DialogActions,
     DialogTitle,
+    IconButton,
     Typography,
 } from '@material-ui/core'
 
@@ -17,6 +18,10 @@ import { useSelector } from 'react-redux'
 import Success from 'assets/img/success-icon.png'
 import axios from 'axios'
 import TextInput from '../../components/TextInput/Index'
+import LoadinScreen from '../../components/LoadingScreen'
+import { getPlans } from '../../api/plans'
+import { formatNumber } from '../../helpers/product'
+import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 
 const useStyles = makeStyles((theme) => ({
     card: {
@@ -41,6 +46,7 @@ const useStyles = makeStyles((theme) => ({
 
 const Activation = () => {
     const { configDetail } = useSelector((state) => state.config)
+    const { user } = useSelector((state) => state.auth)
     const [mp, setMp] = React.useState(null)
     const [cardNumber, setCardNumber] = React.useState('')
     const [cardExp, setCardExp] = React.useState('')
@@ -48,8 +54,11 @@ const Activation = () => {
     const [cardName, setCardName] = React.useState('')
     const [cardDni, setCardDni] = React.useState('')
     const [loading, setLoading] = React.useState(false)
+    const [loadingPlans, setLoadingPlans] = React.useState(false)
+    const [plans, setPlans] = React.useState([])
     const [error, setError] = React.useState(null)
     const [openModal, setOpenModal] = React.useState(false)
+    const [selectedPlan, setSelectedPlan] = React.useState(null)
     const classes = useStyles()
     const subdomain = window.location.hostname
         .split('.')[0]
@@ -58,7 +67,6 @@ const Activation = () => {
     const handleConnect = async (card_token) => {
         console.log('send')
         try {
-            setLoading(true)
             const response = await axios.post(
                 `${process.env.REACT_APP_API_KEY}/api/mercado-pago/subscribe-user?tenant=${subdomain}`,
                 {
@@ -75,10 +83,7 @@ const Activation = () => {
             setOpenModal(true)
         } catch (error) {
             setError('Error al enviar el token de la tarjeta')
-            console.error('Error al enviar el token de la tarjeta:', error)
             return
-        } finally {
-            setLoading(false)
         }
     }
     // const isActivate =
@@ -86,7 +91,13 @@ const Activation = () => {
     const isActivate = false
     console.log('configDetail', configDetail)
     const submitCardDetails = async () => {
+        if (!mp) {
+            setError('Mercado Pago SDK no cargó correctamente')
+            return
+        }
         try {
+            setLoading(true)
+            setError(null)
             const cardTokenResponse = await mp.createCardToken({
                 cardNumber,
                 cardholderName: cardName,
@@ -97,11 +108,15 @@ const Activation = () => {
                 identificationNumber: cardDni,
             })
             console.log('Subscription activated:', cardTokenResponse)
+            setError('Error al enviar el token de la tarjeta')
+
             handleConnect(cardTokenResponse.id)
             // Handle success (e.g., show a success message, redirect, etc.)
         } catch (error) {
             console.error('Error activating subscription:', error)
             // Handle error (e.g., show an error message)
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -121,130 +136,220 @@ const Activation = () => {
         document.body.appendChild(script)
     }, [])
 
+    useEffect(() => {
+        const getData = async () => {
+            try {
+                setLoadingPlans(true)
+                const response = await getPlans(user.token)
+                console.log('Plans fetched:', response)
+                setPlans(response.data.plans)
+            } catch (error) {
+                console.error('Error fetching plans:', error)
+                setLoadingPlans(false)
+            } finally {
+                setLoadingPlans(false)
+            }
+        }
+        getData()
+    }, [])
+
+    useEffect(() => {
+        if (selectedPlan) {
+            setCardNumber('')
+            setCardExp('')
+            setCardCvv('')
+            setCardName('')
+            setCardDni('')
+            setError(null)
+        }
+    }, [selectedPlan])
+
+    if (loadingPlans) {
+        return <LoadinScreen />
+    }
+
     return (
         <>
-            <Card className={classes.card}>
-                <CardContent>
-                    {!isActivate && (
-                        <>
-                            <Typography
-                                variant="h5"
-                                gutterBottom
-                                style={{ marginBottom: 10 }}
-                            >
-                                Activa tu subscripción
-                            </Typography>
-
-                            <Typography
-                                variant="body1"
-                                style={{ marginBottom: 20 }}
-                            >
-                                Para activar tu subscripción, ingresa los
-                                detalles de la tarjeta donde se realizará el
-                                cobro.
-                            </Typography>
-                            <div style={{ marginBottom: 20 }}>
-                                <TextInput
-                                    error={false}
-                                    errorMessage={null}
-                                    icon={null}
-                                    label={'Numero de Tarjeta'}
-                                    placeholder={'Ingrese el numero de tarjeta'}
-                                    value={cardNumber}
-                                    onChange={({ target }) => {
-                                        setCardNumber(target.value)
+            {!selectedPlan && (
+                <>
+                    <Typography
+                        variant="h5"
+                        gutterBottom
+                        style={{ marginBottom: 10 }}
+                    >
+                        Selecciona tu plan
+                    </Typography>
+                    {plans.map((plan) => (
+                        <Card className={classes.card} key={plan._id}>
+                            <CardContent>
+                                <p style={{ margin: 0 }}>Nombre del plan:</p>
+                                <h4 style={{ margin: 0 }}>
+                                    <strong>{plan.name}</strong>
+                                </h4>
+                                <p style={{ margin: 0 }}>Precio del plan</p>
+                                <p style={{ margin: 0 }}>
+                                    <strong>
+                                        ${formatNumber(plan.price.toFixed(1))}
+                                    </strong>
+                                </p>
+                                <Button
+                                    type="button"
+                                    variant="contained"
+                                    color="primary"
+                                    disabled={false}
+                                    loading={false}
+                                    className={classes.button}
+                                    onClick={() => {
+                                        setSelectedPlan(plan)
                                     }}
-                                />
-                            </div>
-                            <div style={{ marginBottom: 20 }}>
-                                <TextInput
-                                    error={false}
-                                    errorMessage={null}
-                                    icon={null}
-                                    label={'Expira'}
-                                    placeholder={'MM/AA'}
-                                    value={cardExp}
-                                    onChange={({ target }) => {
-                                        setCardExp(target.value)
-                                    }}
-                                />
-                            </div>
-                            <div style={{ marginBottom: 20 }}>
-                                <TextInput
-                                    error={false}
-                                    errorMessage={null}
-                                    icon={null}
-                                    label={'CVV'}
-                                    placeholder={'Ingrese el CVV'}
-                                    value={cardCvv}
-                                    onChange={({ target }) => {
-                                        setCardCvv(target.value)
-                                    }}
-                                />
-                            </div>
-                            <div style={{ marginBottom: 20 }}>
-                                <TextInput
-                                    error={false}
-                                    errorMessage={null}
-                                    icon={null}
-                                    label={'Titular de la Tarjeta'}
-                                    placeholder={
-                                        'Ingrese el nombre del titular'
-                                    }
-                                    value={cardName}
-                                    onChange={({ target }) => {
-                                        setCardName(target.value)
-                                    }}
-                                />
-                            </div>
-                            <div style={{ marginBottom: 20 }}>
-                                <TextInput
-                                    error={false}
-                                    errorMessage={null}
-                                    icon={null}
-                                    label={'DNI del titular de la Tarjeta'}
-                                    placeholder={'Ingrese el DNI del titular'}
-                                    value={cardDni}
-                                    onChange={({ target }) => {
-                                        setCardDni(target.value)
-                                    }}
-                                />
-                            </div>
-                            {error && (
-                                <Typography
-                                    variant="body2"
-                                    className={classes.error}
                                 >
-                                    {error}
-                                </Typography>
-                            )}
-                            <Button
-                                type="button"
-                                variant="contained"
-                                color="primary"
-                                disabled={!mp || loading}
-                                loading={loading}
-                                className={classes.button}
-                                onClick={submitCardDetails}
-                            >
-                                Activar Subscripción
-                            </Button>
-                        </>
-                    )}
+                                    Seleccionar plan
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </>
+            )}
+            {selectedPlan && (
+                <>
+                    <IconButton
+                        className={classes.backButton}
+                        onClick={() => setSelectedPlan(null)}
+                    >
+                        <ArrowBackIcon />
+                    </IconButton>
+                    <Card className={classes.card}>
+                        <CardContent>
+                            {!isActivate && (
+                                <>
+                                    <Typography
+                                        variant="h5"
+                                        gutterBottom
+                                        style={{ marginBottom: 10 }}
+                                    >
+                                        Activa tu subscripción
+                                    </Typography>
 
-                    {isActivate && (
-                        <>
-                            <img
-                                src={Success}
-                                alt="Success"
-                                style={{ width: 100 }}
-                            />
-                            <h6>¡Subscripción al día !</h6>
-                            <p>Puedes operar tu tienda con normalidad.</p>
-                        </>
-                    )}
-                </CardContent>
-            </Card>
+                                    <Typography
+                                        variant="body1"
+                                        style={{ marginBottom: 20 }}
+                                    >
+                                        Para activar tu subscripción, ingresa
+                                        los detalles de la tarjeta donde se
+                                        realizará el cobro.
+                                    </Typography>
+                                    <div style={{ marginBottom: 20 }}>
+                                        <TextInput
+                                            error={false}
+                                            errorMessage={null}
+                                            icon={null}
+                                            label={'Numero de Tarjeta'}
+                                            placeholder={
+                                                'Ingrese el numero de tarjeta'
+                                            }
+                                            value={cardNumber}
+                                            onChange={({ target }) => {
+                                                setCardNumber(target.value)
+                                            }}
+                                        />
+                                    </div>
+                                    <div style={{ marginBottom: 20 }}>
+                                        <TextInput
+                                            error={false}
+                                            errorMessage={null}
+                                            icon={null}
+                                            label={'Expira'}
+                                            placeholder={'MM/AA'}
+                                            value={cardExp}
+                                            onChange={({ target }) => {
+                                                setCardExp(target.value)
+                                            }}
+                                        />
+                                    </div>
+                                    <div style={{ marginBottom: 20 }}>
+                                        <TextInput
+                                            error={false}
+                                            errorMessage={null}
+                                            icon={null}
+                                            label={'CVV'}
+                                            placeholder={'Ingrese el CVV'}
+                                            value={cardCvv}
+                                            onChange={({ target }) => {
+                                                setCardCvv(target.value)
+                                            }}
+                                        />
+                                    </div>
+                                    <div style={{ marginBottom: 20 }}>
+                                        <TextInput
+                                            error={false}
+                                            errorMessage={null}
+                                            icon={null}
+                                            label={'Titular de la Tarjeta'}
+                                            placeholder={
+                                                'Ingrese el nombre del titular'
+                                            }
+                                            value={cardName}
+                                            onChange={({ target }) => {
+                                                setCardName(target.value)
+                                            }}
+                                        />
+                                    </div>
+                                    <div style={{ marginBottom: 20 }}>
+                                        <TextInput
+                                            error={false}
+                                            errorMessage={null}
+                                            icon={null}
+                                            label={
+                                                'DNI del titular de la Tarjeta'
+                                            }
+                                            placeholder={
+                                                'Ingrese el DNI del titular'
+                                            }
+                                            value={cardDni}
+                                            onChange={({ target }) => {
+                                                setCardDni(target.value)
+                                            }}
+                                        />
+                                    </div>
+                                    {error && (
+                                        <Typography
+                                            variant="body2"
+                                            className={classes.error}
+                                        >
+                                            {error}
+                                        </Typography>
+                                    )}
+                                    <Button
+                                        type="button"
+                                        variant="contained"
+                                        color="primary"
+                                        disabled={!mp || loading}
+                                        loading={loading}
+                                        className={classes.button}
+                                        onClick={submitCardDetails}
+                                    >
+                                        Activar Subscripción
+                                    </Button>
+                                </>
+                            )}
+
+                            {isActivate && (
+                                <>
+                                    <img
+                                        src={Success}
+                                        alt="Success"
+                                        style={{ width: 100 }}
+                                    />
+                                    <h6>¡Subscripción al día !</h6>
+                                    <p>
+                                        Puedes operar tu tienda con normalidad.
+                                    </p>
+                                </>
+                            )}
+                        </CardContent>
+                    </Card>
+                </>
+            )}
             <Dialog open={openModal} onClose={() => setOpenModal(false)}>
                 <DialogTitle>¡Suscripción exítosa!</DialogTitle>
                 <DialogActions>
