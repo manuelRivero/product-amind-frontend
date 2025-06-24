@@ -60,15 +60,12 @@ const Activation = () => {
     const [openModal, setOpenModal] = React.useState(false)
     const [selectedPlan, setSelectedPlan] = React.useState(null)
     const classes = useStyles()
-    const subdomain = window.location.hostname
-        .split('.')[0]
-        .replace('-admin', '')
 
     const handleConnect = async (card_token) => {
         console.log('send')
         try {
             const response = await axios.post(
-                `${process.env.REACT_APP_API_KEY}/api/mercado-pago/subscribe-user?tenant=${subdomain}`,
+                `${process.env.REACT_APP_API_KEY}/api/mercado-pago/subscribe-user`,
                 {
                     card_token,
                     preapproval_plan_id: selectedPlan._id,
@@ -76,7 +73,7 @@ const Activation = () => {
                 {
                     headers: {
                         'Content-Type': 'application/json',
-                        // "Authorization": `Bearer ${token}` // si tu API lo requiere
+                        'x-token': user.token,
                     },
                 }
             )
