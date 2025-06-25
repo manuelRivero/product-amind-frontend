@@ -47,6 +47,8 @@ const useStyles = makeStyles((theme) => ({
 
 const Activation = () => {
     const { configDetail } = useSelector((state) => state.config)
+    const isActivate =
+        configDetail?.subscriptionDetail?.hasActiveSubscription ?? false
     const { user } = useSelector((state) => state.auth)
     const [mp, setMp] = React.useState(null)
     const [cardNumber, setCardNumber] = React.useState('')
@@ -60,7 +62,7 @@ const Activation = () => {
     const [error, setError] = React.useState(null)
     const [openModal, setOpenModal] = React.useState(false)
     const [selectedPlan, setSelectedPlan] = React.useState(null)
-    const [changingPlan, setChangingPlan] = React.useState(false)
+    const [changingPlan, setChangingPlan] = React.useState(!isActivate ? true: false)
     const classes = useStyles()
 
     const handleConnect = async (card_token) => {
@@ -88,8 +90,6 @@ const Activation = () => {
     }
     // const isActivate =
     //     configDetail?.subscriptionDetail?.hasActiveSubscription ?? false
-    const isActivate =
-        configDetail?.subscriptionDetail?.hasActiveSubscription ?? false
 
     const submitCardDetails = async () => {
         if (!mp) {
