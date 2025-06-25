@@ -2,7 +2,6 @@
 
 import React, { useEffect } from 'react'
 import {
-    Button,
     Card,
     CardContent,
     Dialog,
@@ -11,6 +10,7 @@ import {
     IconButton,
     Typography,
 } from '@material-ui/core'
+import Button from 'components/CustomButtons/Button'
 
 import { makeStyles } from '@material-ui/core/styles'
 import { useSelector } from 'react-redux'
@@ -22,6 +22,7 @@ import LoadinScreen from '../../components/LoadingScreen'
 import { getPlans } from '../../api/plans'
 import { formatNumber } from '../../helpers/product'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
+import moment from 'moment'
 
 const useStyles = makeStyles((theme) => ({
     card: {
@@ -59,6 +60,7 @@ const Activation = () => {
     const [error, setError] = React.useState(null)
     const [openModal, setOpenModal] = React.useState(false)
     const [selectedPlan, setSelectedPlan] = React.useState(null)
+    const [changingPlan, setChangingPlan] = React.useState(false)
     const classes = useStyles()
 
     const handleConnect = async (card_token) => {
@@ -86,8 +88,9 @@ const Activation = () => {
     }
     // const isActivate =
     //     configDetail?.subscriptionDetail?.hasActiveSubscription ?? false
-    const isActivate = false
-    console.log('configDetail', configDetail)
+    const isActivate =
+        configDetail?.subscriptionDetail?.hasActiveSubscription ?? false
+
     const submitCardDetails = async () => {
         if (!mp) {
             setError('Mercado Pago SDK no cargó correctamente')
@@ -168,7 +171,78 @@ const Activation = () => {
 
     return (
         <>
-            {!selectedPlan && (
+            {isActivate && (
+                <>
+                    <h2>
+                        Tu subscripción está activa, puedes operar tu tienda con
+                        normalidad.
+                    </h2>
+                    <h4>detalles de tu subscripción:</h4>
+                    <p>
+                        Plan:{' '}
+                        <strong>
+                            {
+                                configDetail?.subscriptionDetail?.subscription
+                                    .plan?.name
+                            }
+                        </strong>
+                    </p>
+                    <p>
+                        Fecha de activación:{' '}
+                        <strong>
+                            {moment(
+                                configDetail?.subscriptionDetail?.subscription
+                                    .startDate
+                            ).format('DD/MM/YYYY')}
+                        </strong>
+                    </p>
+                    <p>
+                        Fecha del proximo cobro:{' '}
+                        <strong>
+                            {moment(
+                                configDetail?.subscriptionDetail?.subscription
+                                    .startDate
+                            )
+                                .add(
+                                    configDetail?.subscriptionDetail
+                                        ?.subscription.plan.billingCycle
+                                        .frequency,
+                                    configDetail?.subscriptionDetail
+                                        ?.subscription.plan.billingCycle
+                                        .frequencyType
+                                )
+                                .format('DD/MM/YYYY')}
+                        </strong>
+                    </p>
+                    <div style={{ marginBottom: 20, display: 'flex', gap: 10 }}>
+                        <Button
+                            type="button"
+                            variant="contained"
+                            color="primary"
+                            disabled={!mp || loading}
+                            loading={loading}
+                            className={classes.button}
+                            onClick={() => setChangingPlan(true)}
+                        >
+                            Cambiar de plan
+                        </Button>
+                        {changingPlan && (
+                            <Button
+                                type="button"
+                                variant="contained"
+                                color="primary"
+                                disabled={!mp || loading}
+                                loading={loading}
+                                className={classes.button}
+                                onClick={() => setChangingPlan(false)}
+                            >
+                                Continuar con mi plan actual
+                            </Button>
+                        )}
+                    </div>
+                </>
+            )}
+            {!selectedPlan && changingPlan && (
                 <>
                     <Typography
                         variant="h5"
@@ -177,35 +251,70 @@ const Activation = () => {
                     >
                         Selecciona tu plan
                     </Typography>
-                    {plans.map((plan) => (
-                        <Card className={classes.card} key={plan._id}>
-                            <CardContent>
-                                <p style={{ margin: 0 }}>Nombre del plan:</p>
-                                <h4 style={{ margin: 0 }}>
-                                    <strong>{plan.name}</strong>
-                                </h4>
-                                <p style={{ margin: 0 }}>Precio del plan</p>
-                                <p style={{ margin: 0 }}>
-                                    <strong>
-                                        ${formatNumber(plan.price.toFixed(1))}
-                                    </strong>
-                                </p>
-                                <Button
-                                    type="button"
-                                    variant="contained"
-                                    color="primary"
-                                    disabled={false}
-                                    loading={false}
-                                    className={classes.button}
-                                    onClick={() => {
-                                        setSelectedPlan(plan)
-                                    }}
-                                >
-                                    Seleccionar plan
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    ))}
+                    {plans
+                        .filter(
+                            (plan) =>
+                                plan._id !==
+                                configDetail?.subscriptionDetail?.subscription
+                                    .plan
+                                    ._id
+                        )
+                        .map((plan) => (
+                            <Card className={classes.card} key={plan._id}>
+                                <CardContent>
+                                    <p style={{ margin: 0 }}>
+                                        Nombre del plan:
+                                    </p>
+                                    <h4 style={{ margin: 0 }}>
+                                        <strong>{plan.name}</strong>
+                                    </h4>
+                                    <p style={{ margin: 0 }}>Precio del plan</p>
+                                    <p style={{ margin: 0 }}>
+                                        <strong>
+                                            $
+                                            {formatNumber(
+                                                plan.price.toFixed(1)
+                                            )}
+                                        </strong>
+                                    </p>
+                                    <Button
+                                        type="button"
+                                        variant="contained"
+                                        color="primary"
+                                        disabled={false}
+                                        loading={false}
+                                        className={classes.button}
+                                        onClick={() => {
+                                            setSelectedPlan(plan)
+                                        }}
+                                    >
+                                        Seleccionar plan
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    {changingPlan && (
+                        <div
+                            style={{
+                                marginTop: 20,
+                                display: 'flex',
+                                gap: 10,
+                                justifyContent: 'center',
+                            }}
+                        >
+                            <Button
+                                type="button"
+                                variant="contained"
+                                color="primary"
+                                disabled={!mp || loading}
+                                loading={loading}
+                                className={classes.button}
+                                onClick={() => setChangingPlan(false)}
+                            >
+                                Continuar con mi plan actual
+                            </Button>
+                        </div>
+                    )}
                 </>
             )}
             {selectedPlan && (
