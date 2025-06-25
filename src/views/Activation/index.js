@@ -254,10 +254,10 @@ const Activation = () => {
                     {plans
                         .filter(
                             (plan) =>
-                                plan._id !==
+                                isActivate ? plan._id !==
                                 configDetail?.subscriptionDetail?.subscription
                                     .plan
-                                    ._id
+                                    ._id : true
                         )
                         .map((plan) => (
                             <Card className={classes.card} key={plan._id}>
@@ -293,7 +293,7 @@ const Activation = () => {
                                 </CardContent>
                             </Card>
                         ))}
-                    {changingPlan && (
+                    {changingPlan && isActivate && (
                         <div
                             style={{
                                 marginTop: 20,
