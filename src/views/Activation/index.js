@@ -13,7 +13,7 @@ import {
 import Button from 'components/CustomButtons/Button'
 
 import { makeStyles } from '@material-ui/core/styles'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 
 import Success from 'assets/img/success-icon.png'
 import axios from 'axios'
@@ -23,6 +23,7 @@ import { getPlans } from '../../api/plans'
 import { formatNumber } from '../../helpers/product'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import moment from 'moment'
+import { getConfigRequest } from '../../store/config'
 
 const useStyles = makeStyles((theme) => ({
     card: {
@@ -47,8 +48,11 @@ const useStyles = makeStyles((theme) => ({
 
 const Activation = () => {
     const { configDetail } = useSelector((state) => state.config)
+    const dispatch = useDispatch()
     const isActivate =
         configDetail?.subscriptionDetail?.hasActiveSubscription ?? false
+    const isPending = configDetail?.subscriptionDetail?.pending ?? false
+    const status = configDetail?.subscriptionDetail?.status
     const { user } = useSelector((state) => state.auth)
     const [mp, setMp] = React.useState(null)
     const [cardNumber, setCardNumber] = React.useState('')
@@ -62,7 +66,9 @@ const Activation = () => {
     const [error, setError] = React.useState(null)
     const [openModal, setOpenModal] = React.useState(false)
     const [selectedPlan, setSelectedPlan] = React.useState(null)
-    const [changingPlan, setChangingPlan] = React.useState(!isActivate ? true: false)
+    const [changingPlan, setChangingPlan] = React.useState(
+        !isActivate && !isPending ? true : false
+    )
     const classes = useStyles()
 
     const handleConnect = async (card_token) => {
@@ -83,6 +89,8 @@ const Activation = () => {
             )
             console.log('authUrl', response.data)
             setOpenModal(true)
+            dispatch(getConfigRequest({ access: user.token }))
+            setSelectedPlan(null)
         } catch (error) {
             setError('Error al enviar el token de la tarjeta')
             return
@@ -168,9 +176,27 @@ const Activation = () => {
     if (loadingPlans) {
         return <LoadinScreen />
     }
-
+    console.log('status', isPending, status)
     return (
         <>
+            {isPending && (status === 'autorized' || status === 'pending') && (
+                <h2>
+                    Tu subscripción está pendiente de activación, por favor
+                    espera a que se procese el pago.
+                </h2>
+            )}
+            {isPending && status === 'paused' && (
+                <h2>
+                    Tu subscripción está pausada, por favor contacta a soporte
+                    para reactivarla.
+                </h2>
+            )}
+            {isPending && status === 'cancelled' && (
+                <h2>
+                    Tu subscripción está cancelada, por favor contacta a soporte
+                    para reactivarla.
+                </h2>
+            )}
             {isActivate && (
                 <>
                     <h2>
@@ -252,12 +278,12 @@ const Activation = () => {
                         Selecciona tu plan
                     </Typography>
                     {plans
-                        .filter(
-                            (plan) =>
-                                isActivate ? plan._id !==
-                                configDetail?.subscriptionDetail?.subscription
-                                    .plan
-                                    ._id : true
+                        .filter((plan) =>
+                            isActivate
+                                ? plan._id !==
+                                  configDetail?.subscriptionDetail?.subscription
+                                      .plan._id
+                                : true
                         )
                         .map((plan) => (
                             <Card className={classes.card} key={plan._id}>
