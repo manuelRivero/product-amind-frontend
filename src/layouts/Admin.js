@@ -141,7 +141,7 @@ export default function Admin({ ...rest }) {
         const getConfig = async () => {
             try {
                 setLoadingConfig(true)
-                dispatch(getConfigRequest({ access: user.token }))
+                await dispatch(getConfigRequest({ access: user.token }))
             } catch (error) {
                 console.error('Error fetching config:', error)
                 setError({
@@ -155,6 +155,9 @@ export default function Admin({ ...rest }) {
 
         getConfig()
     }, [])
+
+    console.log('loadingTenant', loadingTenant)
+    console.log('loadingConfig', loadingConfig)
 
     if (loadingTenant || loadingConfig) {
         return <LoadinScreen />
