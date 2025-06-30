@@ -15,6 +15,7 @@ import { dashboardRoutes } from 'routes.js'
 import styles from 'assets/jss/material-dashboard-react/layouts/adminStyle.js'
 import { getConfigRequest, setStoreTenant } from '../store/config'
 import { useDispatch, useSelector } from 'react-redux'
+import LoadinScreen from '../components/LoadingScreen'
 
 let ps
 
@@ -59,8 +60,11 @@ export default function Admin({ ...rest }) {
     const mainPanel = React.createRef()
     // states and functions
     const [tenant, setTenant] = React.useState(null)
+    const [loadingTenant, setLoadingTenant] = React.useState(true)
+    const [loadingConfig, setLoadingConfig] = React.useState(true)
     const [color] = React.useState('blue')
     const [mobileOpen, setMobileOpen] = React.useState(false)
+    const [error, setError] = React.useState(null)
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen)
@@ -104,6 +108,7 @@ export default function Admin({ ...rest }) {
         const verifyTenant = async () => {
             try {
                 // Use fetch to verify if the subdomain exists
+                setLoadingTenant(true)
                 const response = await fetch(
                     `/tenant/verify-tenat-admin?subdomain=${subdomain}`
                 )
@@ -115,7 +120,13 @@ export default function Admin({ ...rest }) {
                 }
             } catch (error) {
                 console.error('Error fetching tenant:', error)
+                setError({
+                    type:'tenant',
+                    message: 'Hubo un error cargando la configuración de su tienda, por favor refresque la pagina, si el problema persiste contactese con soporte.',
+                })
                 setTenant(null)
+            } finally {
+                setLoadingTenant(false)
             }
         }
         const subdomain = window.location.hostname.split('.')[0]
@@ -129,14 +140,36 @@ export default function Admin({ ...rest }) {
     React.useEffect(() => {
         const getConfig = async () => {
             try {
+                setLoadingConfig(true)
                 dispatch(getConfigRequest({ access: user.token }))
             } catch (error) {
                 console.error('Error fetching config:', error)
+                setError({
+                    type:'config',
+                    message: 'Hubo un error cargando la configuración de su tienda, por favor refresque la pagina, si el problema persiste contactese con soporte.',
+                })
+            } finally {
+                setLoadingConfig(false)
             }
         }
 
         getConfig()
     }, [])
+
+    if (loadingTenant || loadingConfig) {
+        return <LoadinScreen />
+    }
+
+    if (error) {
+        return (
+            <div className={classes.wrapper}>
+                <h2>{error.message}</h2>
+                <button onClick={() => window.location.reload()}>
+                    Refrescar
+                </button>
+            </div>
+        )
+    }
 
     return (
         <div className={classes.wrapper}>
