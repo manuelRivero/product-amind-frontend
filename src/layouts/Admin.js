@@ -87,6 +87,9 @@ export default function Admin({ ...rest }) {
         })
     }
     React.useEffect(() => {
+        if(mainPanel.current === null) {
+            return
+        }
         if (navigator.platform.indexOf('Win') > -1) {
             ps = new PerfectScrollbar(mainPanel.current, {
                 suppressScrollX: true,
