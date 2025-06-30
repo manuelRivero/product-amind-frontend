@@ -179,11 +179,17 @@ const Activation = () => {
     console.log('status', isPending, status)
     return (
         <>
-            {isPending && (status === 'autorized' || status === 'pending') && (
+            {isPending && (status === 'authorized' || status === 'pending') && (
+                <>
                 <h2>
                     Tu subscripción está pendiente de activación, por favor
                     espera a que se procese el pago.
                 </h2>
+                <p>
+                    Si tienes alguna duda o tu tienda no se activa en un plazo de 24 horas contacta a soporte para más
+                    información.
+                </p>
+                </>
             )}
             {isPending && status === 'paused' && (
                 <h2>
