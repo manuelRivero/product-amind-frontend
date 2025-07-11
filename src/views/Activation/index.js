@@ -49,10 +49,24 @@ const useStyles = makeStyles((theme) => ({
 const Activation = () => {
     const { configDetail } = useSelector((state) => state.config)
     const dispatch = useDispatch()
-    const isActivate =
-        configDetail?.subscriptionDetail?.hasActiveSubscription ?? false
-    const isPending = configDetail?.subscriptionDetail?.pending ?? false
-    const status = configDetail?.subscriptionDetail?.status
+    
+    // Corregir las validaciones para que coincidan con la estructura real
+    const subscriptionDetail = configDetail?.subscriptionDetail
+    const isActivate = subscriptionDetail?.hasActiveSubscription ?? false
+    const isPending = subscriptionDetail?.pending ?? false
+    const paymentStatus = subscriptionDetail?.subscription?.paymentStatus
+    const subscription = subscriptionDetail?.subscription
+    
+    // Validaciones según el estado real del pago
+    const isPaymentAuthorized = paymentStatus === 'authorized' && subscription
+    const isPaymentApproved = paymentStatus === 'approved' && subscription
+    const isPaymentPending = paymentStatus === 'pending' && subscription
+    const isPaymentPaused = paymentStatus === 'paused' && subscription
+    const isPaymentCancelled = paymentStatus === 'cancelled' && subscription
+    
+    // La suscripción está realmente activa solo si está aprobada o si hasActiveSubscription es true
+    const isSubscriptionActive = isActivate || isPaymentApproved
+    
     const { user } = useSelector((state) => state.auth)
     const [mp, setMp] = React.useState(null)
     const [cardNumber, setCardNumber] = React.useState('')
@@ -67,7 +81,7 @@ const Activation = () => {
     const [openModal, setOpenModal] = React.useState(false)
     const [selectedPlan, setSelectedPlan] = React.useState(null)
     const [changingPlan, setChangingPlan] = React.useState(
-        !isActivate && !isPending ? true : false
+        !isSubscriptionActive && !isPaymentAuthorized && !isPaymentPending ? true : false
     )
     const classes = useStyles()
 
@@ -91,6 +105,7 @@ const Activation = () => {
             setOpenModal(true)
             dispatch(getConfigRequest({ access: user.token }))
             setSelectedPlan(null)
+            setChangingPlan(false)
         } catch (error) {
             setError('Error al enviar el token de la tarjeta')
             return
@@ -176,36 +191,46 @@ const Activation = () => {
     if (loadingPlans) {
         return <LoadinScreen />
     }
-    console.log('status', isPending, status)
+    console.log('status', isPending, paymentStatus)
     return (
         <>
-            {isPending && (status === 'authorized' || status === 'pending') && (
+            {isPaymentPending && (
                 <>
-                <h2>
-                    Tu subscripción está pendiente de activación, por favor
-                    espera a que se procese el pago.
+                <h2 style={{ fontWeight: 'bold' }}>
+                    Tu pago está siendo procesado
                 </h2>
                 <p>
-                    Si tienes alguna duda o tu tienda no se activa en un plazo de 24 horas contacta a soporte para más
-                    información.
+                    Estamos verificando tu pago. Este proceso puede tomar un tiempo. 
+                    Una vez confirmado, tu tienda se activará automáticamente.
+                </p>
+                <p style={{ color: '#666', fontSize: '14px', marginTop: '10px' }}>
+                    Si tienes alguna duda o tu tienda no se activa en un plazo de 24 horas, contacta a soporte.
                 </p>
                 </>
             )}
-            {isPending && status === 'paused' && (
-                <h2>
-                    Tu subscripción está pausada, por favor contacta a soporte
-                    para reactivarla.
-                </h2>
-            )}
-            {isPending && status === 'cancelled' && (
-                <h2>
-                    Tu subscripción está cancelada, por favor contacta a soporte
-                    para reactivarla.
-                </h2>
-            )}
-            {isActivate && (
+            {isPaymentPaused && (
                 <>
-                    <h2>
+                    <h2 style={{ fontWeight: 'bold' }}>
+                        Tu subscripción está pausada temporalmente
+                    </h2>
+                    <p>
+                        Por favor contacta a soporte para reactivar tu subscripción y continuar operando tu tienda.
+                    </p>
+                </>
+            )}
+            {isPaymentCancelled && (
+                <>
+                    <h2 style={{ fontWeight: 'bold' }}>
+                        Tu subscripción fue cancelada
+                    </h2>
+                    <p>
+                        Por favor contacta a soporte para reactivar tu subscripción y continuar operando tu tienda.
+                    </p>
+                </>
+            )}
+            {isSubscriptionActive && (
+                <>
+                    <h2 style={{ fontWeight: 'bold' }}>
                         Tu subscripción está activa, puedes operar tu tienda con
                         normalidad.
                     </h2>
@@ -214,8 +239,7 @@ const Activation = () => {
                         Plan:{' '}
                         <strong>
                             {
-                                configDetail?.subscriptionDetail?.subscription
-                                    .plan?.name
+                                subscription?.plan?.name
                             }
                         </strong>
                     </p>
@@ -223,8 +247,7 @@ const Activation = () => {
                         Fecha de activación:{' '}
                         <strong>
                             {moment(
-                                configDetail?.subscriptionDetail?.subscription
-                                    .startDate
+                                subscription?.startDate
                             ).format('DD/MM/YYYY')}
                         </strong>
                     </p>
@@ -232,16 +255,13 @@ const Activation = () => {
                         Fecha del proximo cobro:{' '}
                         <strong>
                             {moment(
-                                configDetail?.subscriptionDetail?.subscription
-                                    .startDate
+                                subscription?.startDate
                             )
                                 .add(
-                                    configDetail?.subscriptionDetail
-                                        ?.subscription.plan.billingCycle
-                                        .frequency,
-                                    configDetail?.subscriptionDetail
-                                        ?.subscription.plan.billingCycle
-                                        .frequencyType
+                                    subscription?.plan?.billingCycle
+                                        ?.frequency || 0,
+                                    subscription?.plan?.billingCycle
+                                        ?.frequencyType || 'days'
                                 )
                                 .format('DD/MM/YYYY')}
                         </strong>
@@ -274,6 +294,37 @@ const Activation = () => {
                     </div>
                 </>
             )}
+            
+            {isPaymentAuthorized && !isSubscriptionActive && (
+                <>
+                    <h2 style={{ fontWeight: 'bold' }}>
+                        Tu pago está autorizado
+                    </h2>
+                    <p >
+                        Tu tarjeta fue autorizada exitosamente. Estamos procesando el pago para activar tu tienda.
+                    </p>
+                    <p>
+                        Este proceso puede tomar unos minutos. Una vez completado, tu tienda estará lista para operar.
+                    </p>
+                    <h4 style={{ fontWeight: 'bold' }}>detalles de tu subscripción:</h4>
+                    <p>
+                        Plan:{' '}
+                        <strong>
+                            {
+                                subscription?.plan?.name
+                            }
+                        </strong>
+                    </p>
+                    <p>
+                        Fecha de autorización:{' '}
+                        <strong>
+                            {moment(
+                                subscription?.startDate
+                            ).format('DD/MM/YYYY')}
+                        </strong>
+                    </p>
+                </>
+            )}
             {!selectedPlan && changingPlan && (
                 <>
                     <Typography
@@ -285,10 +336,9 @@ const Activation = () => {
                     </Typography>
                     {plans
                         .filter((plan) =>
-                            isActivate
+                            (isSubscriptionActive || isPaymentAuthorized)
                                 ? plan._id !==
-                                  configDetail?.subscriptionDetail?.subscription
-                                      .plan._id
+                                  subscription?.plan?._id
                                 : true
                         )
                         .map((plan) => (
@@ -325,7 +375,7 @@ const Activation = () => {
                                 </CardContent>
                             </Card>
                         ))}
-                    {changingPlan && isActivate && (
+                    {changingPlan && (isSubscriptionActive || isPaymentAuthorized) && (
                         <div
                             style={{
                                 marginTop: 20,
@@ -359,23 +409,21 @@ const Activation = () => {
                     </IconButton>
                     <Card className={classes.card}>
                         <CardContent>
-                            {!isActivate && (
+                            {!isSubscriptionActive && !isPaymentAuthorized && (
                                 <>
                                     <Typography
                                         variant="h5"
                                         gutterBottom
                                         style={{ marginBottom: 10 }}
                                     >
-                                        Activa tu subscripción
+                                        Activa tu tienda
                                     </Typography>
 
                                     <Typography
                                         variant="body1"
                                         style={{ marginBottom: 20 }}
                                     >
-                                        Para activar tu subscripción, ingresa
-                                        los detalles de la tarjeta donde se
-                                        realizará el cobro.
+                                        Para comenzar a operar tu tienda, selecciona un plan y completa el pago con tu tarjeta.
                                     </Typography>
                                     <div style={{ marginBottom: 20 }}>
                                         <TextInput
@@ -467,22 +515,33 @@ const Activation = () => {
                                         className={classes.button}
                                         onClick={submitCardDetails}
                                     >
-                                        Activar Subscripción
+                                        Activar Tienda
                                     </Button>
                                 </>
                             )}
 
-                            {isActivate && (
+                            {(isSubscriptionActive || isPaymentAuthorized) && (
                                 <>
                                     <img
                                         src={Success}
                                         alt="Success"
                                         style={{ width: 100 }}
                                     />
-                                    <h6>¡Subscripción al día !</h6>
-                                    <p>
-                                        Puedes operar tu tienda con normalidad.
-                                    </p>
+                                    {isSubscriptionActive ? (
+                                        <>
+                                            <h6>¡Subscripción al día!</h6>
+                                            <p>
+                                                Puedes operar tu tienda con normalidad.
+                                            </p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <h6>¡Pago autorizado exitosamente!</h6>
+                                            <p>
+                                                Tu tarjeta fue autorizada. Estamos procesando el pago para activar tu tienda.
+                                            </p>
+                                        </>
+                                    )}
                                 </>
                             )}
                         </CardContent>

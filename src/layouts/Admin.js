@@ -53,7 +53,7 @@ const useStyles = makeStyles(styles)
 export default function Admin({ ...rest }) {
     const dispatch = useDispatch()
     const { user } = useSelector((state) => state.auth)
-    const { configDetail } = useSelector((state) => state.config)
+    const { configDetail, error: configError, errorDetails } = useSelector((state) => state.config)
     // styles
     const classes = useStyles()
     // ref to help us initialize PerfectScrollbar on windows devices
@@ -77,12 +77,21 @@ export default function Admin({ ...rest }) {
     }
     const handleDashboardRoutes = () => {
         return dashboardRoutes.filter((prop) => {
-            const isActivate =
-                configDetail?.subscriptionDetail?.hasActiveSubscription ?? false
+            // Usar la misma lógica de validación que en Activation
+            const subscriptionDetail = configDetail?.subscriptionDetail
+            const isActivate = subscriptionDetail?.hasActiveSubscription ?? false
+            const paymentStatus = subscriptionDetail?.subscription?.paymentStatus
+            const subscription = subscriptionDetail?.subscription
+            
+            // Validaciones según el estado real del pago
+            const isPaymentApproved = paymentStatus === 'approved' && subscription
+            
+            // La suscripción está realmente activa solo si está aprobada o si hasActiveSubscription es true
+            const isSubscriptionActive = isActivate || isPaymentApproved
 
             return (
                 prop.layout === '/admin' &&
-                (!prop.needConfig || (prop.needConfig && isActivate))
+                (!prop.needConfig || (prop.needConfig && isSubscriptionActive))
             )
         })
     }
@@ -112,14 +121,17 @@ export default function Admin({ ...rest }) {
             try {
                 // Use fetch to verify if the subdomain exists
                 setLoadingTenant(true)
+                setError(null) // Reset error state
                 const response = await fetch(
-                    `/tenant/verify-tenat-admin?subdomain=${subdomain}`
+                    `/tenant/verify-tenant-admin?subdomain=${subdomain}`
                 )
                 console.log('parseResponse', response)
                 if (response.ok) {
                     console.log('valid subdomain')
                     setTenant(subdomain)
                     dispatch(setStoreTenant(subdomain))
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`)
                 }
             } catch (error) {
                 console.error('Error fetching tenant:', error)
@@ -137,13 +149,22 @@ export default function Admin({ ...rest }) {
             verifyTenant(subdomain)
         } else {
             console.error('Tenant not found')
+            setError({
+                type:'tenant',
+                message: 'No se pudo identificar la tienda. Verifique la URL e intente nuevamente.',
+            })
+            setLoadingTenant(false)
         }
     }, [])
 
     React.useEffect(() => {
         const getConfig = async () => {
             try {
+                if (!user?.token) {
+                    throw new Error('No hay token de usuario disponible')
+                }
                 setLoadingConfig(true)
+                setError(null) // Reset error state
                 await dispatch(getConfigRequest({ access: user.token }))
             } catch (error) {
                 console.error('Error fetching config:', error)
@@ -156,11 +177,48 @@ export default function Admin({ ...rest }) {
             }
         }
 
-        getConfig()
-    }, [])
+        // Only get config if tenant is loaded and user has token
+        if (tenant && user?.token) {
+            getConfig()
+        }
+    }, [tenant, user?.token])
+
+    // Handle config errors from Redux store
+    React.useEffect(() => {
+        if (configError && errorDetails) {
+            setError({
+                type: 'config',
+                message: errorDetails.message || 'Hubo un error cargando la configuración de su tienda, por favor refresque la pagina, si el problema persiste contactese con soporte.',
+            })
+        }
+    }, [configError, errorDetails])
 
     console.log('loadingTenant', loadingTenant)
     console.log('loadingConfig', loadingConfig)
+    
+    // Debug info para validación de suscripción
+    if (configDetail) {
+        const subscriptionDetail = configDetail?.subscriptionDetail
+        const isActivate = subscriptionDetail?.hasActiveSubscription ?? false
+        const paymentStatus = subscriptionDetail?.subscription?.paymentStatus
+        const isPaymentApproved = paymentStatus === 'approved' && subscriptionDetail?.subscription
+        const isSubscriptionActive = isActivate || isPaymentApproved
+        
+        console.log('Subscription Debug:', {
+            hasActiveSubscription: isActivate,
+            paymentStatus: paymentStatus,
+            isPaymentApproved: isPaymentApproved,
+            isSubscriptionActive: isSubscriptionActive,
+            routesFiltered: dashboardRoutes.filter(prop => 
+                prop.layout === '/admin' && 
+                (!prop.needConfig || (prop.needConfig && isSubscriptionActive))
+            ).length,
+            availableRoutes: dashboardRoutes.filter(prop => 
+                prop.layout === '/admin' && 
+                (!prop.needConfig || (prop.needConfig && isSubscriptionActive))
+            ).map(route => route.name)
+        })
+    }
 
     if (loadingTenant || loadingConfig) {
         return <LoadinScreen />
@@ -169,10 +227,36 @@ export default function Admin({ ...rest }) {
     if (error) {
         return (
             <div className={classes.wrapper}>
-                <h2>{error.message}</h2>
-                <button onClick={() => window.location.reload()}>
-                    Refrescar
-                </button>
+                <div style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    height: '100vh',
+                    padding: '20px',
+                    textAlign: 'center'
+                }}>
+                    <h2 style={{ color: '#f44336', marginBottom: '20px' }}>
+                        {error.type === 'tenant' ? 'Error de Conexión' : 'Error de Configuración'}
+                    </h2>
+                    <p style={{ marginBottom: '30px', fontSize: '16px' }}>
+                        {error.message}
+                    </p>
+                    <button 
+                        onClick={() => window.location.reload()}
+                        style={{
+                            padding: '12px 24px',
+                            backgroundColor: '#1976d2',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '16px'
+                        }}
+                    >
+                        Refrescar Página
+                    </button>
+                </div>
             </div>
         )
     }
@@ -196,11 +280,49 @@ export default function Admin({ ...rest }) {
                 <div className={classes.content}>
                     <div className={classes.container}>
                         {/* {console.log("childRoutes", childRoutes)} */}
-                        {tenant && (
-                            <Switch>
-                                {mainRoutes}
-                                {childRoutes}
-                            </Switch>
+                        {tenant && !error && (
+                            <>
+                                <Switch>
+                                    {mainRoutes}
+                                    {childRoutes}
+                                </Switch>
+                                {/* Mensaje cuando no hay suscripción activa */}
+                                {configDetail && (() => {
+                                    const subscriptionDetail = configDetail?.subscriptionDetail
+                                    const isActivate = subscriptionDetail?.hasActiveSubscription ?? false
+                                    const paymentStatus = subscriptionDetail?.subscription?.paymentStatus
+                                    const isPaymentApproved = paymentStatus === 'approved' && subscriptionDetail?.subscription
+                                    const isSubscriptionActive = isActivate || isPaymentApproved
+                                    
+                                    if (!isSubscriptionActive && subscriptionDetail?.subscription) {
+                                        return (
+                                            <div style={{
+                                                position: 'fixed',
+                                                bottom: '20px',
+                                                right: '20px',
+                                                backgroundColor: '#fff3cd',
+                                                border: '1px solid #ffeaa7',
+                                                borderRadius: '8px',
+                                                padding: '15px',
+                                                maxWidth: '300px',
+                                                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                                                zIndex: 1000
+                                            }}>
+                                                <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
+                                                    ⚠️ Suscripción pendiente
+                                                </div>
+                                                <div style={{ fontSize: '14px' }}>
+                                                    {paymentStatus === 'authorized' 
+                                                        ? 'Tu pago está autorizado. Espera a que se procese.'
+                                                        : 'Activa tu suscripción para acceder a todas las funciones.'
+                                                    }
+                                                </div>
+                                            </div>
+                                        )
+                                    }
+                                    return null
+                                })()}
+                            </>
                         )}
                     </div>
                 </div>
