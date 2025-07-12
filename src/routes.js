@@ -54,6 +54,7 @@ const dashboardRoutes = [
         layout: '/admin',
         needConfig: false,
         hidden: true,
+        permission: null, // No requiere permisos
     },
     {
         path: '/dashboard',
@@ -63,6 +64,7 @@ const dashboardRoutes = [
         component: DashboardPage,
         layout: '/admin',
         needConfig: true,
+        permission: { resource: 'reports', action: 'read' },
     },
     {
         path: '/orders',
@@ -71,6 +73,7 @@ const dashboardRoutes = [
         component: Sales,
         layout: '/admin',
         needConfig: true,
+        permission: { resource: 'sales', action: 'read' },
 
         childrens: [
             {
@@ -88,6 +91,7 @@ const dashboardRoutes = [
         component: Offers,
         layout: '/admin',
         needConfig: true,
+        permission: { resource: 'offers', action: 'read' },
 
         childrens: [
             {
@@ -112,6 +116,7 @@ const dashboardRoutes = [
         component: Banners,
         layout: '/admin',
         needConfig: true,
+        permission: { resource: 'banners', action: 'read' },
 
         childrens: [
             {
@@ -133,6 +138,7 @@ const dashboardRoutes = [
         component: Categories,
         layout: '/admin',
         needConfig: true,
+        permission: { resource: 'categories', action: 'read' },
         childrens: [
             {
                 path: '/add-category',
@@ -156,6 +162,7 @@ const dashboardRoutes = [
         needConfig: true,
         childrens: [],
         hidden: true,
+        permission: { resource: 'products', action: 'read' },
     },
     {
         path: '/products',
@@ -164,6 +171,7 @@ const dashboardRoutes = [
         component: Products,
         layout: '/admin',
         needConfig: true,
+        permission: { resource: 'products', action: 'read' },
         childrens: [
             {
                 path: '/add-product',
@@ -195,6 +203,7 @@ const dashboardRoutes = [
         component: ConfigPage,
         layout: '/admin',
         needConfig: true,
+        permission: { resource: 'config', action: 'read' },
     },
     {
         path: '/mercado-pago',
@@ -203,6 +212,7 @@ const dashboardRoutes = [
         component: Activation,
         layout: '/admin',
         needConfig: false,
+        permission: null, // No requiere permisos
     },
     
     // {

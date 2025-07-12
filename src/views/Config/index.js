@@ -150,8 +150,10 @@ export default function ConfigPage() {
     }
 
     useEffect(() => {
-        dispatch(getConfigRequest({ access: user.token }))
-    }, [])
+        if (!configDetail) {
+            dispatch(getConfigRequest({ access: user.token }))
+        }
+    }, [ configDetail])
 
     useEffect(() => {
         if (configDetail) {

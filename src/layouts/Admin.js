@@ -16,6 +16,8 @@ import styles from 'assets/jss/material-dashboard-react/layouts/adminStyle.js'
 import { getConfigRequest, setStoreTenant } from '../store/config'
 import { useDispatch, useSelector } from 'react-redux'
 import LoadinScreen from '../components/LoadingScreen'
+import { usePermissions } from '../hooks/usePermissions'
+import PermissionError from '../components/PermissionError'
 
 let ps
 
@@ -54,6 +56,13 @@ export default function Admin({ ...rest }) {
     const dispatch = useDispatch()
     const { user } = useSelector((state) => state.auth)
     const { configDetail, error: configError, errorDetails } = useSelector((state) => state.config)
+    const { 
+        isSubscriptionActive, 
+        isPaymentAuthorized, 
+        loadingConfig: loadingConfigPermissions,
+        permissionsError,
+        hasUserPermission
+    } = usePermissions()
     // styles
     const classes = useStyles()
     // ref to help us initialize PerfectScrollbar on windows devices
@@ -62,6 +71,7 @@ export default function Admin({ ...rest }) {
     const [tenant, setTenant] = React.useState(null)
     const [loadingTenant, setLoadingTenant] = React.useState(true)
     const [loadingConfig, setLoadingConfig] = React.useState(true)
+    const [configRequested, setConfigRequested] = React.useState(false)
     const [color] = React.useState('blue')
     const [mobileOpen, setMobileOpen] = React.useState(false)
     const [error, setError] = React.useState(null)
@@ -77,22 +87,19 @@ export default function Admin({ ...rest }) {
     }
     const handleDashboardRoutes = () => {
         return dashboardRoutes.filter((prop) => {
-            // Usar la misma lógica de validación que en Activation
-            const subscriptionDetail = configDetail?.subscriptionDetail
-            const isActivate = subscriptionDetail?.hasActiveSubscription ?? false
-            const paymentStatus = subscriptionDetail?.subscription?.paymentStatus
-            const subscription = subscriptionDetail?.subscription
+            // Verificar si es una ruta de admin
+            const isAdminRoute = prop.layout === '/admin'
             
-            // Validaciones según el estado real del pago
-            const isPaymentApproved = paymentStatus === 'approved' && subscription
+            // Verificar suscripción activa
+            const hasSubscription = !prop.needConfig || (prop.needConfig && isSubscriptionActive)
             
-            // La suscripción está realmente activa solo si está aprobada o si hasActiveSubscription es true
-            const isSubscriptionActive = isActivate || isPaymentApproved
-
-            return (
-                prop.layout === '/admin' &&
-                (!prop.needConfig || (prop.needConfig && isSubscriptionActive))
-            )
+            // Verificar permisos de usuario
+            let hasPermission = true
+            if (prop.permission) {
+                hasPermission = hasUserPermission(prop.permission.resource, prop.permission.action)
+            }
+            
+            return isAdminRoute && hasSubscription && hasPermission
         })
     }
     React.useEffect(() => {
@@ -157,31 +164,35 @@ export default function Admin({ ...rest }) {
         }
     }, [])
 
-    React.useEffect(() => {
-        const getConfig = async () => {
-            try {
-                if (!user?.token) {
-                    throw new Error('No hay token de usuario disponible')
-                }
-                setLoadingConfig(true)
-                setError(null) // Reset error state
-                await dispatch(getConfigRequest({ access: user.token }))
-            } catch (error) {
-                console.error('Error fetching config:', error)
-                setError({
-                    type:'config',
-                    message: 'Hubo un error cargando la configuración de su tienda, por favor refresque la pagina, si el problema persiste contactese con soporte.',
-                })
-            } finally {
-                setLoadingConfig(false)
+    const getConfig = React.useCallback(async () => {
+        try {
+            if (!user?.token) {
+                throw new Error('No hay token de usuario disponible')
             }
+            if (configRequested) {
+                return // Evitar llamadas duplicadas
+            }
+            setConfigRequested(true)
+            setLoadingConfig(true)
+            setError(null) // Reset error state
+            await dispatch(getConfigRequest({ access: user.token }))
+        } catch (error) {
+            console.error('Error fetching config:', error)
+            setError({
+                type:'config',
+                message: 'Hubo un error cargando la configuración de su tienda, por favor refresque la pagina, si el problema persiste contactese con soporte.',
+            })
+        } finally {
+            setLoadingConfig(false)
         }
+    }, [user?.token, dispatch, configRequested])
 
+    React.useEffect(() => {
         // Only get config if tenant is loaded and user has token
         if (tenant && user?.token) {
             getConfig()
         }
-    }, [tenant, user?.token])
+    }, [tenant, user?.token, getConfig])
 
     // Handle config errors from Redux store
     React.useEffect(() => {
@@ -193,34 +204,9 @@ export default function Admin({ ...rest }) {
         }
     }, [configError, errorDetails])
 
-    console.log('loadingTenant', loadingTenant)
-    console.log('loadingConfig', loadingConfig)
-    
-    // Debug info para validación de suscripción
-    if (configDetail) {
-        const subscriptionDetail = configDetail?.subscriptionDetail
-        const isActivate = subscriptionDetail?.hasActiveSubscription ?? false
-        const paymentStatus = subscriptionDetail?.subscription?.paymentStatus
-        const isPaymentApproved = paymentStatus === 'approved' && subscriptionDetail?.subscription
-        const isSubscriptionActive = isActivate || isPaymentApproved
-        
-        console.log('Subscription Debug:', {
-            hasActiveSubscription: isActivate,
-            paymentStatus: paymentStatus,
-            isPaymentApproved: isPaymentApproved,
-            isSubscriptionActive: isSubscriptionActive,
-            routesFiltered: dashboardRoutes.filter(prop => 
-                prop.layout === '/admin' && 
-                (!prop.needConfig || (prop.needConfig && isSubscriptionActive))
-            ).length,
-            availableRoutes: dashboardRoutes.filter(prop => 
-                prop.layout === '/admin' && 
-                (!prop.needConfig || (prop.needConfig && isSubscriptionActive))
-            ).map(route => route.name)
-        })
-    }
 
-    if (loadingTenant || loadingConfig) {
+
+    if (loadingTenant || loadingConfig || loadingConfigPermissions) {
         return <LoadinScreen />
     }
 
@@ -287,41 +273,47 @@ export default function Admin({ ...rest }) {
                                     {childRoutes}
                                 </Switch>
                                 {/* Mensaje cuando no hay suscripción activa */}
-                                {configDetail && (() => {
-                                    const subscriptionDetail = configDetail?.subscriptionDetail
-                                    const isActivate = subscriptionDetail?.hasActiveSubscription ?? false
-                                    const paymentStatus = subscriptionDetail?.subscription?.paymentStatus
-                                    const isPaymentApproved = paymentStatus === 'approved' && subscriptionDetail?.subscription
-                                    const isSubscriptionActive = isActivate || isPaymentApproved
-                                    
-                                    if (!isSubscriptionActive && subscriptionDetail?.subscription) {
-                                        return (
-                                            <div style={{
-                                                position: 'fixed',
-                                                bottom: '20px',
-                                                right: '20px',
-                                                backgroundColor: '#fff3cd',
-                                                border: '1px solid #ffeaa7',
-                                                borderRadius: '8px',
-                                                padding: '15px',
-                                                maxWidth: '300px',
-                                                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                                                zIndex: 1000
-                                            }}>
-                                                <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
-                                                    ⚠️ Suscripción pendiente
-                                                </div>
-                                                <div style={{ fontSize: '14px' }}>
-                                                    {paymentStatus === 'authorized' 
-                                                        ? 'Tu pago está autorizado. Espera a que se procese.'
-                                                        : 'Activa tu suscripción para acceder a todas las funciones.'
-                                                    }
-                                                </div>
-                                            </div>
-                                        )
-                                    }
-                                    return null
-                                })()}
+                                {configDetail && !isSubscriptionActive && configDetail?.subscriptionDetail?.subscription && (
+                                    <div style={{
+                                        position: 'fixed',
+                                        bottom: '20px',
+                                        right: '20px',
+                                        backgroundColor: '#fff3cd',
+                                        border: '1px solid #ffeaa7',
+                                        borderRadius: '8px',
+                                        padding: '15px',
+                                        maxWidth: '300px',
+                                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                                        zIndex: 1000
+                                    }}>
+                                        <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
+                                            ⚠️ Suscripción pendiente
+                                        </div>
+                                        <div style={{ fontSize: '14px' }}>
+                                            {isPaymentAuthorized 
+                                                ? 'Tu pago está autorizado. Espera a que se procese.'
+                                                : 'Activa tu suscripción para acceder a todas las funciones.'
+                                            }
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {/* Mensaje de error de permisos */}
+                                {permissionsError && (
+                                    <div style={{
+                                        position: 'fixed',
+                                        top: '20px',
+                                        right: '20px',
+                                        zIndex: 1001
+                                    }}>
+                                        <PermissionError 
+                                            message="Error al cargar permisos"
+                                            showDetails={false}
+                                            showRetry={true}
+                                            style={{ maxWidth: '350px' }}
+                                        />
+                                    </div>
+                                )}
                             </>
                         )}
                     </div>

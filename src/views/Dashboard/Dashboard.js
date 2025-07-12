@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 // @material-ui/core
 import { makeStyles } from '@material-ui/core/styles'
 // @material-ui/icons
@@ -70,25 +70,28 @@ export default function Dashboard() {
         getData()
     }, [])
 
-    const handleContent = () => {
-        return topProductsData.data.length === 0 ? (
-            <EmptyTablePlaceholder title="No hay información de productos para la fecha seleccionada" />
-        ) : (
-            <Table
-                tableHeaderColor="warning"
-                tableHead={['ID', 'Nombre', 'Precio', 'Cantidad']}
-                tableData={topProductsData.data.map((product) => {
-                    const productData = product
-                    return [
-                        productData.data._id,
-                        productData.data.name,
-                        '$' + formatNumber(productData.data.price),
-                        product.count,
-                    ]
-                })}
-            />
-        )
-    }
+    const handleContent = useMemo(() => {
+        if (topProductsData) {
+            return topProductsData && topProductsData?.data?.length === 0 ? (
+                <EmptyTablePlaceholder title="No hay información de productos para la fecha seleccionada" />
+            ) : (
+                <Table
+                    tableHeaderColor="warning"
+                    tableHead={['ID', 'Nombre', 'Precio', 'Cantidad']}
+                    tableData={topProductsData.data.map((product) => {
+                        const productData = product
+                        return [
+                            productData.data._id,
+                            productData.data.name,
+                            '$' + formatNumber(productData.data.price),
+                            product.count,
+                        ]
+                    })}
+                />
+            )
+        }
+        return null
+    }, [topProductsData])
     return (
         <div>
             <PendingOrders />
@@ -165,7 +168,7 @@ export default function Dashboard() {
                                         <CircularProgress />
                                     </Box>
                                 ) : (
-                                    handleContent()
+                                    handleContent
                                 )}
                             </CardBody>
                         </Card>

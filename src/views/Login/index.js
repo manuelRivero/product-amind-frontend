@@ -10,6 +10,7 @@ import Button from "./../../components/CustomButtons/Button"
 import { useDispatch } from 'react-redux'
 import { login } from 'store/auth'
 import { useHistory } from 'react-router-dom/cjs/react-router-dom.min'
+import { getTenantForLogin } from '../../utils/tenant'
 
 // schema
 const schema = yup.object({
@@ -60,17 +61,33 @@ export default function Login() {
         setFormAlert(null)
         setLoadingSubmit(true)
         try {
-            const response = await dispatch(login({ data: values }))
+            // Obtener el tenant para el login
+            const tenant = getTenantForLogin()
+            const loginData = {
+                ...values,
+                tenant: tenant
+            }
+            
+            console.log('Login Debug:', {
+                hostname: window.location.hostname,
+                tenant: tenant,
+                loginData: loginData,
+                values: values
+            })
+            
+            const response = await dispatch(login({ data: loginData }))
             if (response.type === 'login/rejected') {
-                console.log('payload', response.payload)
+                console.log('Login rejected payload:', response.payload)
                 if (response.payload?.message) {
                     throw new Error(response.payload.message)
                 } else {
                     throw new Error('Error al iniciar sesión')
                 }
             }
+            console.log('Login successful:', response)
             history.push('/admin')
         } catch (error) {
+            console.error('Login error:', error)
             setFormAlert(error.message)
         } finally {
             setLoadingSubmit(false)
