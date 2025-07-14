@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react'
 import {
-    Card,
+    Card as MaterialCard,
     CardContent,
     Dialog,
     DialogActions,
@@ -10,6 +10,11 @@ import {
     IconButton,
 } from '@material-ui/core'
 import Button from 'components/CustomButtons/Button'
+import Card from 'components/Card/Card.js'
+import CardHeader from 'components/Card/CardHeader.js'
+import CardBody from 'components/Card/CardBody.js'
+import GridContainer from 'components/Grid/GridContainer.js'
+import GridItem from 'components/Grid/GridItem.js'
 
 import { makeStyles } from '@material-ui/core/styles'
 import { useDispatch, useSelector } from 'react-redux'
@@ -21,6 +26,10 @@ import LoadinScreen from '../../components/LoadingScreen'
 import { getPlans } from '../../api/plans'
 import { formatNumber } from '../../helpers/product'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
+import CheckCircleIcon from '@material-ui/icons/CheckCircle'
+import ScheduleIcon from '@material-ui/icons/Schedule'
+import PauseCircleFilledIcon from '@material-ui/icons/PauseCircleFilled'
+import CancelIcon from '@material-ui/icons/Cancel'
 import moment from 'moment'
 import { getConfigRequest, cancelSubscriptionRequest, pauseSubscriptionRequest } from '../../store/config'
 import { SUBSCRIPTION_MESSAGES, ACTION_TYPES, PLAN_CHANGE_MESSAGES } from '../const'
@@ -155,6 +164,83 @@ const useStyles = makeStyles((theme) => ({
     subscriptionDetailValue: {
         fontWeight: 'bold',
         color: '#333',
+    },
+    // Estilos para el Card personalizado
+    cardTitleWhite: {
+        color: '#FFFFFF',
+        marginTop: '0px',
+        minHeight: 'auto',
+        fontWeight: '300',
+        fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
+        marginBottom: '3px',
+        textDecoration: 'none',
+    },
+    cardCategoryWhite: {
+        color: '#fff',
+        margin: '0',
+        fontSize: '14px',
+        marginTop: '0',
+        marginBottom: '0',
+    },
+    subscriptionActiveBanner: {
+        color: '#388e3c',
+        display: 'flex',
+        alignItems: 'center',
+        fontWeight: 'bold',
+        fontSize: '1.5rem',
+        marginTop: `calc(${theme.spacing(3)}px + 1rem)`,
+        marginBottom: theme.spacing(1),
+        justifyContent: 'flex-start',
+        padding: 0,
+    },
+    subscriptionPendingBanner: {
+        color: theme.palette.info.main,
+        display: 'flex',
+        alignItems: 'center',
+        fontWeight: 'bold',
+        fontSize: '1.5rem',
+        marginTop: `calc(${theme.spacing(3)}px + 1rem)`,
+        marginBottom: theme.spacing(1),
+        justifyContent: 'flex-start',
+        padding: 0,
+    },
+    subscriptionPausedBanner: {
+        color: theme.palette.warning.main,
+        display: 'flex',
+        alignItems: 'center',
+        fontWeight: 'bold',
+        fontSize: '1.5rem',
+        marginTop: `calc(${theme.spacing(3)}px + 1rem)`,
+        marginBottom: theme.spacing(1),
+        justifyContent: 'flex-start',
+        padding: 0,
+    },
+    subscriptionCancelledBanner: {
+        color: theme.palette.error.main,
+        display: 'flex',
+        alignItems: 'center',
+        fontWeight: 'bold',
+        fontSize: '1.5rem',
+        marginTop: `calc(${theme.spacing(3)}px + 1rem)`,
+        marginBottom: theme.spacing(1),
+        justifyContent: 'flex-start',
+        padding: 0,
+    },
+    planCardHeaderGray: {
+        background: '#f5f5f5',
+        padding: theme.spacing(2, 2, 2, 2),
+        borderTopLeftRadius: 6,
+        borderTopRightRadius: 6,
+        borderBottom: '1px solid #e0e0e0',
+    },
+    planTitleDark: {
+        color: '#222',
+        fontWeight: 'bold',
+        margin: 0,
+    },
+    planPriceDark: {
+        color: '#444',
+        margin: 0,
     },
 }))
 
@@ -372,14 +458,14 @@ const Activation = () => {
             case 'payment-pending':
                 return (
                     <>
-                        <h2 className={classes.title}>
+                        <div className={classes.subscriptionPendingBanner}>
                             Tu pago está siendo procesado
-                        </h2>
-                        <p>
-                            Estamos verificando tu pago. Este proceso puede tomar un tiempo. 
-                            Una vez confirmado, tu tienda se activará automáticamente.
+                            <ScheduleIcon style={{ marginLeft: 12, fontSize: 32 }} />
+                        </div>
+                        <p className={classes.description} style={{ marginTop: 0 }}>
+                            Estamos verificando tu pago. Este proceso puede tomar un tiempo. Una vez confirmado, tu tienda se activará automáticamente.
                         </p>
-                        <p className={classes.description}>
+                        <p className={classes.description} style={{ marginTop: 0 }}>
                             Si tienes alguna duda o tu tienda no se activa en un plazo de 24 horas, contacta a soporte.
                         </p>
                     </>
@@ -388,10 +474,11 @@ const Activation = () => {
             case 'payment-paused':
                 return (
                     <>
-                        <h2 className={classes.title}>
+                        <div className={classes.subscriptionPausedBanner}>
                             Tu subscripción está pausada temporalmente
-                        </h2>
-                        <p>
+                            <PauseCircleFilledIcon style={{ marginLeft: 12, fontSize: 32 }} />
+                        </div>
+                        <p className={classes.description} style={{ marginTop: 0 }}>
                             Por favor contacta a soporte para reactivar tu subscripción y continuar operando tu tienda.
                         </p>
                     </>
@@ -400,10 +487,11 @@ const Activation = () => {
             case 'payment-cancelled':
                 return (
                     <>
-                        <h2 className={classes.title}>
+                        <div className={classes.subscriptionCancelledBanner}>
                             Tu subscripción fue cancelada
-                        </h2>
-                        <p>
+                            <CancelIcon style={{ marginLeft: 12, fontSize: 32 }} />
+                        </div>
+                        <p className={classes.description} style={{ marginTop: 0 }}>
                             Por favor contacta a soporte para reactivar tu subscripción y continuar operando tu tienda.
                         </p>
                     </>
@@ -412,69 +500,84 @@ const Activation = () => {
             case 'subscription-details':
                 return (
                     <>
-                        <h2 className={classes.title}>
-                            Tu subscripción está activa, puedes operar tu tienda con
-                            normalidad.
-                        </h2>
-                        <h4 className={classes.subtitle}>detalles de tu subscripción:</h4>
-                        <ul className={classes.subscriptionDetailsList}>
-                            <li className={classes.subscriptionDetailItem}>
-                                <div className={classes.subscriptionDetailBullet}></div>
-                                <span className={classes.subscriptionDetailLabel}>Plan:</span>
-                                <span className={classes.subscriptionDetailValue}>
-                                    {subscription?.plan?.name}
-                                </span>
-                            </li>
-                            <li className={classes.subscriptionDetailItem}>
-                                <div className={classes.subscriptionDetailBullet}></div>
-                                <span className={classes.subscriptionDetailLabel}>Fecha de activación:</span>
-                                <span className={classes.subscriptionDetailValue}>
-                                    {moment(subscription?.startDate).format('DD/MM/YYYY')}
-                                </span>
-                            </li>
-                            <li className={classes.subscriptionDetailItem}>
-                                <div className={classes.subscriptionDetailBullet}></div>
-                                <span className={classes.subscriptionDetailLabel}>Fecha del próximo cobro:</span>
-                                <span className={classes.subscriptionDetailValue}>
-                                    {moment(subscription?.nextPaymentDate).format('DD/MM/YYYY')}
-                                </span>
-                            </li>
-                        </ul>
-                        <div className={classes.buttonContainer}>
-                            <Button
-                                type="button"
-                                variant="contained"
-                                color="primary"
-                                disabled={!mp || loading}
-                                loading={loading}
-                                className={classes.button}
-                                onClick={() => handleConfirmAction(ACTION_TYPES.CHANGE_PLAN_INITIAL)}
-                            >
-                                Cambiar de plan
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="contained"
-                                color="warning"
-                                disabled={loadingPauseSubscription}
-                                loading={loadingPauseSubscription}
-                                className={classes.button}
-                                onClick={() => handleConfirmAction(ACTION_TYPES.PAUSE)}
-                            >
-                                Pausar suscripción
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="contained"
-                                color="danger"
-                                disabled={loadingCancelSubscription}
-                                loading={loadingCancelSubscription}
-                                className={classes.button}
-                                onClick={() => handleConfirmAction(ACTION_TYPES.CANCEL)}
-                            >
-                                Cancelar suscripción
-                            </Button>
-                        </div>
+                        <Card>
+                            <CardHeader color="primary">
+                                <h4 className={classes.cardTitleWhite}>
+                                    Panel de Activación y Gestión de Suscripción
+                                </h4>
+                                <p className={classes.cardCategoryWhite}>
+                                    Aquí puedes ver el estado de tu suscripción, consultar los detalles de tu plan actual y gestionar acciones como cambiar, pausar o cancelar tu suscripción.
+                                </p>
+                            </CardHeader>
+                            <CardBody>
+                                <div className={classes.subscriptionActiveBanner}>
+                                    Tu subscripción está activa
+                                    <CheckCircleIcon style={{ marginLeft: 12, fontSize: 32 }} />
+                                </div>
+                                <p className={classes.description} style={{ marginTop: 0 }}>
+                                    Puedes operar tu tienda con normalidad
+                                </p>
+                                <h4 className={classes.subtitle}>Detalles de tu subscripción:</h4>
+                                <ul className={classes.subscriptionDetailsList}>
+                                    <li className={classes.subscriptionDetailItem}>
+                                        <div className={classes.subscriptionDetailBullet}></div>
+                                        <span className={classes.subscriptionDetailLabel}>Plan:</span>
+                                        <span className={classes.subscriptionDetailValue}>
+                                            {subscription?.plan?.name}
+                                        </span>
+                                    </li>
+                                    <li className={classes.subscriptionDetailItem}>
+                                        <div className={classes.subscriptionDetailBullet}></div>
+                                        <span className={classes.subscriptionDetailLabel}>Fecha de activación:</span>
+                                        <span className={classes.subscriptionDetailValue}>
+                                            {moment(subscription?.startDate).format('DD/MM/YYYY')}
+                                        </span>
+                                    </li>
+                                    <li className={classes.subscriptionDetailItem}>
+                                        <div className={classes.subscriptionDetailBullet}></div>
+                                        <span className={classes.subscriptionDetailLabel}>Fecha del próximo cobro:</span>
+                                        <span className={classes.subscriptionDetailValue}>
+                                            {moment(subscription?.nextPaymentDate).format('DD/MM/YYYY')}
+                                        </span>
+                                    </li>
+                                </ul>
+                                <div className={classes.buttonContainer}>
+                                    <Button
+                                        type="button"
+                                        variant="contained"
+                                        color="primary"
+                                        disabled={!mp || loading}
+                                        loading={loading}
+                                        className={classes.button}
+                                        onClick={() => handleConfirmAction(ACTION_TYPES.CHANGE_PLAN_INITIAL)}
+                                    >
+                                        Cambiar de plan
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="contained"
+                                        color="warning"
+                                        disabled={loadingPauseSubscription}
+                                        loading={loadingPauseSubscription}
+                                        className={classes.button}
+                                        onClick={() => handleConfirmAction(ACTION_TYPES.PAUSE)}
+                                    >
+                                        Pausar suscripción
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="contained"
+                                        color="danger"
+                                        disabled={loadingCancelSubscription}
+                                        loading={loadingCancelSubscription}
+                                        className={classes.button}
+                                        onClick={() => handleConfirmAction(ACTION_TYPES.CANCEL)}
+                                    >
+                                        Cancelar suscripción
+                                    </Button>
+                                </div>
+                            </CardBody>
+                        </Card>
                     </>
                 );
 
@@ -487,120 +590,138 @@ const Activation = () => {
                         >
                             <ArrowBackIcon />
                         </IconButton>
-                        <h5 className={classes.subtitle}>
-                            Selecciona tu plan
-                        </h5>
-                        {plans
-                            .filter((plan) =>
-                                (isSubscriptionActive || isPaymentAuthorized)
-                                    ? plan._id !==
-                                      subscription?.plan?._id
-                                    : true
-                            )
-                            .map((plan) => (
-                                <Card className={classes.card} key={plan._id}>
-                                    <CardContent>
-                                        <div className={classes.planCard}>
-                                            <h3 className={classes.planTitle}>
-                                                {plan.name}
-                                            </h3>
-                                            <h4 className={classes.planPrice}>
-                                                ${formatNumber(plan.price.toFixed(1))}
-                                            </h4>
-                                        </div>
-                                        
-                                        <Button
-                                            type="button"
-                                            variant="contained"
-                                            color="primary"
-                                            disabled={false}
-                                            loading={false}
-                                            className={`${classes.button} ${classes.planButton}`}
-                                            onClick={() => {
-                                                // Determinar el tipo de cambio de plan
-                                                const currentPlan = subscription?.plan;
-                                                let changeType = 'SAME_PLAN';
-                                                
-                                                console.log('Plan actual:', currentPlan);
-                                                console.log('Plan seleccionado:', plan);
-                                                console.log('Estado actual del modal:', showConfirmModal);
-                                                
-                                                if (currentPlan) {
-                                                    if (plan.price > currentPlan.price) {
-                                                        changeType = 'UPGRADE';
-                                                    } else if (plan.price < currentPlan.price) {
-                                                        changeType = 'DOWNGRADE';
-                                                    }
-                                                }
-                                                
-                                                console.log('Tipo de cambio:', changeType);
-                                                
-                                                // Mostrar alerta si es downgrade o upgrade
-                                                if (changeType !== 'SAME_PLAN') {
-                                                    console.log('Mostrando modal de confirmación');
-                                                    console.log('Antes de setConfirmAction:', confirmAction);
-                                                    setConfirmAction(ACTION_TYPES.CHANGE_PLAN);
-                                                    console.log('Después de setConfirmAction:', ACTION_TYPES.CHANGE_PLAN);
-                                                    setSelectedPlan(plan);
-                                                    console.log('Antes de setShowConfirmModal:', showConfirmModal);
-                                                    setShowConfirmModal(true);
-                                                    console.log('Después de setShowConfirmModal: true');
-                                                } else {
-                                                    console.log('Mismo plan, no mostrar modal');
-                                                    setSelectedPlan(plan);
-                                                }
-                                            }}
-                                        >
-                                            Seleccionar {plan.name}
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        <div className={classes.continueButtonContainer}>
-                            <Button
-                                type="button"
-                                variant="contained"
-                                color="primary"
-                                disabled={!mp || loading}
-                                loading={loading}
-                                className={classes.button}
-                                onClick={() => setViewMode('subscription-details')}
-                            >
-                                Continuar con mi plan actual
-                            </Button>
-                        </div>
+                        <Card>
+                            <CardHeader color="primary">
+                                <h4 className={classes.cardTitleWhite}>
+                                    Selecciona tu plan
+                                </h4>
+                                <p className={classes.cardCategoryWhite}>
+                                    Elige el plan que mejor se adapte a las necesidades de tu tienda. Puedes cambiar de plan en cualquier momento según el crecimiento de tu negocio.
+                                </p>
+                            </CardHeader>
+                            <CardBody>
+                                <GridContainer>
+                                    {plans
+                                        .filter((plan) =>
+                                            (isSubscriptionActive || isPaymentAuthorized)
+                                                ? plan._id !==
+                                                  subscription?.plan?._id
+                                                : true
+                                        )
+                                        .map((plan) => (
+                                            <GridItem xs={12} sm={6} md={4} key={plan._id}>
+                                                <Card>
+                                                    <CardHeader className={classes.planCardHeaderGray}>
+                                                        <h4 className={classes.planTitleDark}>
+                                                            {plan.name}
+                                                        </h4>
+                                                        <p className={classes.planPriceDark}>
+                                                            ${formatNumber(plan.price.toFixed(1))}
+                                                        </p>
+                                                    </CardHeader>
+                                                    <CardBody>
+                                                        <Button
+                                                            type="button"
+                                                            variant="contained"
+                                                            color="primary"
+                                                            disabled={false}
+                                                            loading={false}
+                                                            className={`${classes.button} ${classes.planButton}`}
+                                                            onClick={() => {
+                                                                // Determinar el tipo de cambio de plan
+                                                                const currentPlan = subscription?.plan;
+                                                                let changeType = 'SAME_PLAN';
+                                                                
+                                                                console.log('Plan actual:', currentPlan);
+                                                                console.log('Plan seleccionado:', plan);
+                                                                console.log('Estado actual del modal:', showConfirmModal);
+                                                                
+                                                                if (currentPlan) {
+                                                                    if (plan.price > currentPlan.price) {
+                                                                        changeType = 'UPGRADE';
+                                                                    } else if (plan.price < currentPlan.price) {
+                                                                        changeType = 'DOWNGRADE';
+                                                                    }
+                                                                }
+                                                                
+                                                                console.log('Tipo de cambio:', changeType);
+                                                                
+                                                                // Mostrar alerta si es downgrade o upgrade
+                                                                if (changeType !== 'SAME_PLAN') {
+                                                                    console.log('Mostrando modal de confirmación');
+                                                                    console.log('Antes de setConfirmAction:', confirmAction);
+                                                                    setConfirmAction(ACTION_TYPES.CHANGE_PLAN);
+                                                                    console.log('Después de setConfirmAction:', ACTION_TYPES.CHANGE_PLAN);
+                                                                    setSelectedPlan(plan);
+                                                                    console.log('Antes de setShowConfirmModal:', showConfirmModal);
+                                                                    setShowConfirmModal(true);
+                                                                    console.log('Después de setShowConfirmModal: true');
+                                                                } else {
+                                                                    console.log('Mismo plan, no mostrar modal');
+                                                                    setSelectedPlan(plan);
+                                                                }
+                                                            }}
+                                                        >
+                                                            Seleccionar {plan.name}
+                                                        </Button>
+                                                    </CardBody>
+                                                </Card>
+                                            </GridItem>
+                                        ))}
+                                </GridContainer>
+                                <div className={classes.continueButtonContainer}>
+                                    <Button
+                                        type="button"
+                                        variant="contained"
+                                        color="primary"
+                                        disabled={!mp || loading}
+                                        loading={loading}
+                                        className={classes.button}
+                                        onClick={() => setViewMode('subscription-details')}
+                                    >
+                                        Continuar con mi plan actual
+                                    </Button>
+                                </div>
+                            </CardBody>
+                        </Card>
                     </>
                 );
 
             case 'payment-authorized':
                 return (
                     <>
-                        <h2 className={classes.title}>
-                            Tu pago está autorizado
-                        </h2>
-                        <p>
-                            Tu tarjeta fue autorizada exitosamente. Estamos procesando el pago para activar tu tienda.
-                        </p>
-                        <p>
-                            Este proceso puede tomar unos minutos. Una vez completado, tu tienda estará lista para operar.
-                        </p>
-                        <h4 className={classes.subtitle}>detalles de tu subscripción:</h4>
-                        <ul className={classes.subscriptionDetailsList}>
-                            <li className={classes.subscriptionDetailItem}>
-                                <div className={classes.subscriptionDetailBullet}></div>
-                                <span className={classes.subscriptionDetailLabel}>Plan:</span>
-                                <span className={classes.subscriptionDetailValue}>
-                                    {subscription?.plan?.name}
-                                </span>
-                            </li>
-                            <li className={classes.subscriptionDetailItem}>
-                                <div className={classes.subscriptionDetailBullet}></div>
-                                <span className={classes.subscriptionDetailLabel}>Fecha de autorización:</span>
-                                <span className={classes.subscriptionDetailValue}>
-                                    {moment(subscription?.startDate).format('DD/MM/YYYY')}
-                                </span>
-                            </li>
-                        </ul>
+                        <Card>
+                            <CardHeader color="info">
+                                <h4 className={classes.cardTitleWhite}>
+                                    Tu pago está autorizado
+                                </h4>
+                                <p className={classes.cardCategoryWhite}>
+                                    Tu tarjeta fue autorizada exitosamente
+                                </p>
+                            </CardHeader>
+                            <CardBody>
+                                <p>
+                                    Estamos procesando el pago para activar tu tienda. Este proceso puede tomar unos minutos. Una vez completado, tu tienda estará lista para operar.
+                                </p>
+                                <h4 className={classes.subtitle}>Detalles de tu subscripción:</h4>
+                                <ul className={classes.subscriptionDetailsList}>
+                                    <li className={classes.subscriptionDetailItem}>
+                                        <div className={classes.subscriptionDetailBullet}></div>
+                                        <span className={classes.subscriptionDetailLabel}>Plan:</span>
+                                        <span className={classes.subscriptionDetailValue}>
+                                            {subscription?.plan?.name}
+                                        </span>
+                                    </li>
+                                    <li className={classes.subscriptionDetailItem}>
+                                        <div className={classes.subscriptionDetailBullet}></div>
+                                        <span className={classes.subscriptionDetailLabel}>Fecha de autorización:</span>
+                                        <span className={classes.subscriptionDetailValue}>
+                                            {moment(subscription?.startDate).format('DD/MM/YYYY')}
+                                        </span>
+                                    </li>
+                                </ul>
+                            </CardBody>
+                        </Card>
                     </>
                 );
 
@@ -612,7 +733,7 @@ const Activation = () => {
                         >
                             <ArrowBackIcon />
                         </IconButton>
-                        <Card className={classes.card}>
+                        <MaterialCard className={classes.card}>
                             <CardContent>
                                 {!isSubscriptionActive && !isPaymentAuthorized && (
                                     <>
@@ -740,7 +861,7 @@ const Activation = () => {
                                     </>
                                 )}
                             </CardContent>
-                        </Card>
+                        </MaterialCard>
                     </>
                 );
 
