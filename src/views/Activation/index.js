@@ -8,7 +8,6 @@ import {
     DialogActions,
     DialogTitle,
     IconButton,
-    Typography,
 } from '@material-ui/core'
 import Button from 'components/CustomButtons/Button'
 
@@ -24,6 +23,7 @@ import { formatNumber } from '../../helpers/product'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import moment from 'moment'
 import { getConfigRequest, cancelSubscriptionRequest, pauseSubscriptionRequest } from '../../store/config'
+import { SUBSCRIPTION_MESSAGES, ACTION_TYPES, PLAN_CHANGE_MESSAGES } from '../const'
 
 const useStyles = makeStyles((theme) => ({
     card: {
@@ -43,6 +43,90 @@ const useStyles = makeStyles((theme) => ({
     },
     button: {
         marginTop: theme.spacing(4),
+    },
+    backButton: {
+        display: 'flex',
+        gap: '1rem',
+        alignItems: 'center',
+        cursor: 'pointer',
+    },
+    // Títulos y textos
+    title: {
+        fontWeight: 'bold',
+    },
+    subtitle: {
+        fontWeight: 'bold',
+        marginBottom: theme.spacing(1),
+    },
+    description: {
+        color: '#666',
+        fontSize: '14px',
+        marginTop: theme.spacing(1),
+    },
+    // Contenedores
+    buttonContainer: {
+        marginBottom: theme.spacing(2.5),
+        display: 'flex',
+        gap: theme.spacing(1.25),
+        flexWrap: 'wrap',
+    },
+    planCard: {
+        textAlign: 'center',
+        marginBottom: theme.spacing(2.5),
+    },
+    planTitle: {
+        margin: '0 0 10px 0',
+        color: '#1976d2',
+    },
+    planPrice: {
+        margin: '10px 0',
+        color: '#2e7d32',
+    },
+    planButton: {
+        width: '100%',
+    },
+    continueButtonContainer: {
+        marginTop: theme.spacing(2.5),
+        display: 'flex',
+        gap: theme.spacing(1.25),
+        justifyContent: 'center',
+    },
+    // Formularios
+    formField: {
+        marginBottom: theme.spacing(2.5),
+    },
+    // Modal
+    modalContent: {
+        padding: '0 24px 24px 24px',
+    },
+    modalDescription: {
+        marginBottom: theme.spacing(2),
+        fontWeight: 'bold',
+    },
+    modalList: {
+        marginBottom: theme.spacing(2),
+        paddingLeft: theme.spacing(2.5),
+    },
+    modalListItem: {
+        marginBottom: theme.spacing(1),
+    },
+    modalWarning: {
+        marginBottom: theme.spacing(2),
+        padding: theme.spacing(1.5),
+        borderRadius: theme.spacing(0.5),
+        fontSize: '14px',
+    },
+    modalWarningSuccess: {
+        backgroundColor: '#e8f5e8',
+        border: '1px solid #4caf50',
+    },
+    modalWarningWarning: {
+        backgroundColor: '#fff3cd',
+        border: '1px solid #ffeaa7',
+    },
+    // Imágenes
+    successImage: {
+        width: 100,
     },
 }))
 
@@ -78,8 +162,8 @@ const Activation = () => {
     const [error, setError] = React.useState(null)
     const [openModal, setOpenModal] = React.useState(false)
     const [selectedPlan, setSelectedPlan] = React.useState(null)
-    const [changingPlan, setChangingPlan] = React.useState(
-        !isSubscriptionActive && !isPaymentAuthorized && !isPaymentPending ? true : false
+    const [viewMode, setViewMode] = React.useState(
+        !isSubscriptionActive && !isPaymentAuthorized && !isPaymentPending ? 'plan-selection' : 'subscription-details'
     )
     const [showConfirmModal, setShowConfirmModal] = React.useState(false)
     const [confirmAction, setConfirmAction] = React.useState(null)
@@ -99,7 +183,7 @@ const Activation = () => {
             setOpenModal(true)
             dispatch(getConfigRequest())
             setSelectedPlan(null)
-            setChangingPlan(false)
+            setViewMode('subscription-details')
         } catch (error) {
             setError('Error al enviar el token de la tarjeta')
             return
@@ -128,16 +212,47 @@ const Activation = () => {
         }
     }
 
+    const handleChangePlan = async () => {
+        try {
+            console.log('Ejecutando handleChangePlan');
+            // Aquí iría la lógica para cambiar el plan
+            // Por ahora solo cerramos el modal y actualizamos el estado
+            console.log('Cambiando a plan:', selectedPlan)
+            
+            // TODO: Implementar la llamada a la API para cambiar el plan
+            // await dispatch(changePlanRequest({ planId: selectedPlan._id }))
+            
+            setShowConfirmModal(false)
+            setConfirmAction(null)
+            setSelectedPlan(null)
+            setViewMode('subscription-details')
+            
+            // Actualizar la configuración para reflejar el cambio
+            dispatch(getConfigRequest())
+            
+        } catch (error) {
+            console.error('Error en handleChangePlan:', error);
+            setError('Error al cambiar el plan')
+        }
+    }
+
     const handleConfirmAction = (action) => {
         setConfirmAction(action)
         setShowConfirmModal(true)
     }
 
     const executeAction = () => {
-        if (confirmAction === 'cancel') {
+        if (confirmAction === ACTION_TYPES.CANCEL) {
             handleCancelSubscription()
-        } else if (confirmAction === 'pause') {
+        } else if (confirmAction === ACTION_TYPES.PAUSE) {
             handlePauseSubscription()
+        } else if (confirmAction === ACTION_TYPES.CHANGE_PLAN) {
+            handleChangePlan()
+        } else if (confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL) {
+            // Cerrar el modal y mostrar la selección de planes
+            setShowConfirmModal(false)
+            setConfirmAction(null)
+            setViewMode('plan-selection')
         }
     }
 
@@ -215,96 +330,97 @@ const Activation = () => {
         }
     }, [selectedPlan])
 
+    // Debug useEffect para monitorear cambios en el modal
+    useEffect(() => {
+        console.log('showConfirmModal cambió a:', showConfirmModal);
+        console.log('confirmAction cambió a:', confirmAction);
+    }, [showConfirmModal, confirmAction])
+
     if (loadingPlans) {
         return <LoadinScreen />
     }
-    return (
-        <>
-            {isPaymentPending && (
-                <>
-                <h2 style={{ fontWeight: 'bold' }}>
-                    Tu pago está siendo procesado
-                </h2>
-                <p>
-                    Estamos verificando tu pago. Este proceso puede tomar un tiempo. 
-                    Una vez confirmado, tu tienda se activará automáticamente.
-                </p>
-                <p style={{ color: '#666', fontSize: '14px', marginTop: '10px' }}>
-                    Si tienes alguna duda o tu tienda no se activa en un plazo de 24 horas, contacta a soporte.
-                </p>
-                </>
-            )}
-            {isPaymentPaused && (
-                <>
-                    <h2 style={{ fontWeight: 'bold' }}>
-                        Tu subscripción está pausada temporalmente
-                    </h2>
-                    <p>
-                        Por favor contacta a soporte para reactivar tu subscripción y continuar operando tu tienda.
-                    </p>
-                </>
-            )}
-            {isPaymentCancelled && (
-                <>
-                    <h2 style={{ fontWeight: 'bold' }}>
-                        Tu subscripción fue cancelada
-                    </h2>
-                    <p>
-                        Por favor contacta a soporte para reactivar tu subscripción y continuar operando tu tienda.
-                    </p>
-                </>
-            )}
-            {isSubscriptionActive && (
-                <>
-                    <h2 style={{ fontWeight: 'bold' }}>
-                        Tu subscripción está activa, puedes operar tu tienda con
-                        normalidad.
-                    </h2>
-                    <h4>detalles de tu subscripción:</h4>
-                    <p>
-                        Plan:{' '}
-                        <strong>
-                            {
-                                subscription?.plan?.name
-                            }
-                        </strong>
-                    </p>
-                    <p>
-                        Fecha de activación:{' '}
-                        <strong>
-                            {moment(
-                                subscription?.startDate
-                            ).format('DD/MM/YYYY')}
-                        </strong>
-                    </p>
-                    <p>
-                        Fecha del proximo cobro:{' '}
-                        <strong>
-                            {moment(
-                                subscription?.startDate
-                            )
-                                .add(
-                                    subscription?.plan?.billingCycle
-                                        ?.frequency || 0,
-                                    subscription?.plan?.billingCycle
-                                        ?.frequencyType || 'days'
+    const renderContent = () => {
+        switch (currentViewMode) {
+            case 'payment-pending':
+                return (
+                    <>
+                        <h2 className={classes.title}>
+                            Tu pago está siendo procesado
+                        </h2>
+                        <p>
+                            Estamos verificando tu pago. Este proceso puede tomar un tiempo. 
+                            Una vez confirmado, tu tienda se activará automáticamente.
+                        </p>
+                        <p className={classes.description}>
+                            Si tienes alguna duda o tu tienda no se activa en un plazo de 24 horas, contacta a soporte.
+                        </p>
+                    </>
+                );
+
+            case 'payment-paused':
+                return (
+                    <>
+                        <h2 className={classes.title}>
+                            Tu subscripción está pausada temporalmente
+                        </h2>
+                        <p>
+                            Por favor contacta a soporte para reactivar tu subscripción y continuar operando tu tienda.
+                        </p>
+                    </>
+                );
+
+            case 'payment-cancelled':
+                return (
+                    <>
+                        <h2 className={classes.title}>
+                            Tu subscripción fue cancelada
+                        </h2>
+                        <p>
+                            Por favor contacta a soporte para reactivar tu subscripción y continuar operando tu tienda.
+                        </p>
+                    </>
+                );
+
+            case 'subscription-details':
+                return (
+                    <>
+                        <h2 className={classes.title}>
+                            Tu subscripción está activa, puedes operar tu tienda con
+                            normalidad.
+                        </h2>
+                        <h4 className={classes.subtitle}>detalles de tu subscripción:</h4>
+                        <p>
+                            Plan:{' '}
+                            <strong>
+                                {
+                                    subscription?.plan?.name
+                                }
+                            </strong>
+                        </p>
+                        <p>
+                            Fecha de activación:{' '}
+                            <strong>
+                                {moment(
+                                    subscription?.startDate
+                                ).format('DD/MM/YYYY')}
+                            </strong>
+                        </p>
+                        <p>
+                            Fecha del proximo cobro:{' '}
+                            <strong>
+                                {moment(
+                                    subscription?.startDate
                                 )
-                                .format('DD/MM/YYYY')}
-                        </strong>
-                    </p>
-                    <div style={{ marginBottom: 20, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                        <Button
-                            type="button"
-                            variant="contained"
-                            color="primary"
-                            disabled={!mp || loading}
-                            loading={loading}
-                            className={classes.button}
-                            onClick={() => setChangingPlan(true)}
-                        >
-                            Cambiar de plan
-                        </Button>
-                        {changingPlan && (
+                                    .add(
+                                        subscription?.plan?.billingCycle
+                                            ?.frequency || 0,
+                                        subscription?.plan?.billingCycle
+                                            ?.frequencyType || 'days'
+                                    )
+                                    .format('DD/MM/YYYY')}
+                            </strong>
+                        </p>
+                        <div className={classes.buttonContainer}>
                             <Button
                                 type="button"
                                 variant="contained"
@@ -312,126 +428,115 @@ const Activation = () => {
                                 disabled={!mp || loading}
                                 loading={loading}
                                 className={classes.button}
-                                onClick={() => setChangingPlan(false)}
+                                onClick={() => handleConfirmAction(ACTION_TYPES.CHANGE_PLAN_INITIAL)}
                             >
-                                Continuar con mi plan actual
+                                Cambiar de plan
                             </Button>
-                        )}
-                        <Button
-                            type="button"
-                            variant="contained"
-                            color="warning"
-                            disabled={loadingPauseSubscription}
-                            loading={loadingPauseSubscription}
-                            className={classes.button}
-                            onClick={() => handleConfirmAction('pause')}
+                            <Button
+                                type="button"
+                                variant="contained"
+                                color="warning"
+                                disabled={loadingPauseSubscription}
+                                loading={loadingPauseSubscription}
+                                className={classes.button}
+                                onClick={() => handleConfirmAction(ACTION_TYPES.PAUSE)}
+                            >
+                                Pausar suscripción
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="contained"
+                                color="danger"
+                                disabled={loadingCancelSubscription}
+                                loading={loadingCancelSubscription}
+                                className={classes.button}
+                                onClick={() => handleConfirmAction(ACTION_TYPES.CANCEL)}
+                            >
+                                Cancelar suscripción
+                            </Button>
+                        </div>
+                    </>
+                );
+
+            case 'plan-selection':
+                return (
+                    <>
+                        <IconButton
+                            className={classes.backButton}
+                            onClick={() => setViewMode('subscription-details')}
                         >
-                            Pausar suscripción
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="contained"
-                            color="danger"
-                            disabled={loadingCancelSubscription}
-                            loading={loadingCancelSubscription}
-                            className={classes.button}
-                            onClick={() => handleConfirmAction('cancel')}
-                        >
-                            Cancelar suscripción
-                        </Button>
-                    </div>
-                </>
-            )}
-            
-            {isPaymentAuthorized && !isSubscriptionActive && (
-                <>
-                    <h2 style={{ fontWeight: 'bold' }}>
-                        Tu pago está autorizado
-                    </h2>
-                    <p >
-                        Tu tarjeta fue autorizada exitosamente. Estamos procesando el pago para activar tu tienda.
-                    </p>
-                    <p>
-                        Este proceso puede tomar unos minutos. Una vez completado, tu tienda estará lista para operar.
-                    </p>
-                    <h4 style={{ fontWeight: 'bold' }}>detalles de tu subscripción:</h4>
-                    <p>
-                        Plan:{' '}
-                        <strong>
-                            {
-                                subscription?.plan?.name
-                            }
-                        </strong>
-                    </p>
-                    <p>
-                        Fecha de autorización:{' '}
-                        <strong>
-                            {moment(
-                                subscription?.startDate
-                            ).format('DD/MM/YYYY')}
-                        </strong>
-                    </p>
-                </>
-            )}
-            {!selectedPlan && changingPlan && (
-                <>
-                    <Typography
-                        variant="h5"
-                        gutterBottom
-                        style={{ marginBottom: 10 }}
-                    >
-                        Selecciona tu plan
-                    </Typography>
-                    {plans
-                        .filter((plan) =>
-                            (isSubscriptionActive || isPaymentAuthorized)
-                                ? plan._id !==
-                                  subscription?.plan?._id
-                                : true
-                        )
-                        .map((plan) => (
-                            <Card className={classes.card} key={plan._id}>
-                                <CardContent>
-                                    <p style={{ margin: 0 }}>
-                                        Nombre del plan:
-                                    </p>
-                                    <h4 style={{ margin: 0 }}>
-                                        <strong>{plan.name}</strong>
-                                    </h4>
-                                    <p style={{ margin: 0 }}>Precio del plan</p>
-                                    <p style={{ margin: 0 }}>
-                                        <strong>
-                                            $
-                                            {formatNumber(
-                                                plan.price.toFixed(1)
-                                            )}
-                                        </strong>
-                                    </p>
-                                    <Button
-                                        type="button"
-                                        variant="contained"
-                                        color="primary"
-                                        disabled={false}
-                                        loading={false}
-                                        className={classes.button}
-                                        onClick={() => {
-                                            setSelectedPlan(plan)
-                                        }}
-                                    >
-                                        Seleccionar plan
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    {changingPlan && (isSubscriptionActive || isPaymentAuthorized) && (
-                        <div
-                            style={{
-                                marginTop: 20,
-                                display: 'flex',
-                                gap: 10,
-                                justifyContent: 'center',
-                            }}
-                        >
+                            <ArrowBackIcon />
+                        </IconButton>
+                        <h5 className={classes.subtitle}>
+                            Selecciona tu plan
+                        </h5>
+                        {plans
+                            .filter((plan) =>
+                                (isSubscriptionActive || isPaymentAuthorized)
+                                    ? plan._id !==
+                                      subscription?.plan?._id
+                                    : true
+                            )
+                            .map((plan) => (
+                                <Card className={classes.card} key={plan._id}>
+                                    <CardContent>
+                                        <div className={classes.planCard}>
+                                            <h3 className={classes.planTitle}>
+                                                {plan.name}
+                                            </h3>
+                                            <h4 className={classes.planPrice}>
+                                                ${formatNumber(plan.price.toFixed(1))}
+                                            </h4>
+                                        </div>
+                                        
+                                        <Button
+                                            type="button"
+                                            variant="contained"
+                                            color="primary"
+                                            disabled={false}
+                                            loading={false}
+                                            className={`${classes.button} ${classes.planButton}`}
+                                            onClick={() => {
+                                                // Determinar el tipo de cambio de plan
+                                                const currentPlan = subscription?.plan;
+                                                let changeType = 'SAME_PLAN';
+                                                
+                                                console.log('Plan actual:', currentPlan);
+                                                console.log('Plan seleccionado:', plan);
+                                                console.log('Estado actual del modal:', showConfirmModal);
+                                                
+                                                if (currentPlan) {
+                                                    if (plan.price > currentPlan.price) {
+                                                        changeType = 'UPGRADE';
+                                                    } else if (plan.price < currentPlan.price) {
+                                                        changeType = 'DOWNGRADE';
+                                                    }
+                                                }
+                                                
+                                                console.log('Tipo de cambio:', changeType);
+                                                
+                                                // Mostrar alerta si es downgrade o upgrade
+                                                if (changeType !== 'SAME_PLAN') {
+                                                    console.log('Mostrando modal de confirmación');
+                                                    console.log('Antes de setConfirmAction:', confirmAction);
+                                                    setConfirmAction(ACTION_TYPES.CHANGE_PLAN);
+                                                    console.log('Después de setConfirmAction:', ACTION_TYPES.CHANGE_PLAN);
+                                                    setSelectedPlan(plan);
+                                                    console.log('Antes de setShowConfirmModal:', showConfirmModal);
+                                                    setShowConfirmModal(true);
+                                                    console.log('Después de setShowConfirmModal: true');
+                                                } else {
+                                                    console.log('Mismo plan, no mostrar modal');
+                                                    setSelectedPlan(plan);
+                                                }
+                                            }}
+                                        >
+                                            Seleccionar {plan.name}
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        <div className={classes.continueButtonContainer}>
                             <Button
                                 type="button"
                                 variant="contained"
@@ -439,162 +544,208 @@ const Activation = () => {
                                 disabled={!mp || loading}
                                 loading={loading}
                                 className={classes.button}
-                                onClick={() => setChangingPlan(false)}
+                                onClick={() => setViewMode('subscription-details')}
                             >
                                 Continuar con mi plan actual
                             </Button>
                         </div>
-                    )}
-                </>
-            )}
-            {selectedPlan && (
-                <>
-                    <IconButton
-                        onClick={() => setSelectedPlan(null)}
-                    >
-                        <ArrowBackIcon />
-                    </IconButton>
-                    <Card className={classes.card}>
-                        <CardContent>
-                            {!isSubscriptionActive && !isPaymentAuthorized && (
-                                <>
-                                    <Typography
-                                        variant="h5"
-                                        gutterBottom
-                                        style={{ marginBottom: 10 }}
-                                    >
-                                        Activa tu tienda
-                                    </Typography>
+                    </>
+                );
 
-                                    <Typography
-                                        variant="body1"
-                                        style={{ marginBottom: 20 }}
-                                    >
-                                        Para comenzar a operar tu tienda, selecciona un plan y completa el pago con tu tarjeta.
-                                    </Typography>
-                                    <div style={{ marginBottom: 20 }}>
-                                        <TextInput
-                                            error={false}
-                                            errorMessage={null}
-                                            icon={null}
-                                            label={'Numero de Tarjeta'}
-                                            placeholder={
-                                                'Ingrese el numero de tarjeta'
-                                            }
-                                            value={cardNumber}
-                                            onChange={({ target }) => {
-                                                setCardNumber(target.value)
-                                            }}
-                                        />
-                                    </div>
-                                    <div style={{ marginBottom: 20 }}>
-                                        <TextInput
-                                            error={false}
-                                            errorMessage={null}
-                                            icon={null}
-                                            label={'Expira'}
-                                            placeholder={'MM/AA'}
-                                            value={cardExp}
-                                            onChange={({ target }) => {
-                                                setCardExp(target.value)
-                                            }}
-                                        />
-                                    </div>
-                                    <div style={{ marginBottom: 20 }}>
-                                        <TextInput
-                                            error={false}
-                                            errorMessage={null}
-                                            icon={null}
-                                            label={'CVV'}
-                                            placeholder={'Ingrese el CVV'}
-                                            value={cardCvv}
-                                            onChange={({ target }) => {
-                                                setCardCvv(target.value)
-                                            }}
-                                        />
-                                    </div>
-                                    <div style={{ marginBottom: 20 }}>
-                                        <TextInput
-                                            error={false}
-                                            errorMessage={null}
-                                            icon={null}
-                                            label={'Titular de la Tarjeta'}
-                                            placeholder={
-                                                'Ingrese el nombre del titular'
-                                            }
-                                            value={cardName}
-                                            onChange={({ target }) => {
-                                                setCardName(target.value)
-                                            }}
-                                        />
-                                    </div>
-                                    <div style={{ marginBottom: 20 }}>
-                                        <TextInput
-                                            error={false}
-                                            errorMessage={null}
-                                            icon={null}
-                                            label={
-                                                'DNI del titular de la Tarjeta'
-                                            }
-                                            placeholder={
-                                                'Ingrese el DNI del titular'
-                                            }
-                                            value={cardDni}
-                                            onChange={({ target }) => {
-                                                setCardDni(target.value)
-                                            }}
-                                        />
-                                    </div>
-                                    {error && (
-                                        <Typography
-                                            variant="body2"
-                                            className={classes.error}
+            case 'payment-authorized':
+                return (
+                    <>
+                        <h2 className={classes.title}>
+                            Tu pago está autorizado
+                        </h2>
+                        <p>
+                            Tu tarjeta fue autorizada exitosamente. Estamos procesando el pago para activar tu tienda.
+                        </p>
+                        <p>
+                            Este proceso puede tomar unos minutos. Una vez completado, tu tienda estará lista para operar.
+                        </p>
+                        <h4 className={classes.subtitle}>detalles de tu subscripción:</h4>
+                        <p>
+                            Plan:{' '}
+                            <strong>
+                                {
+                                    subscription?.plan?.name
+                                }
+                            </strong>
+                        </p>
+                        <p>
+                            Fecha de autorización:{' '}
+                            <strong>
+                                {moment(
+                                    subscription?.startDate
+                                ).format('DD/MM/YYYY')}
+                            </strong>
+                        </p>
+                    </>
+                );
+
+            case 'plan-details':
+                return (
+                    <>
+                        <IconButton
+                            onClick={() => setSelectedPlan(null)}
+                        >
+                            <ArrowBackIcon />
+                        </IconButton>
+                        <Card className={classes.card}>
+                            <CardContent>
+                                {!isSubscriptionActive && !isPaymentAuthorized && (
+                                    <>
+                                        <h5 className={classes.subtitle}>
+                                            Activa tu tienda
+                                        </h5>
+
+                                        <p className={classes.formField}>
+                                            Para comenzar a operar tu tienda, selecciona un plan y completa el pago con tu tarjeta.
+                                        </p>
+                                        <div className={classes.formField}>
+                                            <TextInput
+                                                error={false}
+                                                errorMessage={null}
+                                                icon={null}
+                                                label={'Numero de Tarjeta'}
+                                                placeholder={
+                                                    'Ingrese el numero de tarjeta'
+                                                }
+                                                value={cardNumber}
+                                                onChange={({ target }) => {
+                                                    setCardNumber(target.value)
+                                                }}
+                                            />
+                                        </div>
+                                        <div className={classes.formField}>
+                                            <TextInput
+                                                error={false}
+                                                errorMessage={null}
+                                                icon={null}
+                                                label={'Expira'}
+                                                placeholder={'MM/AA'}
+                                                value={cardExp}
+                                                onChange={({ target }) => {
+                                                    setCardExp(target.value)
+                                                }}
+                                            />
+                                        </div>
+                                        <div className={classes.formField}>
+                                            <TextInput
+                                                error={false}
+                                                errorMessage={null}
+                                                icon={null}
+                                                label={'CVV'}
+                                                placeholder={'Ingrese el CVV'}
+                                                value={cardCvv}
+                                                onChange={({ target }) => {
+                                                    setCardCvv(target.value)
+                                                }}
+                                            />
+                                        </div>
+                                        <div className={classes.formField}>
+                                            <TextInput
+                                                error={false}
+                                                errorMessage={null}
+                                                icon={null}
+                                                label={'Titular de la Tarjeta'}
+                                                placeholder={
+                                                    'Ingrese el nombre del titular'
+                                                }
+                                                value={cardName}
+                                                onChange={({ target }) => {
+                                                    setCardName(target.value)
+                                                }}
+                                            />
+                                        </div>
+                                        <div className={classes.formField}>
+                                            <TextInput
+                                                error={false}
+                                                errorMessage={null}
+                                                icon={null}
+                                                label={
+                                                    'DNI del titular de la Tarjeta'
+                                                }
+                                                placeholder={
+                                                    'Ingrese el DNI del titular'
+                                                }
+                                                value={cardDni}
+                                                onChange={({ target }) => {
+                                                    setCardDni(target.value)
+                                                }}
+                                            />
+                                        </div>
+                                        {error && (
+                                            <p className={classes.error}>
+                                                {error}
+                                            </p>
+                                        )}
+                                        <Button
+                                            type="button"
+                                            variant="contained"
+                                            color="primary"
+                                            disabled={!mp || loading}
+                                            loading={loading}
+                                            className={classes.button}
+                                            onClick={submitCardDetails}
                                         >
-                                            {error}
-                                        </Typography>
-                                    )}
-                                    <Button
-                                        type="button"
-                                        variant="contained"
-                                        color="primary"
-                                        disabled={!mp || loading}
-                                        loading={loading}
-                                        className={classes.button}
-                                        onClick={submitCardDetails}
-                                    >
-                                        Activar Tienda
-                                    </Button>
-                                </>
-                            )}
+                                            Activar Tienda
+                                        </Button>
+                                    </>
+                                )}
 
-                            {(isSubscriptionActive || isPaymentAuthorized) && (
-                                <>
-                                    <img
-                                        src={Success}
-                                        alt="Success"
-                                        style={{ width: 100 }}
-                                    />
-                                    {isSubscriptionActive ? (
-                                        <>
-                                            <h6>¡Subscripción al día!</h6>
-                                            <p>
-                                                Puedes operar tu tienda con normalidad.
-                                            </p>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <h6>¡Pago autorizado exitosamente!</h6>
-                                            <p>
-                                                Tu tarjeta fue autorizada. Estamos procesando el pago para activar tu tienda.
-                                            </p>
-                                        </>
-                                    )}
-                                </>
-                            )}
-                        </CardContent>
-                    </Card>
-                </>
-            )}
+                                {(isSubscriptionActive || isPaymentAuthorized) && (
+                                    <>
+                                        <img
+                                            src={Success}
+                                            alt="Success"
+                                            className={classes.successImage}
+                                        />
+                                        {isSubscriptionActive ? (
+                                            <>
+                                                <h6>¡Subscripción al día!</h6>
+                                                <p>
+                                                    Puedes operar tu tienda con normalidad.
+                                                </p>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <h6>¡Pago autorizado exitosamente!</h6>
+                                                <p>
+                                                    Tu tarjeta fue autorizada. Estamos procesando el pago para activar tu tienda.
+                                                </p>
+                                            </>
+                                        )}
+                                    </>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </>
+                );
+
+            default:
+                return null;
+        }
+    };
+
+    // Determinar el modo de vista basado en el estado
+    const getCurrentViewMode = () => {
+        if (isPaymentPending) return 'payment-pending';
+        if (isPaymentPaused) return 'payment-paused';
+        if (isPaymentCancelled) return 'payment-cancelled';
+        if (isPaymentAuthorized && !isSubscriptionActive) return 'payment-authorized';
+        if (selectedPlan) return 'plan-details';
+        if (viewMode === 'plan-selection') return 'plan-selection';
+        if (isSubscriptionActive) return 'subscription-details';
+        return 'subscription-details';
+    };
+
+    const currentViewMode = getCurrentViewMode();
+
+    return (
+        <>
+            {renderContent()}
             <Dialog open={openModal} onClose={() => setOpenModal(false)}>
                 <DialogTitle>¡Suscripción exítosa!</DialogTitle>
                 <DialogActions>
@@ -604,20 +755,186 @@ const Activation = () => {
                 </DialogActions>
             </Dialog>
 
-            <Dialog open={showConfirmModal} onClose={() => setShowConfirmModal(false)}>
+            <Dialog open={showConfirmModal} onClose={() => setShowConfirmModal(false)} maxWidth="sm" fullWidth>
+                {console.log('Modal abierto:', showConfirmModal, 'Acción:', confirmAction)}
                 <DialogTitle>
-                    {confirmAction === 'cancel' ? 'Cancelar suscripción' : 'Pausar suscripción'}
+                    {confirmAction === ACTION_TYPES.CANCEL 
+                        ? SUBSCRIPTION_MESSAGES.CANCEL.title 
+                        : confirmAction === ACTION_TYPES.PAUSE
+                        ? SUBSCRIPTION_MESSAGES.PAUSE.title
+                        : confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL
+                        ? PLAN_CHANGE_MESSAGES.INITIAL.title
+                        : confirmAction === ACTION_TYPES.CHANGE_PLAN
+                        ? (() => {
+                            const currentPlan = subscription?.plan;
+                            const selectedPlanData = selectedPlan;
+                            
+                            if (currentPlan && selectedPlanData) {
+                                if (selectedPlanData.price > currentPlan.price) {
+                                    return PLAN_CHANGE_MESSAGES.UPGRADE.title;
+                                } else if (selectedPlanData.price < currentPlan.price) {
+                                    return PLAN_CHANGE_MESSAGES.DOWNGRADE.title;
+                                } else {
+                                    return PLAN_CHANGE_MESSAGES.SAME_PLAN.title;
+                                }
+                            }
+                            return 'Cambiar plan';
+                        })()
+                        : 'Confirmar acción'
+                    }
                 </DialogTitle>
+                <div className={classes.modalContent}>
+                    {confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL ? (
+                        <>
+                            <p className={classes.modalDescription}>
+                                {PLAN_CHANGE_MESSAGES.INITIAL.description}
+                            </p>
+                            <ul className={classes.modalList}>
+                                {PLAN_CHANGE_MESSAGES.INITIAL.benefits.map((benefit, index) => (
+                                    <li key={index} className={classes.modalListItem}>
+                                        {benefit}
+                                    </li>
+                                ))}
+                            </ul>
+                            <p className={`${classes.modalWarning} ${classes.modalWarningSuccess}`}>
+                                {PLAN_CHANGE_MESSAGES.INITIAL.warning}
+                            </p>
+                        </>
+                    ) : confirmAction === ACTION_TYPES.CHANGE_PLAN ? (
+                        (() => {
+                            const currentPlan = subscription?.plan;
+                            const selectedPlanData = selectedPlan;
+                            
+                                                            if (currentPlan && selectedPlanData) {
+                                    if (selectedPlanData.price > currentPlan.price) {
+                                        return (
+                                            <>
+                                                <p className={classes.modalDescription}>
+                                                    {PLAN_CHANGE_MESSAGES.UPGRADE.description}
+                                                </p>
+                                                <ul className={classes.modalList}>
+                                                    {PLAN_CHANGE_MESSAGES.UPGRADE.benefits.map((benefit, index) => (
+                                                        <li key={index} className={classes.modalListItem}>
+                                                            {benefit}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                                <p className={`${classes.modalWarning} ${classes.modalWarningSuccess}`}>
+                                                    {PLAN_CHANGE_MESSAGES.UPGRADE.warning}
+                                                </p>
+                                            </>
+                                        );
+                                    } else if (selectedPlanData.price < currentPlan.price) {
+                                        return (
+                                            <>
+                                                <p className={classes.modalDescription}>
+                                                    {PLAN_CHANGE_MESSAGES.DOWNGRADE.description}
+                                                </p>
+                                                <ul className={classes.modalList}>
+                                                    {PLAN_CHANGE_MESSAGES.DOWNGRADE.consequences.map((consequence, index) => (
+                                                        <li key={index} className={classes.modalListItem}>
+                                                            {consequence}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                                <p className={`${classes.modalWarning} ${classes.modalWarningWarning}`}>
+                                                    {PLAN_CHANGE_MESSAGES.DOWNGRADE.warning}
+                                                </p>
+                                            </>
+                                        );
+                                    } else {
+                                        return (
+                                            <p className={classes.modalDescription}>
+                                                {PLAN_CHANGE_MESSAGES.SAME_PLAN.message}
+                                            </p>
+                                        );
+                                    }
+                                }
+                            return <p>Cambiando plan...</p>;
+                        })()
+                    ) : (
+                        <>
+                            <p className={classes.modalDescription}>
+                                {confirmAction === ACTION_TYPES.CANCEL 
+                                    ? SUBSCRIPTION_MESSAGES.CANCEL.description 
+                                    : SUBSCRIPTION_MESSAGES.PAUSE.description
+                                }
+                            </p>
+                            <ul className={classes.modalList}>
+                                {(confirmAction === ACTION_TYPES.CANCEL 
+                                    ? SUBSCRIPTION_MESSAGES.CANCEL.consequences 
+                                    : SUBSCRIPTION_MESSAGES.PAUSE.consequences
+                                ).map((consequence, index) => (
+                                    <li key={index} className={classes.modalListItem}>
+                                        {consequence}
+                                    </li>
+                                ))}
+                            </ul>
+                            <p className={`${classes.modalWarning} ${classes.modalWarningWarning}`}>
+                                {confirmAction === ACTION_TYPES.CANCEL 
+                                    ? SUBSCRIPTION_MESSAGES.CANCEL.warning 
+                                    : SUBSCRIPTION_MESSAGES.PAUSE.warning
+                                }
+                            </p>
+                        </>
+                    )}
+                </div>
                 <DialogActions>
                     <Button onClick={() => setShowConfirmModal(false)} color="default">
-                        Cancelar
+                        {confirmAction === ACTION_TYPES.CANCEL 
+                            ? SUBSCRIPTION_MESSAGES.CANCEL.cancelText 
+                            : confirmAction === ACTION_TYPES.PAUSE
+                            ? SUBSCRIPTION_MESSAGES.PAUSE.cancelText
+                            : confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL
+                            ? PLAN_CHANGE_MESSAGES.INITIAL.cancelText
+                            : confirmAction === ACTION_TYPES.CHANGE_PLAN
+                            ? (() => {
+                                const currentPlan = subscription?.plan;
+                                const selectedPlanData = selectedPlan;
+                                
+                                if (currentPlan && selectedPlanData) {
+                                    if (selectedPlanData.price > currentPlan.price) {
+                                        return PLAN_CHANGE_MESSAGES.UPGRADE.cancelText;
+                                    } else if (selectedPlanData.price < currentPlan.price) {
+                                        return PLAN_CHANGE_MESSAGES.DOWNGRADE.cancelText;
+                                    } else {
+                                        return PLAN_CHANGE_MESSAGES.SAME_PLAN.cancelText;
+                                    }
+                                }
+                                return 'Cancelar';
+                            })()
+                            : 'Cancelar'
+                        }
                     </Button>
                     <Button 
                         onClick={executeAction} 
-                        color={confirmAction === 'cancel' ? 'danger' : 'warning'}
+                        color={confirmAction === ACTION_TYPES.CANCEL ? 'danger' : 'primary'}
                         disabled={loadingCancelSubscription || loadingPauseSubscription}
                     >
-                        {confirmAction === 'cancel' ? 'Sí, cancelar' : 'Sí, pausar'}
+                        {confirmAction === ACTION_TYPES.CANCEL 
+                            ? SUBSCRIPTION_MESSAGES.CANCEL.confirmText 
+                            : confirmAction === ACTION_TYPES.PAUSE
+                            ? SUBSCRIPTION_MESSAGES.PAUSE.confirmText
+                            : confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL
+                            ? PLAN_CHANGE_MESSAGES.INITIAL.confirmText
+                            : confirmAction === ACTION_TYPES.CHANGE_PLAN
+                            ? (() => {
+                                const currentPlan = subscription?.plan;
+                                const selectedPlanData = selectedPlan;
+                                
+                                if (currentPlan && selectedPlanData) {
+                                    if (selectedPlanData.price > currentPlan.price) {
+                                        return PLAN_CHANGE_MESSAGES.UPGRADE.confirmText;
+                                    } else if (selectedPlanData.price < currentPlan.price) {
+                                        return PLAN_CHANGE_MESSAGES.DOWNGRADE.confirmText;
+                                    } else {
+                                        return PLAN_CHANGE_MESSAGES.SAME_PLAN.confirmText;
+                                    }
+                                }
+                                return 'Confirmar';
+                            })()
+                            : 'Confirmar'
+                        }
                     </Button>
                 </DialogActions>
             </Dialog>
