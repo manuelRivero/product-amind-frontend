@@ -24,6 +24,9 @@ import uploadImage from 'assets/img/upload-cloud.png'
 import TextDanger from 'components/Typography/Danger'
 import { getCategoryDetail } from '../../api/categories'
 import LoadinScreen from '../../components/LoadingScreen'
+import Card from 'components/Card/Card'
+import CardHeader from 'components/Card/CardHeader'
+import CardBody from 'components/Card/CardBody'
 
 const schema = yup.object({
     name: yup.string().required('Campo obligatorio'),
@@ -48,6 +51,8 @@ const useStyles = makeStyles({
         maxWidth: '220px',
         boxSizing: 'border-box',
         background: '#fff',
+        border: '1px solid #ccc',
+        cursor: 'pointer',
     },
     imagesRow: {
         display: 'flex',
@@ -111,6 +116,22 @@ const useStyles = makeStyles({
         '& .MuiInputBase-input': {
             background: '#fff !important',
         },
+    },
+    cardTitleWhite: {
+        color: '#FFFFFF',
+        marginTop: '0px',
+        minHeight: 'auto',
+        fontWeight: '300',
+        fontFamily: "'Roboto",
+        marginBottom: '3px',
+        textAlign: 'left',
+    },
+    cardCategoryWhite: {
+        color: '#FFFFFF',
+        margin: '0',
+        fontSize: '14px',
+        marginTop: '0',
+        marginBottom: '0',
     },
 })
 
@@ -229,96 +250,102 @@ export default function AddCategories() {
             >
                 <ArrowBackIcon />
             </IconButton>
-            <form onSubmit={handleSubmit(submit)}>
-                <Box>
-                    <h3>Información de la categoría</h3>
-                </Box>
-                <Box>
-                    <p>Imágen de la categoría</p>
-                </Box>
-                <div className={classes.imagesRow}>
-                    {fields.map((file, index) => {
-                        return (
-                            <div
-                                className={classes.imagesWrapper}
-                                key={`file-${index}`}
-                            >
-                                <IconButton
-                                    className={classes.trashICon}
-                                    onClick={() => handleDeleteImage(index)}
-                                >
-                                    <DeleteForever />
-                                </IconButton>
-                                <img
-                                    className={classes.productImage}
-                                    src={file.preview}
-                                    alt="product-image"
-                                />
-                            </div>
-                        )
-                    })}
-                    {fields.length < 1 && (
-                        <div {...getRootProps()} className={classes.dropZone}>
-                            <img
-                                src={uploadImage}
-                                alt="Subir archivo"
-                                className={classes.uploadImage}
-                            />
-                            <input {...getInputProps()} />
+            <Card>
+                <CardHeader color="primary">
+                    <h4 className={classes.cardTitleWhite}>Información de la categoría</h4>
+                    <p className={classes.cardCategoryWhite}>
+                        Agrega o edita una categoría para tu tienda. Sube una imagen y asigna un nombre descriptivo.
+                    </p>
+                </CardHeader>
+                <CardBody>
+                    <form onSubmit={handleSubmit(submit)}>
+                        <Box>
+                            <p>Imágen de la categoría</p>
+                        </Box>
+                        <div className={classes.imagesRow}>
+                            {fields.map((file, index) => {
+                                return (
+                                    <div
+                                        className={classes.imagesWrapper}
+                                        key={`file-${index}`}
+                                    >
+                                        <IconButton
+                                            className={classes.trashICon}
+                                            onClick={() => handleDeleteImage(index)}
+                                        >
+                                            <DeleteForever />
+                                        </IconButton>
+                                        <img
+                                            className={classes.productImage}
+                                            src={file.preview}
+                                            alt="product-image"
+                                        />
+                                    </div>
+                                )
+                            })}
+                            {fields.length < 1 && (
+                                <div {...getRootProps()} className={classes.dropZone}>
+                                    <img
+                                        src={uploadImage}
+                                        alt="Subir archivo"
+                                        className={classes.uploadImage}
+                                    />
+                                    <input {...getInputProps()} />
 
-                            {isDragActive ? (
-                                <p>Suelta tu archivo aquí</p>
-                            ) : (
-                                <p>
-                                    Arrastra tu archivo o has click para
-                                    seleccionar desde tu ordenador
-                                </p>
+                                    {isDragActive ? (
+                                        <p>Suelta tu archivo aquí</p>
+                                    ) : (
+                                        <p>
+                                            Arrastra tu archivo o has click para
+                                            seleccionar desde tu ordenador
+                                        </p>
+                                    )}
+                                </div>
                             )}
                         </div>
-                    )}
-                </div>
-                <Box>
-                    {errors.images && (
-                        <TextDanger>
-                            <p className={classes.errorText}>
-                                {errors.images.message}
-                            </p>
-                        </TextDanger>
-                    )}
-                </Box>
-                <Box className={classes.inputRow}>
-                    <Controller
-                        name="name"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <TextInput
-                                error={fieldState.error ? true : false}
-                                errorMessage={fieldState.error}
-                                icon={null}
-                                label={'Nombre de la categoría'}
-                                value={field.value}
-                                onChange={field.onChange}
+                        <Box>
+                            {errors.images && (
+                                <TextDanger>
+                                    <p className={classes.errorText}>
+                                        {errors.images.message}
+                                    </p>
+                                </TextDanger>
+                            )}
+                        </Box>
+                        <Box className={classes.inputRow}>
+                            <Controller
+                                name="name"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <TextInput
+                                        error={fieldState.error ? true : false}
+                                        errorMessage={fieldState.error}
+                                        icon={null}
+                                        label={'Nombre de la categoría'}
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                    />
+                                )}
                             />
-                        )}
-                    />
-                </Box>
+                        </Box>
 
-                {categoryError ||
-                    (editCategoryError && (
-                        <p>Hubo un error al guardar la categoría</p>
-                    ))}
-                <Box className={classes.buttonsRow}>
-                    <Button
-                        isLoading={loadingCategory | loadingEditCategory}
-                        variant="contained"
-                        color="primary"
-                        type="submit"
-                    >
-                        Guardar
-                    </Button>
-                </Box>
-            </form>
-
+                        {categoryError ||
+                            (editCategoryError && (
+                                <p>Hubo un error al guardar la categoría</p>
+                            ))}
+                        <Box className={classes.buttonsRow}>
+                            <Button
+                                isLoading={loadingCategory | loadingEditCategory}
+                                variant="contained"
+                                color="primary"
+                                type="submit"
+                            >
+                                Guardar
+                            </Button>
+                        </Box>
+                    </form>
+                </CardBody>
+            </Card>
             <CustomModal
                 open={params.id ? editCategorySuccess : categorySuccess}
                 handleClose={() => {
