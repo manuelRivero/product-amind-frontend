@@ -16,14 +16,14 @@ import { makeStyles } from '@material-ui/core/styles'
 import { useDispatch, useSelector } from 'react-redux'
 
 import Success from 'assets/img/success-icon.png'
-import axios from 'axios'
+import client from '../../api/client'
 import TextInput from '../../components/TextInput/Index'
 import LoadinScreen from '../../components/LoadingScreen'
 import { getPlans } from '../../api/plans'
 import { formatNumber } from '../../helpers/product'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import moment from 'moment'
-import { getConfigRequest } from '../../store/config'
+import { getConfigRequest, cancelSubscriptionRequest, pauseSubscriptionRequest } from '../../store/config'
 
 const useStyles = makeStyles((theme) => ({
     card: {
@@ -47,13 +47,12 @@ const useStyles = makeStyles((theme) => ({
 }))
 
 const Activation = () => {
-    const { configDetail } = useSelector((state) => state.config)
+    const { configDetail, loadingCancelSubscription, loadingPauseSubscription } = useSelector((state) => state.config)
     const dispatch = useDispatch()
     
     // Corregir las validaciones para que coincidan con la estructura real
     const subscriptionDetail = configDetail?.subscriptionDetail
     const isActivate = subscriptionDetail?.hasActiveSubscription ?? false
-    const isPending = subscriptionDetail?.pending ?? false
     const paymentStatus = subscriptionDetail?.subscription?.paymentStatus
     const subscription = subscriptionDetail?.subscription
     
@@ -67,7 +66,6 @@ const Activation = () => {
     // La suscripción está realmente activa solo si está aprobada o si hasActiveSubscription es true
     const isSubscriptionActive = isActivate || isPaymentApproved
     
-    const { user } = useSelector((state) => state.auth)
     const [mp, setMp] = React.useState(null)
     const [cardNumber, setCardNumber] = React.useState('')
     const [cardExp, setCardExp] = React.useState('')
@@ -83,27 +81,23 @@ const Activation = () => {
     const [changingPlan, setChangingPlan] = React.useState(
         !isSubscriptionActive && !isPaymentAuthorized && !isPaymentPending ? true : false
     )
+    const [showConfirmModal, setShowConfirmModal] = React.useState(false)
+    const [confirmAction, setConfirmAction] = React.useState(null)
     const classes = useStyles()
 
     const handleConnect = async (card_token) => {
         console.log('send')
         try {
-            const response = await axios.post(
-                `${process.env.REACT_APP_API_KEY}/api/mercado-pago/subscribe-user`,
+            const response = await client.post(
+                `api/mercado-pago/subscribe-user`,
                 {
                     card_token,
                     preapproval_plan_id: selectedPlan._id,
-                },
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-token': user.token,
-                    },
                 }
             )
             console.log('authUrl', response.data)
             setOpenModal(true)
-            dispatch(getConfigRequest({ access: user.token }))
+            dispatch(getConfigRequest())
             setSelectedPlan(null)
             setChangingPlan(false)
         } catch (error) {
@@ -111,8 +105,41 @@ const Activation = () => {
             return
         }
     }
-    // const isActivate =
-    //     configDetail?.subscriptionDetail?.hasActiveSubscription ?? false
+
+    const handleCancelSubscription = async () => {
+        try {
+            await dispatch(cancelSubscriptionRequest())
+            setError(null)
+            setShowConfirmModal(false)
+            setConfirmAction(null)
+        } catch (error) {
+            setError('Error al cancelar la suscripción')
+        }
+    }
+
+    const handlePauseSubscription = async () => {
+        try {
+            await dispatch(pauseSubscriptionRequest())
+            setError(null)
+            setShowConfirmModal(false)
+            setConfirmAction(null)
+        } catch (error) {
+            setError('Error al pausar la suscripción')
+        }
+    }
+
+    const handleConfirmAction = (action) => {
+        setConfirmAction(action)
+        setShowConfirmModal(true)
+    }
+
+    const executeAction = () => {
+        if (confirmAction === 'cancel') {
+            handleCancelSubscription()
+        } else if (confirmAction === 'pause') {
+            handlePauseSubscription()
+        }
+    }
 
     const submitCardDetails = async () => {
         if (!mp) {
@@ -164,7 +191,7 @@ const Activation = () => {
         const getData = async () => {
             try {
                 setLoadingPlans(true)
-                const response = await getPlans(user.token)
+                const response = await getPlans()
                 console.log('Plans fetched:', response)
                 setPlans(response.data.plans)
             } catch (error) {
@@ -191,7 +218,6 @@ const Activation = () => {
     if (loadingPlans) {
         return <LoadinScreen />
     }
-    console.log('status', isPending, paymentStatus)
     return (
         <>
             {isPaymentPending && (
@@ -266,7 +292,7 @@ const Activation = () => {
                                 .format('DD/MM/YYYY')}
                         </strong>
                     </p>
-                    <div style={{ marginBottom: 20, display: 'flex', gap: 10 }}>
+                    <div style={{ marginBottom: 20, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                         <Button
                             type="button"
                             variant="contained"
@@ -291,6 +317,28 @@ const Activation = () => {
                                 Continuar con mi plan actual
                             </Button>
                         )}
+                        <Button
+                            type="button"
+                            variant="contained"
+                            color="warning"
+                            disabled={loadingPauseSubscription}
+                            loading={loadingPauseSubscription}
+                            className={classes.button}
+                            onClick={() => handleConfirmAction('pause')}
+                        >
+                            Pausar suscripción
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="contained"
+                            color="danger"
+                            disabled={loadingCancelSubscription}
+                            loading={loadingCancelSubscription}
+                            className={classes.button}
+                            onClick={() => handleConfirmAction('cancel')}
+                        >
+                            Cancelar suscripción
+                        </Button>
                     </div>
                 </>
             )}
@@ -402,7 +450,6 @@ const Activation = () => {
             {selectedPlan && (
                 <>
                     <IconButton
-                        className={classes.backButton}
                         onClick={() => setSelectedPlan(null)}
                     >
                         <ArrowBackIcon />
@@ -556,6 +603,35 @@ const Activation = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            <Dialog open={showConfirmModal} onClose={() => setShowConfirmModal(false)}>
+                <DialogTitle>
+                    {confirmAction === 'cancel' ? 'Cancelar suscripción' : 'Pausar suscripción'}
+                </DialogTitle>
+                <DialogActions>
+                    <Button onClick={() => setShowConfirmModal(false)} color="default">
+                        Cancelar
+                    </Button>
+                    <Button 
+                        onClick={executeAction} 
+                        color={confirmAction === 'cancel' ? 'danger' : 'warning'}
+                        disabled={loadingCancelSubscription || loadingPauseSubscription}
+                    >
+                        {confirmAction === 'cancel' ? 'Sí, cancelar' : 'Sí, pausar'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {error && (
+                <Dialog open={!!error} onClose={() => setError(null)}>
+                    <DialogTitle>Error</DialogTitle>
+                    <DialogActions>
+                        <Button onClick={() => setError(null)} color="primary">
+                            Aceptar
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            )}
         </>
     )
 }
