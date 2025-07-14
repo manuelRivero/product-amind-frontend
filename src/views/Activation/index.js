@@ -128,6 +128,34 @@ const useStyles = makeStyles((theme) => ({
     successImage: {
         width: 100,
     },
+    // Lista de detalles de suscripción
+    subscriptionDetailsList: {
+        listStyle: 'none',
+        padding: 0,
+        margin: `${theme.spacing(2)} 0`,
+    },
+    subscriptionDetailItem: {
+        display: 'flex',
+        alignItems: 'center',
+        marginBottom: theme.spacing(1),
+        fontSize: '16px',
+    },
+    subscriptionDetailBullet: {
+        width: '6px',
+        height: '6px',
+        borderRadius: '50%',
+        backgroundColor: '#000',
+        marginRight: theme.spacing(1),
+        flexShrink: 0,
+    },
+    subscriptionDetailLabel: {
+        color: '#666',
+        marginRight: theme.spacing(1),
+    },
+    subscriptionDetailValue: {
+        fontWeight: 'bold',
+        color: '#333',
+    },
 }))
 
 const Activation = () => {
@@ -389,37 +417,29 @@ const Activation = () => {
                             normalidad.
                         </h2>
                         <h4 className={classes.subtitle}>detalles de tu subscripción:</h4>
-                        <p>
-                            Plan:{' '}
-                            <strong>
-                                {
-                                    subscription?.plan?.name
-                                }
-                            </strong>
-                        </p>
-                        <p>
-                            Fecha de activación:{' '}
-                            <strong>
-                                {moment(
-                                    subscription?.startDate
-                                ).format('DD/MM/YYYY')}
-                            </strong>
-                        </p>
-                        <p>
-                            Fecha del proximo cobro:{' '}
-                            <strong>
-                                {moment(
-                                    subscription?.startDate
-                                )
-                                    .add(
-                                        subscription?.plan?.billingCycle
-                                            ?.frequency || 0,
-                                        subscription?.plan?.billingCycle
-                                            ?.frequencyType || 'days'
-                                    )
-                                    .format('DD/MM/YYYY')}
-                            </strong>
-                        </p>
+                        <ul className={classes.subscriptionDetailsList}>
+                            <li className={classes.subscriptionDetailItem}>
+                                <div className={classes.subscriptionDetailBullet}></div>
+                                <span className={classes.subscriptionDetailLabel}>Plan:</span>
+                                <span className={classes.subscriptionDetailValue}>
+                                    {subscription?.plan?.name}
+                                </span>
+                            </li>
+                            <li className={classes.subscriptionDetailItem}>
+                                <div className={classes.subscriptionDetailBullet}></div>
+                                <span className={classes.subscriptionDetailLabel}>Fecha de activación:</span>
+                                <span className={classes.subscriptionDetailValue}>
+                                    {moment(subscription?.startDate).format('DD/MM/YYYY')}
+                                </span>
+                            </li>
+                            <li className={classes.subscriptionDetailItem}>
+                                <div className={classes.subscriptionDetailBullet}></div>
+                                <span className={classes.subscriptionDetailLabel}>Fecha del próximo cobro:</span>
+                                <span className={classes.subscriptionDetailValue}>
+                                    {moment(subscription?.nextPaymentDate).format('DD/MM/YYYY')}
+                                </span>
+                            </li>
+                        </ul>
                         <div className={classes.buttonContainer}>
                             <Button
                                 type="button"
@@ -565,22 +585,22 @@ const Activation = () => {
                             Este proceso puede tomar unos minutos. Una vez completado, tu tienda estará lista para operar.
                         </p>
                         <h4 className={classes.subtitle}>detalles de tu subscripción:</h4>
-                        <p>
-                            Plan:{' '}
-                            <strong>
-                                {
-                                    subscription?.plan?.name
-                                }
-                            </strong>
-                        </p>
-                        <p>
-                            Fecha de autorización:{' '}
-                            <strong>
-                                {moment(
-                                    subscription?.startDate
-                                ).format('DD/MM/YYYY')}
-                            </strong>
-                        </p>
+                        <ul className={classes.subscriptionDetailsList}>
+                            <li className={classes.subscriptionDetailItem}>
+                                <div className={classes.subscriptionDetailBullet}></div>
+                                <span className={classes.subscriptionDetailLabel}>Plan:</span>
+                                <span className={classes.subscriptionDetailValue}>
+                                    {subscription?.plan?.name}
+                                </span>
+                            </li>
+                            <li className={classes.subscriptionDetailItem}>
+                                <div className={classes.subscriptionDetailBullet}></div>
+                                <span className={classes.subscriptionDetailLabel}>Fecha de autorización:</span>
+                                <span className={classes.subscriptionDetailValue}>
+                                    {moment(subscription?.startDate).format('DD/MM/YYYY')}
+                                </span>
+                            </li>
+                        </ul>
                     </>
                 );
 
@@ -880,7 +900,7 @@ const Activation = () => {
                     )}
                 </div>
                 <DialogActions>
-                    <Button onClick={() => setShowConfirmModal(false)} color="default">
+                    <Button onClick={() => setShowConfirmModal(false)} color="transparent">
                         {confirmAction === ACTION_TYPES.CANCEL 
                             ? SUBSCRIPTION_MESSAGES.CANCEL.cancelText 
                             : confirmAction === ACTION_TYPES.PAUSE
