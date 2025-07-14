@@ -27,6 +27,7 @@ export default function RegularButton(props) {
         justIcon,
         className,
         muiClasses,
+        isLoading, // extraigo isLoading
         ...rest
     } = props
     const btnClasses = classNames({
@@ -42,8 +43,8 @@ export default function RegularButton(props) {
         [className]: className,
     })
     return (
-        <Button {...rest} classes={muiClasses} className={btnClasses}>
-            {props.isLoading ? <CircularProgress size={'sm'} color='inherit' /> : children}
+        <Button {...rest} classes={muiClasses} className={btnClasses} disabled={isLoading || disabled}>
+            {isLoading ? <CircularProgress size={'sm'} color='inherit' /> : children}
         </Button>
     )
 }
