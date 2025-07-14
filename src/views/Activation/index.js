@@ -36,11 +36,9 @@ import { SUBSCRIPTION_MESSAGES, ACTION_TYPES, PLAN_CHANGE_MESSAGES } from '../co
 
 const useStyles = makeStyles((theme) => ({
     card: {
-        maxWidth: 500,
+        maxWidth: 1000,
         margin: 'auto',
         marginTop: theme.spacing(8),
-        textAlign: 'center',
-        padding: theme.spacing(3),
     },
     success: {
         color: theme.palette.success.main,
@@ -500,7 +498,7 @@ const Activation = () => {
             case 'subscription-details':
                 return (
                     <>
-                        <Card>
+                        <Card className={classes.card}>
                             <CardHeader color="primary">
                                 <h4 className={classes.cardTitleWhite}>
                                     Panel de Activación y Gestión de Suscripción
@@ -590,7 +588,7 @@ const Activation = () => {
                         >
                             <ArrowBackIcon />
                         </IconButton>
-                        <Card>
+                        <Card className={classes.card}>
                             <CardHeader color="primary">
                                 <h4 className={classes.cardTitleWhite}>
                                     Selecciona tu plan
@@ -690,7 +688,7 @@ const Activation = () => {
             case 'payment-authorized':
                 return (
                     <>
-                        <Card>
+                        <Card className={classes.card}>
                             <CardHeader color="info">
                                 <h4 className={classes.cardTitleWhite}>
                                     Tu pago está autorizado

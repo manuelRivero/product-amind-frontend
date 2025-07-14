@@ -8,9 +8,9 @@ import CardBody from 'components/Card/CardBody.js'
 
 const useStyles = makeStyles((theme) => ({
     card: {
-        maxWidth: 900,
+        maxWidth: 1000,
         margin: 'auto',
-        marginTop: theme.spacing(4),
+        marginTop: theme.spacing(8),
     },
     cardTitleWhite: {
         color: '#FFFFFF',

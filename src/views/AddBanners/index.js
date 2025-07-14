@@ -21,6 +21,9 @@ import CustomModal from '../../components/CustomModal'
 import { useHistory } from 'react-router-dom'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import { useSelector } from 'react-redux'
+import Card from 'components/Card/Card'
+import CardHeader from 'components/Card/CardHeader'
+import CardBody from 'components/Card/CardBody'
 
 const schema = yup.object({
     images: yup
@@ -29,7 +32,7 @@ const schema = yup.object({
         .required('Campo obligatorio'),
 })
 
-const useStyles = makeStyles({
+const useStyles = makeStyles((theme) => ({
     uploadImage: {
         maxWidth: '50px',
     },
@@ -45,6 +48,7 @@ const useStyles = makeStyles({
         background: '#fff',
         marginTop: '2rem',
         cursor: 'pointer',
+        border: '1px solid #ccc',
     },
     imagesRow: {
         display: 'flex',
@@ -97,7 +101,30 @@ const useStyles = makeStyles({
             background: '#fff !important',
         },
     },
-})
+    card: {
+        maxWidth: 1000,
+        margin: 'auto',
+        marginTop: theme.spacing(8),
+    },
+    cardTitleWhite: {
+        color: '#FFFFFF',
+        marginTop: '0px',
+        minHeight: 'auto',
+        fontWeight: '300',
+        fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
+        marginBottom: '3px',
+        textDecoration: 'none',
+    },
+    cardCategoryWhite: {
+        color: '#FFFFFF',
+        marginTop: '0px',
+        minHeight: 'auto',
+        fontWeight: '300',
+        fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
+        marginBottom: '3px',
+        textDecoration: 'none',
+    },
+}))
 
 export default function AddBannersPage() {
     const { user } = useSelector((state) => state.auth)
@@ -199,25 +226,58 @@ export default function AddBannersPage() {
                 >
                     <ArrowBackIcon />
                 </IconButton>
-                {watchType === '0' ? (
-                    <Box>
-                        <h3>Cargar un nuevo banner</h3>
-                        <p>
-                            Las medidas recomendadas para un banner para celular son de
-                            500px de ancho por 500px de alto
-                        </p>
+                <Card className={classes.card}>
+                  <CardHeader color="primary">
+                    <h4 className={classes.cardTitleWhite}>
+                      Cargar un nuevo banner
+                    </h4>
+                    <p className={classes.cardCategoryWhite}>
+                      Sube y administra banners para tu tienda. Elige el tipo de banner, la sección de destino y activa o desactiva según tus necesidades.
+                    </p>
+                  </CardHeader>
+                  <CardBody>
+                    <Box mt={2}>
+                      <p style={{ margin: 0 }}>Tipo de banner</p>
+                      <Box>
+                        <Controller
+                          name="type"
+                          control={control}
+                          render={({ field }) => (
+                            <label htmlFor="available">
+                              Banner para movil
+                              <Checkbox
+                                id="available"
+                                classes={{
+                                  checked: classes.checked,
+                                }}
+                                checked={field.value === '0'}
+                                onChange={() => field.onChange('0')}
+                                inputProps={{ 'aria-label': 'primary checkbox' }}
+                              />
+                            </label>
+                          )}
+                        />
+                        <Controller
+                          name="type"
+                          control={control}
+                          render={({ field }) => (
+                            <label htmlFor="disabled">
+                              Banner para escritorio
+                              <Checkbox
+                                id="disabled"
+                                checked={field.value === '1'}
+                                onChange={() => field.onChange('1')}
+                                inputProps={{ 'aria-label': 'primary checkbox' }}
+                              />
+                            </label>
+                          )}
+                        />
+                       
+                      </Box>
                     </Box>
-                ) : (
-                    <Box>
-                        <h3>Cargar un nuevo banner</h3>
-                        <p>
-                            Las medidas recomendadas para un banner para computadoras son de
-                            2000px de ancho por 600px de alto
-                        </p>
-                    </Box>
-                )}
-                <div className={classes.imagesRow}>
-                    {fields.map((file, index) => {
+                    {/* Sección de imágenes y previsualización */}
+                    <div className={classes.imagesRow}>
+                      {fields.map((file, index) => {
                         console.log('file', file)
                         return (
                             <div
@@ -246,211 +306,102 @@ export default function AddBannersPage() {
                                 <p>Esta es una previsualización de tu banner</p>
                             </div>
                         )
-                    })}
-                </div>
-                {fields.length === 0 && (
-                    <div {...getRootProps()} className={classes.dropZone}>
-                        <img
-                            src={uploadImage}
-                            alt="Subir archivo"
-                            className={classes.uploadImage}
-                        />
-                        <input {...getInputProps()} />
-
-                        {isDragActive ? (
-                            <p>Suelta tu archivo aquí</p>
-                        ) : (
-                            <p>
-                                Arrastra tu archivo o has click para seleccionar
-                                desde tu ordenador
-                            </p>
-                        )}
+                      })}
                     </div>
-                )}
-                <Box>
-                    <Box mt={2}>
-                        <p style={{ margin: 0 }}>Tipo de banner</p>
+                    {fields.length === 0 && (
+                      <div {...getRootProps()} className={classes.dropZone}>
+                        <img src={uploadImage} alt="Subir archivo" className={classes.uploadImage} />
+                        <input {...getInputProps()} />
+                        {isDragActive ? (
+                          <p>Suelta tu archivo aquí</p>
+                        ) : (
+                          <p>Arrastra tu archivo o has click para seleccionar desde tu ordenador</p>
+                        )}
+                      </div>
+                    )}
+                    <Box>
+                        {errors.images && (
+                            <TextDanger>
+                                <p className={classes.errorText}>
+                                    {errors.images.message}
+                                </p>
+                            </TextDanger>
+                        )}
+                    </Box>
+                    <Box>
+                    <Box>
+                          <Controller
+                            name="active"
+                            control={control}
+                            render={({ field }) => (
+                              <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }}>
+                                <Box flexBasis={{ xs: 'auto', md: 200 }}>
+                                  <p>Activar banner</p>
+                                  <Switch
+                                    defaultChecked={field.value}
+                                    onChange={(event) => field.onChange(event.target.checked)}
+                                    inputProps={{ 'aria-label': 'primary checkbox' }}
+                                  />
+                                </Box>
+                              </Box>
+                            )}
+                          />
+                          <Controller
+                            name="section"
+                            control={control}
+                            render={({ field }) => (
+                              <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }}>
+                                <Box flexBasis={{ xs: 'auto', md: 350 }} display="flex" alignItems="end" style={{ gap: '1rem' }}>
+                                  <Box>
+                                    <p>Sección de destino</p>
+                                    <Select
+                                      native
+                                      defaultValue={''}
+                                      value={field.value}
+                                      onChange={(event) => field.onChange(event.target.value)}
+                                      variant="outlined"
+                                      style={{ width: '100%' }}
+                                    >
+                                      <option value="">Seleccione una sección</option>
+                                      <option value="HOME-HERO">Sección de bienvedida</option>
+                                      <option value="HOME-FOOTER">Píe de pagina</option>
+                                    </Select>
+                                  </Box>
+                                </Box>
+                              </Box>
+                            )}
+                          />
+                        </Box>
                         <Box>
-                            <Controller
-                                name="type"
-                                control={control}
-                                render={({ field }) => (
-                                    <label htmlFor="available">
-                                        Banner para movil
-                                        <Checkbox
-                                            id="available"
-                                            classes={{
-                                                checked: classes.checked,
-                                            }}
-                                            checked={
-                                                field.value === '0'
-                                                    ? true
-                                                    : false
-                                            }
-                                            onChange={() => field.onChange('0')}
-                                            inputProps={{
-                                                'aria-label':
-                                                    'primary checkbox',
-                                            }}
-                                        />
-                                    </label>
-                                )}
-                            />
-
-                            <Controller
-                                name="type"
-                                control={control}
-                                render={({ field }) => (
-                                    <label htmlFor="disabled">
-                                        Banner para escritorio
-                                        <Checkbox
-                                            id="disabled"
-                                            checked={
-                                                field.value === '1'
-                                                    ? true
-                                                    : false
-                                            }
-                                            onChange={() => field.onChange('1')}
-                                            inputProps={{
-                                                'aria-label':
-                                                    'primary checkbox',
-                                            }}
-                                        />
-                                    </label>
-                                )}
-                            />
-                            <Box>
-                                <Controller
-                                    name="active"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <Box
-                                            display="flex"
-                                            flexDirection={{
-                                                xs: 'column',
-                                                md: 'row',
-                                            }}
-                                        >
-                                            <Box
-                                                flexBasis={{
-                                                    xs: 'auto',
-                                                    md: 200,
-                                                }}
-                                            >
-                                                <p>Activar banner</p>
-                                                <Switch
-                                                    defaultChecked={field.value}
-                                                    onChange={(event) =>
-                                                        field.onChange(
-                                                            event.target.checked
-                                                        )
-                                                    }
-                                                    inputProps={{
-                                                        'aria-label':
-                                                            'primary checkbox',
-                                                    }}
-                                                />
-                                            </Box>
-                                        </Box>
-                                    )}
-                                />
-                                <Controller
-                                    name="section"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <Box
-                                            display="flex"
-                                            flexDirection={{
-                                                xs: 'column',
-                                                md: 'row',
-                                            }}
-                                        >
-                                            <Box
-                                                flexBasis={{
-                                                    xs: 'auto',
-                                                    md: 350,
-                                                }}
-                                                display="flex"
-                                                alignItems="end"
-                                                style={{ gap: '1rem' }}
-                                            >
-                                                <Box>
-                                                    <p>Sección de destino</p>
-                                                    <Select
-                                                        native
-                                                        defaultValue={''}
-                                                        value={field.value}
-                                                        onChange={(event) =>
-                                                            field.onChange(
-                                                                event.target
-                                                                    .value
-                                                            )
-                                                        }
-                                                        variant="outlined"
-                                                        style={{
-                                                            width: '100%',
-                                                        }}
-                                                    >
-                                                        <option value="">
-                                                            Seleccione una
-                                                            sección
-                                                        </option>
-                                                        <option value="HOME-HERO">
-                                                            Sección de
-                                                            bienvedida
-                                                        </option>
-                                                        <option value="HOME-FOOTER">
-                                                            Píe de pagina
-                                                        </option>
-                                                    </Select>
-                                                </Box>
-                                            </Box>
-                                        </Box>
-                                    )}
-                                />
-                            </Box>
-                            <Box>
-                                {console.log('errors', errors)}
-                                {errors.status && (
-                                    <TextDanger>
-                                        <p className={classes.errorText}>
-                                            {errors.status.message}
-                                        </p>
-                                    </TextDanger>
-                                )}
-                            </Box>
+                          {errors.status && (
+                            <TextDanger>
+                              <p className={classes.errorText}>{errors.status.message}</p>
+                            </TextDanger>
+                          )}
                         </Box>
                     </Box>
-                </Box>
-                <Box>
-                    {errors.images && (
-                        <TextDanger>
-                            <p className={classes.errorText}>
-                                {errors.images.message}
-                            </p>
-                        </TextDanger>
-                    )}
-                </Box>
-                <Box>
-                    {showFormAlert && (
-                        <TextDanger>
-                            <p className={classes.errorText}>{showFormAlert}</p>
-                        </TextDanger>
-                    )}
-                </Box>
-                <Box className={classes.buttonsRow}>
-                    <Button
-                        isLoading={loading}
-                        disabled={!formValidation}
-                        variant="contained"
-                        color="primary"
-                        type="button"
-                        loading={loading}
-                        onClick={handleSubmit(submit)}
-                    >
-                        Guardar
-                    </Button>
-                </Box>
+                    <Box>
+                        {showFormAlert && (
+                            <TextDanger>
+                                <p className={classes.errorText}>{showFormAlert}</p>
+                            </TextDanger>
+                        )}
+                    </Box>
+                    <Box className={classes.buttonsRow}>
+                        <Button
+                            isLoading={loading}
+                            disabled={!formValidation}
+                            variant="contained"
+                            color="primary"
+                            type="button"
+                            loading={loading}
+                            onClick={handleSubmit(submit)}
+                        >
+                            Guardar
+                        </Button>
+                    </Box>
+                  </CardBody>
+                </Card>
             </Box>
             <CustomModal
                 open={showModal}
