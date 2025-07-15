@@ -59,6 +59,9 @@ export default function Admin({ ...rest }) {
     const { 
         isSubscriptionActive, 
         isPaymentAuthorized, 
+        isPaymentPending, 
+        isPaymentPaused, 
+        isPaymentCancelled, 
         loadingConfig: loadingConfigPermissions,
         permissionsError,
         hasUserPermission
@@ -204,6 +207,30 @@ export default function Admin({ ...rest }) {
         }
     }, [configError, errorDetails])
 
+    // Mensaje de estado de suscripción
+    const subscriptionDetail = configDetail?.subscriptionDetail
+    const subscription = subscriptionDetail?.subscription
+    const showSubscriptionBanner = configDetail && !isSubscriptionActive && subscription
+    let subscriptionBannerTitle = ''
+    let subscriptionBannerMessage = ''
+    if (showSubscriptionBanner) {
+        if (isPaymentPaused) {
+            subscriptionBannerTitle = 'Suscripción pausada'
+            subscriptionBannerMessage = 'Tu suscripción está pausada. Reactívala para acceder a todas las funciones.'
+        } else if (isPaymentCancelled) {
+            subscriptionBannerTitle = 'Suscripción cancelada'
+            subscriptionBannerMessage = 'Tu suscripción fue cancelada. Contrata un plan para reactivar tu tienda.'
+        } else if (isPaymentPending) {
+            subscriptionBannerTitle = 'Suscripción pendiente'
+            subscriptionBannerMessage = 'Tu pago está pendiente. Espera a que se procese.'
+        } else if (isPaymentAuthorized) {
+            subscriptionBannerTitle = 'Pago autorizado'
+            subscriptionBannerMessage = 'Tu pago está autorizado. Espera a que se procese.'
+        } else {
+            subscriptionBannerTitle = 'Suscripción inactiva'
+            subscriptionBannerMessage = 'Activa tu suscripción para acceder a todas las funciones.'
+        }
+    }
 
 
     if (loadingTenant || loadingConfig || loadingConfigPermissions) {
@@ -273,13 +300,12 @@ export default function Admin({ ...rest }) {
                                     {childRoutes}
                                 </Switch>
                                 {/* Mensaje cuando no hay suscripción activa */}
-                                {configDetail && !isSubscriptionActive && configDetail?.subscriptionDetail?.subscription && (
+                                {showSubscriptionBanner && (
                                     <div style={{
                                         position: 'fixed',
                                         bottom: '20px',
                                         right: '20px',
-                                        backgroundColor: '#fff3cd',
-                                        border: '1px solid #ffeaa7',
+                                        backgroundColor: '#fff',
                                         borderRadius: '8px',
                                         padding: '15px',
                                         maxWidth: '300px',
@@ -287,13 +313,10 @@ export default function Admin({ ...rest }) {
                                         zIndex: 1000
                                     }}>
                                         <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
-                                            ⚠️ Suscripción pendiente
+                                            {subscriptionBannerTitle}
                                         </div>
                                         <div style={{ fontSize: '14px' }}>
-                                            {isPaymentAuthorized 
-                                                ? 'Tu pago está autorizado. Espera a que se procese.'
-                                                : 'Activa tu suscripción para acceder a todas las funciones.'
-                                            }
+                                            {subscriptionBannerMessage}
                                         </div>
                                     </div>
                                 )}

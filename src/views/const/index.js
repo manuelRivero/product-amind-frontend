@@ -4,29 +4,37 @@ export const SUBSCRIPTION_MESSAGES = {
         title: '¿Estás seguro de que quieres cancelar tu suscripción?',
         description: 'Al cancelar tu suscripción:',
         consequences: [
-            'Tu tienda se desactivará inmediatamente',
-            'No podrás acceder a las funciones de administración',
-            'Los productos no estarán disponibles para tus clientes',
-            'Perderás acceso al dashboard y reportes',
-            'Tendrás que reactivar la suscripción para continuar operando'
+            "Tu tienda quedará inactiva.",
+            "No podrás acceder a la administración ni a las ventas.",
+            "Tus clientes no podrán comprar en tu tienda."
         ],
-        warning: 'Esta acción no se puede deshacer automáticamente. Contacta a soporte si necesitas reactivar tu cuenta.',
-        confirmText: 'Sí, cancelar suscripción',
-        cancelText: 'No, mantener activa'
+        warning: "Esta acción es irreversible.",
+        confirmText: "Cancelar",
+        cancelText: "Volver"
     },
     PAUSE: {
-        title: '¿Estás seguro de que quieres pausar tu suscripción?',
-        description: 'Al pausar tu suscripción:',
+        title: "¿Pausar suscripción?",
+        description: "Puedes pausar tu suscripción temporalmente. Durante la pausa, tu tienda no estará disponible para tus clientes.",
         consequences: [
-            'Tu tienda se desactivará temporalmente',
-            'No podrás acceder a las funciones de administración',
-            'Los productos no estarán disponibles para tus clientes',
-            'No se realizarán más cobros hasta que reactives',
-            'Puedes reactivar en cualquier momento desde esta sección'
+            "Tu tienda quedará temporalmente inactiva.",
+            "No perderás la configuración ni los datos de tu tienda.",
+            "Podrás reactivarla en cualquier momento."
         ],
-        warning: 'La pausa es temporal y puedes reactivar cuando quieras. No perderás tu configuración.',
-        confirmText: 'Sí, pausar suscripción',
-        cancelText: 'No, mantener activa'
+        warning: "Podrás reactivar tu suscripción cuando lo desees.",
+        confirmText: "Pausar",
+        cancelText: "Volver"
+    },
+    RESUME: {
+        title: "¿Reactivar suscripción?",
+        description: "Al reactivar tu suscripción, tu tienda volverá a estar activa y podrás acceder a todas las funciones.",
+        benefits: [
+            "Recuperarás el acceso completo a la plataforma.",
+            "Tus clientes podrán volver a comprar en tu tienda.",
+            "No perderás la configuración ni los datos de tu tienda."
+        ],
+        warning: "La reactivación puede demorar unos minutos en reflejarse.",
+        confirmText: "Reactivar",
+        cancelText: "Cancelar"
     }
 };
 
@@ -94,11 +102,11 @@ export const SUBSCRIPTION_STATUS = {
 
 // Constantes para tipos de acciones
 export const ACTION_TYPES = {
-    CANCEL: 'cancel',
-    PAUSE: 'pause',
-    RESUME: 'resume',
-    CHANGE_PLAN: 'change_plan',
-    CHANGE_PLAN_INITIAL: 'change_plan_initial'
+    CANCEL: "CANCEL",
+    PAUSE: "PAUSE",
+    CHANGE_PLAN: "CHANGE_PLAN",
+    CHANGE_PLAN_INITIAL: "CHANGE_PLAN_INITIAL",
+    RESUME: "RESUME"
 };
 
 // Constantes para tipos de planes

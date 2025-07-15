@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { getConfig } from '../../api/config'
-import { cancelSubscription, pauseSubscription } from '../../api/subscriptions'
+import { cancelSubscription, pauseSubscription, resumeSubscription } from '../../api/subscriptions'
 
 const initialState = {
     loadingConfig: true,
@@ -47,9 +47,9 @@ export const getConfigRequest = createAsyncThunk(
 
 export const cancelSubscriptionRequest = createAsyncThunk(
     'cancel/subscription',
-    async (_, { rejectWithValue }) => {
+    async (mpSubscriptionId, { rejectWithValue }) => {
         try {
-            const response = await cancelSubscription()
+            const response = await cancelSubscription(mpSubscriptionId)
             return response
         } catch (error) {
             console.error('Cancel subscription error:', error)
@@ -75,15 +75,43 @@ export const cancelSubscriptionRequest = createAsyncThunk(
 
 export const pauseSubscriptionRequest = createAsyncThunk(
     'pause/subscription',
-    async (_, { rejectWithValue }) => {
+    async (mpSubscriptionId, { rejectWithValue }) => {
         try {
-            const response = await pauseSubscription()
+            const response = await pauseSubscription(mpSubscriptionId)
             return response
         } catch (error) {
             console.error('Pause subscription error:', error)
             if (error.response) {
                 return rejectWithValue({
                     message: error.response.data?.message || 'Error al pausar la suscripción',
+                    status: error.response.status
+                })
+            } else if (error.request) {
+                return rejectWithValue({
+                    message: 'Error de conexión. Verifique su conexión a internet.',
+                    status: 0
+                })
+            } else {
+                return rejectWithValue({
+                    message: error.message || 'Error desconocido',
+                    status: -1
+                })
+            }
+        }
+    }
+)
+
+export const resumeSubscriptionRequest = createAsyncThunk(
+    'resume/subscription',
+    async (mpSubscriptionId, { rejectWithValue }) => {
+        try {
+            const response = await resumeSubscription(mpSubscriptionId)
+            return response
+        } catch (error) {
+            console.error('Resume subscription error:', error)
+            if (error.response) {
+                return rejectWithValue({
+                    message: error.response.data?.message || 'Error al reactivar la suscripción',
                     status: error.response.status
                 })
             } else if (error.request) {

@@ -3,8 +3,6 @@
 import React, { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import {
-    Card as MaterialCard,
-    CardContent,
     Dialog,
     DialogActions,
     DialogTitle,
@@ -32,7 +30,7 @@ import ScheduleIcon from '@material-ui/icons/Schedule'
 import PauseCircleFilledIcon from '@material-ui/icons/PauseCircleFilled'
 import CancelIcon from '@material-ui/icons/Cancel'
 import moment from 'moment'
-import { getConfigRequest, cancelSubscriptionRequest, pauseSubscriptionRequest } from '../../store/config'
+import { getConfigRequest, cancelSubscriptionRequest, pauseSubscriptionRequest, resumeSubscriptionRequest } from '../../store/config'
 import { SUBSCRIPTION_MESSAGES, ACTION_TYPES, PLAN_CHANGE_MESSAGES, UNAVAILABLE_FEATURE_FALLBACK } from '../const'
 import FeatureAlert from 'components/FeatureAlert'
 
@@ -266,19 +264,20 @@ const Activation = () => {
 
     // Corregir las validaciones para que coincidan con la estructura real
     const subscriptionDetail = configDetail?.subscriptionDetail
-    const isActivate = subscriptionDetail?.hasActiveSubscription ?? false
-    const paymentStatus = subscriptionDetail?.subscription?.paymentStatus
     const subscription = subscriptionDetail?.subscription
+    const preapprovalStatus = subscription?.preapprovalStatus
+    const paymentStatus = subscription?.paymentStatus
+    const isActivate = subscriptionDetail?.hasActiveSubscription ?? false
 
-    // Validaciones según el estado real del pago
+    // Validaciones mejoradas considerando preapprovalStatus
     const isPaymentAuthorized = paymentStatus === 'authorized' && subscription
     const isPaymentApproved = paymentStatus === 'approved' && subscription
     const isPaymentPending = paymentStatus === 'pending' && subscription
-    const isPaymentPaused = paymentStatus === 'paused' && subscription
-    const isPaymentCancelled = paymentStatus === 'cancelled' && subscription
+    const isPaymentPaused = (paymentStatus === 'paused' || preapprovalStatus === 'paused') && subscription
+    const isPaymentCancelled = (paymentStatus === 'cancelled' || preapprovalStatus === 'cancelled') && subscription
 
-    // La suscripción está realmente activa solo si está aprobada o si hasActiveSubscription es true
-    const isSubscriptionActive = isActivate || isPaymentApproved
+    // La suscripción está realmente activa solo si está aprobada o hasActiveSubscription es true y no está pausada/cancelada
+    const isSubscriptionActive = (isActivate || isPaymentApproved) && !isPaymentPaused && !isPaymentCancelled
 
     const [mp, setMp] = React.useState(null)
     const [cardNumber, setCardNumber] = React.useState('')
@@ -348,9 +347,11 @@ const Activation = () => {
         }
     }
 
+    const mpSubscriptionId = configDetail?.subscriptionDetail?.subscription?.mpSubscriptionId
+
     const handleCancelSubscription = async () => {
         try {
-            await dispatch(cancelSubscriptionRequest())
+            await dispatch(cancelSubscriptionRequest(mpSubscriptionId))
             setError(null)
             setShowConfirmModal(false)
             setConfirmAction(null)
@@ -361,12 +362,25 @@ const Activation = () => {
 
     const handlePauseSubscription = async () => {
         try {
-            await dispatch(pauseSubscriptionRequest())
+            await dispatch(pauseSubscriptionRequest(mpSubscriptionId))
             setError(null)
             setShowConfirmModal(false)
             setConfirmAction(null)
+            dispatch(getConfigRequest()) // Refrescar la configuración tras pausar
         } catch (error) {
             setError('Error al pausar la suscripción')
+        }
+    }
+
+    const handleResumeSubscription = async () => {
+        try {
+            await dispatch(resumeSubscriptionRequest(mpSubscriptionId))
+            setError(null)
+            setShowConfirmModal(false)
+            setConfirmAction(null)
+            dispatch(getConfigRequest()) // Refrescar la configuración tras reactivar
+        } catch (error) {
+            setError('Error al reactivar la suscripción')
         }
     }
 
@@ -411,6 +425,8 @@ const Activation = () => {
             setShowConfirmModal(false)
             setConfirmAction(null)
             setViewMode('plan-selection')
+        } else if (confirmAction === ACTION_TYPES.RESUME) {
+            handleResumeSubscription()
         }
     }
 
@@ -501,91 +517,353 @@ const Activation = () => {
         switch (currentViewMode) {
             case 'payment-pending':
                 return (
-                    <>
-                        <div className={classes.subscriptionPendingBanner}>
-                            Tu pago está siendo procesado
-                            <ScheduleIcon style={{ marginLeft: 12, fontSize: 32 }} />
-                        </div>
-                        <p className={classes.description} style={{ marginTop: 0 }}>
-                            Estamos verificando tu pago. Este proceso puede tomar un tiempo. Una vez confirmado, tu tienda se activará automáticamente.
-                        </p>
-                        <p className={classes.description} style={{ marginTop: 0 }}>
-                            Si tienes alguna duda o tu tienda no se activa en un plazo de 24 horas, contacta a soporte.
-                        </p>
-                    </>
+                    <Card className={classes.card}>
+                        <CardHeader color="info">
+                            <h4 className={classes.cardTitleWhite}>
+                                Panel de Activación y Gestión de Suscripción
+                            </h4>
+                            <p className={classes.cardCategoryWhite}>
+                                Aquí puedes ver el estado de tu suscripción, consultar los detalles de tu plan actual y gestionar acciones como cambiar, pausar o cancelar tu suscripción.
+                            </p>
+                        </CardHeader>
+                        <CardBody>
+                            <div className={classes.subscriptionPendingBanner}>
+                                Tu pago está siendo procesado
+                                <ScheduleIcon style={{ marginLeft: 12, fontSize: 32 }} />
+                            </div>
+                            <p className={classes.description} style={{ marginTop: 0 }}>
+                                Estamos verificando tu pago. Este proceso puede tomar un tiempo. Una vez confirmado, tu tienda se activará automáticamente.
+                            </p>
+                            <p className={classes.description} style={{ marginTop: 0 }}>
+                                Si tienes alguna duda o tu tienda no se activa en un plazo de 24 horas, contacta a soporte.
+                            </p>
+                        </CardBody>
+                    </Card>
                 );
 
             case 'payment-paused':
                 return (
-                    <>
-                        <div className={classes.subscriptionPausedBanner}>
-                            Tu subscripción está pausada temporalmente
-                            <PauseCircleFilledIcon style={{ marginLeft: 12, fontSize: 32 }} />
-                        </div>
-                        <p className={classes.description} style={{ marginTop: 0 }}>
-                            Por favor contacta a soporte para reactivar tu subscripción y continuar operando tu tienda.
-                        </p>
-                    </>
+                    <Card className={classes.card}>
+                        <CardHeader color="primary">
+                            <h4 className={classes.cardTitleWhite}>
+                                Panel de Activación y Gestión de Suscripción
+                            </h4>
+                            <p className={classes.cardCategoryWhite}>
+                                Aquí puedes ver el estado de tu suscripción, consultar los detalles de tu plan actual y gestionar acciones como cambiar, pausar o cancelar tu suscripción.
+                            </p>
+                        </CardHeader>
+                        <CardBody>
+                            <div className={classes.subscriptionPausedBanner}>
+                                Tu subscripción está pausada temporalmente
+                                <PauseCircleFilledIcon style={{ marginLeft: 12, fontSize: 32 }} />
+                            </div>
+                            <p className={classes.description} style={{ marginTop: 0 }}>
+                                Por favor contacta a soporte para reactivar tu subscripción y continuar operando tu tienda.
+                            </p>
+                            <h4 className={classes.subtitle}>Detalles de tu subscripción:</h4>
+                            <ul className={classes.subscriptionDetailsList}>
+                                <li className={classes.subscriptionDetailItem}>
+                                    <div className={classes.subscriptionDetailBullet}></div>
+                                    <span className={classes.subscriptionDetailLabel}>Plan:</span>
+                                    <span className={classes.subscriptionDetailValue}>
+                                        {subscription?.plan?.name}
+                                    </span>
+                                </li>
+                                <li className={classes.subscriptionDetailItem}>
+                                    <div className={classes.subscriptionDetailBullet}></div>
+                                    <span className={classes.subscriptionDetailLabel}>Fecha de activación:</span>
+                                    <span className={classes.subscriptionDetailValue}>
+                                        {moment(subscription?.startDate).format('DD/MM/YYYY')}
+                                    </span>
+                                </li>
+                                {lastPauseDate && (
+                                    <li className={classes.subscriptionDetailItem}>
+                                        <div className={classes.subscriptionDetailBullet}></div>
+                                        <span className={classes.subscriptionDetailLabel}>Fecha de pausa:</span>
+                                        <span className={classes.subscriptionDetailValue}>
+                                            {moment(lastPauseDate).format('DD/MM/YYYY')}
+                                        </span>
+                                    </li>
+                                )}
+                            </ul>
+                            <div className={classes.buttonContainer}>
+                                <Button
+                                    type="button"
+                                    variant="contained"
+                                    color="primary"
+                                    disabled={!mp || loading}
+                                    loading={loading}
+                                    className={classes.button}
+                                    onClick={() => handleConfirmAction(ACTION_TYPES.CHANGE_PLAN_INITIAL)}
+                                >
+                                    Cambiar de plan
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="contained"
+                                    color="danger"
+                                    disabled={loadingCancelSubscription}
+                                    loading={loadingCancelSubscription}
+                                    className={classes.button}
+                                    onClick={() => handleConfirmAction(ACTION_TYPES.CANCEL)}
+                                >
+                                    Cancelar suscripción
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="contained"
+                                    color="success"
+                                    className={classes.button}
+                                    onClick={() => handleConfirmAction(ACTION_TYPES.RESUME)}
+                                >
+                                    Reactivar suscripción
+                                </Button>
+                            </div>
+                        </CardBody>
+                    </Card>
                 );
 
             case 'payment-cancelled':
                 return (
-                    <>
-                        <div className={classes.subscriptionCancelledBanner}>
-                            Tu subscripción fue cancelada
-                            <CancelIcon style={{ marginLeft: 12, fontSize: 32 }} />
-                        </div>
-                        <p className={classes.description} style={{ marginTop: 0 }}>
-                            Por favor contacta a soporte para reactivar tu subscripción y continuar operando tu tienda.
-                        </p>
-                    </>
+                    <Card className={classes.card}>
+                        <CardHeader color="primary">
+                            <h4 className={classes.cardTitleWhite}>
+                                Panel de Activación y Gestión de Suscripción
+                            </h4>
+                            <p className={classes.cardCategoryWhite}>
+                                Aquí puedes ver el estado de tu suscripción, consultar los detalles de tu plan actual y gestionar acciones como cambiar, pausar o cancelar tu suscripción.
+                            </p>
+                        </CardHeader>
+                        <CardBody>
+                            <div className={classes.subscriptionCancelledBanner}>
+                                Tu subscripción fue cancelada
+                                <CancelIcon style={{ marginLeft: 12, fontSize: 32 }} />
+                            </div>
+                            <p className={classes.description} style={{ marginTop: 0 }}>
+                                Por favor contacta a soporte para reactivar tu subscripción y continuar operando tu tienda.
+                            </p>
+                            <h4 className={classes.subtitle}>Detalles de tu subscripción:</h4>
+                            <ul className={classes.subscriptionDetailsList}>
+                                <li className={classes.subscriptionDetailItem}>
+                                    <div className={classes.subscriptionDetailBullet}></div>
+                                    <span className={classes.subscriptionDetailLabel}>Plan:</span>
+                                    <span className={classes.subscriptionDetailValue}>
+                                        {subscription?.plan?.name}
+                                    </span>
+                                </li>
+                                <li className={classes.subscriptionDetailItem}>
+                                    <div className={classes.subscriptionDetailBullet}></div>
+                                    <span className={classes.subscriptionDetailLabel}>Fecha de activación:</span>
+                                    <span className={classes.subscriptionDetailValue}>
+                                        {moment(subscription?.startDate).format('DD/MM/YYYY')}
+                                    </span>
+                                </li>
+                                {lastCancelDate && (
+                                    <li className={classes.subscriptionDetailItem}>
+                                        <div className={classes.subscriptionDetailBullet}></div>
+                                        <span className={classes.subscriptionDetailLabel}>Fecha de cancelación:</span>
+                                        <span className={classes.subscriptionDetailValue}>
+                                            {moment(lastCancelDate).format('DD/MM/YYYY')}
+                                        </span>
+                                    </li>
+                                )}
+                            </ul>
+                        </CardBody>
+                    </Card>
                 );
 
             case 'subscription-details':
                 return (
-                    <>
-                        <Card className={classes.card}>
-                            <CardHeader color="primary">
-                                <h4 className={classes.cardTitleWhite}>
-                                    Panel de Activación y Gestión de Suscripción
-                                </h4>
-                                <p className={classes.cardCategoryWhite}>
-                                    Aquí puedes ver el estado de tu suscripción, consultar los detalles de tu plan actual y gestionar acciones como cambiar, pausar o cancelar tu suscripción.
-                                </p>
-                            </CardHeader>
-                            <CardBody>
-                                <div className={classes.subscriptionActiveBanner}>
-                                    Tu subscripción está activa
-                                    <CheckCircleIcon style={{ marginLeft: 12, fontSize: 32 }} />
-                                </div>
-                                <p className={classes.description} style={{ marginTop: 0 }}>
-                                    Puedes operar tu tienda con normalidad
-                                </p>
-                                <h4 className={classes.subtitle}>Detalles de tu subscripción:</h4>
-                                <ul className={classes.subscriptionDetailsList}>
-                                    <li className={classes.subscriptionDetailItem}>
-                                        <div className={classes.subscriptionDetailBullet}></div>
-                                        <span className={classes.subscriptionDetailLabel}>Plan:</span>
-                                        <span className={classes.subscriptionDetailValue}>
-                                            {subscription?.plan?.name}
-                                        </span>
-                                    </li>
-                                    <li className={classes.subscriptionDetailItem}>
-                                        <div className={classes.subscriptionDetailBullet}></div>
-                                        <span className={classes.subscriptionDetailLabel}>Fecha de activación:</span>
-                                        <span className={classes.subscriptionDetailValue}>
-                                            {moment(subscription?.startDate).format('DD/MM/YYYY')}
-                                        </span>
-                                    </li>
-                                    <li className={classes.subscriptionDetailItem}>
-                                        <div className={classes.subscriptionDetailBullet}></div>
-                                        <span className={classes.subscriptionDetailLabel}>Fecha del próximo cobro:</span>
-                                        <span className={classes.subscriptionDetailValue}>
-                                            {moment(subscription?.nextPaymentDate).format('DD/MM/YYYY')}
-                                        </span>
-                                    </li>
-                                </ul>
-                                <div className={classes.buttonContainer}>
+                    <Card className={classes.card}>
+                        <CardHeader color="primary">
+                            <h4 className={classes.cardTitleWhite}>
+                                Panel de Activación y Gestión de Suscripción
+                            </h4>
+                            <p className={classes.cardCategoryWhite}>
+                                Aquí puedes ver el estado de tu suscripción, consultar los detalles de tu plan actual y gestionar acciones como cambiar, pausar o cancelar tu suscripción.
+                            </p>
+                        </CardHeader>
+                        <CardBody>
+                            <div className={classes.subscriptionActiveBanner}>
+                                Tu subscripción está activa
+                                <CheckCircleIcon style={{ marginLeft: 12, fontSize: 32 }} />
+                            </div>
+                            <p className={classes.description} style={{ marginTop: 0 }}>
+                                Puedes operar tu tienda con normalidad
+                            </p>
+                            <h4 className={classes.subtitle}>Detalles de tu subscripción:</h4>
+                            <ul className={classes.subscriptionDetailsList}>
+                                <li className={classes.subscriptionDetailItem}>
+                                    <div className={classes.subscriptionDetailBullet}></div>
+                                    <span className={classes.subscriptionDetailLabel}>Plan:</span>
+                                    <span className={classes.subscriptionDetailValue}>
+                                        {subscription?.plan?.name}
+                                    </span>
+                                </li>
+                                <li className={classes.subscriptionDetailItem}>
+                                    <div className={classes.subscriptionDetailBullet}></div>
+                                    <span className={classes.subscriptionDetailLabel}>Fecha de activación:</span>
+                                    <span className={classes.subscriptionDetailValue}>
+                                        {moment(subscription?.startDate).format('DD/MM/YYYY')}
+                                    </span>
+                                </li>
+                                <li className={classes.subscriptionDetailItem}>
+                                    <div className={classes.subscriptionDetailBullet}></div>
+                                    <span className={classes.subscriptionDetailLabel}>Fecha del próximo cobro:</span>
+                                    <span className={classes.subscriptionDetailValue}>
+                                        {moment(subscription?.nextPaymentDate).format('DD/MM/YYYY')}
+                                    </span>
+                                </li>
+                            </ul>
+                            <div className={classes.buttonContainer}>
+                                <Button
+                                    type="button"
+                                    variant="contained"
+                                    color="primary"
+                                    disabled={!mp || loading}
+                                    loading={loading}
+                                    className={classes.button}
+                                    onClick={() => handleConfirmAction(ACTION_TYPES.CHANGE_PLAN_INITIAL)}
+                                >
+                                    Cambiar de plan
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="contained"
+                                    color="warning"
+                                    disabled={loadingPauseSubscription}
+                                    loading={loadingPauseSubscription}
+                                    className={classes.button}
+                                    onClick={() => handleConfirmAction(ACTION_TYPES.PAUSE)}
+                                >
+                                    Pausar suscripción
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="contained"
+                                    color="danger"
+                                    disabled={loadingCancelSubscription}
+                                    loading={loadingCancelSubscription}
+                                    className={classes.button}
+                                    onClick={() => handleConfirmAction(ACTION_TYPES.CANCEL)}
+                                >
+                                    Cancelar suscripción
+                                </Button>
+                            </div>
+                        </CardBody>
+                    </Card>
+                );
+
+            case 'payment-authorized':
+                return (
+                    <Card className={classes.card}>
+                        <CardHeader color="info">
+                            <h4 className={classes.cardTitleWhite}>
+                                Tu pago está autorizado
+                            </h4>
+                            <p className={classes.cardCategoryWhite}>
+                                Tu tarjeta fue autorizada exitosamente
+                            </p>
+                        </CardHeader>
+                        <CardBody>
+                            <p>
+                                Estamos procesando el pago para activar tu tienda. Este proceso puede tomar unos minutos. Una vez completado, tu tienda estará lista para operar.
+                            </p>
+                            <h4 className={classes.subtitle}>Detalles de tu subscripción:</h4>
+                            <ul className={classes.subscriptionDetailsList}>
+                                <li className={classes.subscriptionDetailItem}>
+                                    <div className={classes.subscriptionDetailBullet}></div>
+                                    <span className={classes.subscriptionDetailLabel}>Plan:</span>
+                                    <span className={classes.subscriptionDetailValue}>
+                                        {subscription?.plan?.name}
+                                    </span>
+                                </li>
+                                <li className={classes.subscriptionDetailItem}>
+                                    <div className={classes.subscriptionDetailBullet}></div>
+                                    <span className={classes.subscriptionDetailLabel}>Fecha de autorización:</span>
+                                    <span className={classes.subscriptionDetailValue}>
+                                        {moment(subscription?.startDate).format('DD/MM/YYYY')}
+                                    </span>
+                                </li>
+                            </ul>
+                        </CardBody>
+                    </Card>
+                );
+
+            case 'plan-details':
+                return (
+                    <Card className={classes.card}>
+                        <CardHeader color="primary">
+                            <h4 className={classes.cardTitleWhite}>
+                                Activar tienda
+                            </h4>
+                            <p className={classes.cardCategoryWhite}>
+                                Para comenzar a operar tu tienda, selecciona un plan y completa el pago con tu tarjeta.
+                            </p>
+                        </CardHeader>
+                        <CardBody>
+                            {!isSubscriptionActive && !isPaymentAuthorized && (
+                                <>
+                                    <TextInput
+                                        error={false}
+                                        errorMessage={null}
+                                        icon={null}
+                                        label={'Numero de Tarjeta'}
+                                        placeholder={'Ingrese el numero de tarjeta'}
+                                        value={cardNumber}
+                                        onChange={({ target }) => {
+                                            setCardNumber(target.value)
+                                        }}
+                                    />
+                                    <TextInput
+                                        error={false}
+                                        errorMessage={null}
+                                        icon={null}
+                                        label={'Expira'}
+                                        placeholder={'MM/AA'}
+                                        value={cardExp}
+                                        onChange={({ target }) => {
+                                            setCardExp(target.value)
+                                        }}
+                                    />
+                                    <TextInput
+                                        error={false}
+                                        errorMessage={null}
+                                        icon={null}
+                                        label={'CVV'}
+                                        placeholder={'Ingrese el CVV'}
+                                        value={cardCvv}
+                                        onChange={({ target }) => {
+                                            setCardCvv(target.value)
+                                        }}
+                                    />
+                                    <TextInput
+                                        error={false}
+                                        errorMessage={null}
+                                        icon={null}
+                                        label={'Titular de la Tarjeta'}
+                                        placeholder={'Ingrese el nombre del titular'}
+                                        value={cardName}
+                                        onChange={({ target }) => {
+                                            setCardName(target.value)
+                                        }}
+                                    />
+                                    <TextInput
+                                        error={false}
+                                        errorMessage={null}
+                                        icon={null}
+                                        label={'DNI del titular de la Tarjeta'}
+                                        placeholder={'Ingrese el DNI del titular'}
+                                        value={cardDni}
+                                        onChange={({ target }) => {
+                                            setCardDni(target.value)
+                                        }}
+                                    />
+                                    {error && (
+                                        <p className={classes.error}>
+                                            {error}
+                                        </p>
+                                    )}
                                     <Button
                                         type="button"
                                         variant="contained"
@@ -593,39 +871,43 @@ const Activation = () => {
                                         disabled={!mp || loading}
                                         loading={loading}
                                         className={classes.button}
-                                        onClick={() => handleConfirmAction(ACTION_TYPES.CHANGE_PLAN_INITIAL)}
+                                        onClick={submitCardDetails}
                                     >
-                                        Cambiar de plan
+                                        Activar Tienda
                                     </Button>
-                                    <Button
-                                        type="button"
-                                        variant="contained"
-                                        color="warning"
-                                        disabled={loadingPauseSubscription}
-                                        loading={loadingPauseSubscription}
-                                        className={classes.button}
-                                        onClick={() => handleConfirmAction(ACTION_TYPES.PAUSE)}
-                                    >
-                                        Pausar suscripción
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="contained"
-                                        color="danger"
-                                        disabled={loadingCancelSubscription}
-                                        loading={loadingCancelSubscription}
-                                        className={classes.button}
-                                        onClick={() => handleConfirmAction(ACTION_TYPES.CANCEL)}
-                                    >
-                                        Cancelar suscripción
-                                    </Button>
-                                </div>
-                            </CardBody>
-                        </Card>
-                    </>
+                                </>
+                            )}
+
+                            {(isSubscriptionActive || isPaymentAuthorized) && (
+                                <>
+                                    <img
+                                        src={Success}
+                                        alt="Success"
+                                        className={classes.successImage}
+                                    />
+                                    {isSubscriptionActive ? (
+                                        <>
+                                            <h6>¡Subscripción al día!</h6>
+                                            <p>
+                                                Puedes operar tu tienda con normalidad.
+                                            </p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <h6>¡Pago autorizado exitosamente!</h6>
+                                            <p>
+                                                Tu tarjeta fue autorizada. Estamos procesando el pago para activar tu tienda.
+                                            </p>
+                                        </>
+                                    )}
+                                </>
+                            )}
+                        </CardBody>
+                    </Card>
                 );
 
             case 'plan-selection':
+                // Este caso se mantiene como está, sin envolver en Card personalizado
                 return (
                     <>
                         <IconButton
@@ -682,11 +964,11 @@ const Activation = () => {
                                                             ${formatNumber(plan.price.toFixed(1))}
                                                         </p>
                                                         {/* Lista de features habilitadas */}
-                                                       
+
                                                     </CardHeader>
                                                     <CardBody>
                                                         <h4 className={classes.subtitle}>Funciones claves:</h4>
-                                                    {plan.features && (
+                                                        {plan.features && (
                                                             <ul style={{ margin: '12px 0 0 0', padding: 0 }}>
                                                                 {Object.entries(plan.features)
                                                                     .filter(([, feat]) => feat.enabled)
@@ -764,185 +1046,6 @@ const Activation = () => {
                     </>
                 );
 
-            case 'payment-authorized':
-                return (
-                    <>
-                        <Card className={classes.card}>
-                            <CardHeader color="info">
-                                <h4 className={classes.cardTitleWhite}>
-                                    Tu pago está autorizado
-                                </h4>
-                                <p className={classes.cardCategoryWhite}>
-                                    Tu tarjeta fue autorizada exitosamente
-                                </p>
-                            </CardHeader>
-                            <CardBody>
-                                <p>
-                                    Estamos procesando el pago para activar tu tienda. Este proceso puede tomar unos minutos. Una vez completado, tu tienda estará lista para operar.
-                                </p>
-                                <h4 className={classes.subtitle}>Detalles de tu subscripción:</h4>
-                                <ul className={classes.subscriptionDetailsList}>
-                                    <li className={classes.subscriptionDetailItem}>
-                                        <div className={classes.subscriptionDetailBullet}></div>
-                                        <span className={classes.subscriptionDetailLabel}>Plan:</span>
-                                        <span className={classes.subscriptionDetailValue}>
-                                            {subscription?.plan?.name}
-                                        </span>
-                                    </li>
-                                    <li className={classes.subscriptionDetailItem}>
-                                        <div className={classes.subscriptionDetailBullet}></div>
-                                        <span className={classes.subscriptionDetailLabel}>Fecha de autorización:</span>
-                                        <span className={classes.subscriptionDetailValue}>
-                                            {moment(subscription?.startDate).format('DD/MM/YYYY')}
-                                        </span>
-                                    </li>
-                                </ul>
-                            </CardBody>
-                        </Card>
-                    </>
-                );
-
-            case 'plan-details':
-                return (
-                    <>
-                        <IconButton
-                            onClick={() => setSelectedPlan(null)}
-                        >
-                            <ArrowBackIcon />
-                        </IconButton>
-                       
-                        <MaterialCard className={classes.card}>
-                            <CardContent>
-                                {!isSubscriptionActive && !isPaymentAuthorized && (
-                                    <>
-                                        <h5 className={classes.subtitle}>
-                                            Activa tu tienda
-                                        </h5>
-
-                                        <p className={classes.formField}>
-                                            Para comenzar a operar tu tienda, selecciona un plan y completa el pago con tu tarjeta.
-                                        </p>
-                                        <div className={classes.formField}>
-                                            <TextInput
-                                                error={false}
-                                                errorMessage={null}
-                                                icon={null}
-                                                label={'Numero de Tarjeta'}
-                                                placeholder={
-                                                    'Ingrese el numero de tarjeta'
-                                                }
-                                                value={cardNumber}
-                                                onChange={({ target }) => {
-                                                    setCardNumber(target.value)
-                                                }}
-                                            />
-                                        </div>
-                                        <div className={classes.formField}>
-                                            <TextInput
-                                                error={false}
-                                                errorMessage={null}
-                                                icon={null}
-                                                label={'Expira'}
-                                                placeholder={'MM/AA'}
-                                                value={cardExp}
-                                                onChange={({ target }) => {
-                                                    setCardExp(target.value)
-                                                }}
-                                            />
-                                        </div>
-                                        <div className={classes.formField}>
-                                            <TextInput
-                                                error={false}
-                                                errorMessage={null}
-                                                icon={null}
-                                                label={'CVV'}
-                                                placeholder={'Ingrese el CVV'}
-                                                value={cardCvv}
-                                                onChange={({ target }) => {
-                                                    setCardCvv(target.value)
-                                                }}
-                                            />
-                                        </div>
-                                        <div className={classes.formField}>
-                                            <TextInput
-                                                error={false}
-                                                errorMessage={null}
-                                                icon={null}
-                                                label={'Titular de la Tarjeta'}
-                                                placeholder={
-                                                    'Ingrese el nombre del titular'
-                                                }
-                                                value={cardName}
-                                                onChange={({ target }) => {
-                                                    setCardName(target.value)
-                                                }}
-                                            />
-                                        </div>
-                                        <div className={classes.formField}>
-                                            <TextInput
-                                                error={false}
-                                                errorMessage={null}
-                                                icon={null}
-                                                label={
-                                                    'DNI del titular de la Tarjeta'
-                                                }
-                                                placeholder={
-                                                    'Ingrese el DNI del titular'
-                                                }
-                                                value={cardDni}
-                                                onChange={({ target }) => {
-                                                    setCardDni(target.value)
-                                                }}
-                                            />
-                                        </div>
-                                        {error && (
-                                            <p className={classes.error}>
-                                                {error}
-                                            </p>
-                                        )}
-                                        <Button
-                                            type="button"
-                                            variant="contained"
-                                            color="primary"
-                                            disabled={!mp || loading}
-                                            loading={loading}
-                                            className={classes.button}
-                                            onClick={submitCardDetails}
-                                        >
-                                            Activar Tienda
-                                        </Button>
-                                    </>
-                                )}
-
-                                {(isSubscriptionActive || isPaymentAuthorized) && (
-                                    <>
-                                        <img
-                                            src={Success}
-                                            alt="Success"
-                                            className={classes.successImage}
-                                        />
-                                        {isSubscriptionActive ? (
-                                            <>
-                                                <h6>¡Subscripción al día!</h6>
-                                                <p>
-                                                    Puedes operar tu tienda con normalidad.
-                                                </p>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <h6>¡Pago autorizado exitosamente!</h6>
-                                                <p>
-                                                    Tu tarjeta fue autorizada. Estamos procesando el pago para activar tu tienda.
-                                                </p>
-                                            </>
-                                        )}
-                                    </>
-                                )}
-                            </CardContent>
-                        </MaterialCard>
-                    </>
-                );
-
             default:
                 return null;
         }
@@ -962,6 +1065,13 @@ const Activation = () => {
 
     const currentViewMode = getCurrentViewMode();
 
+    // Extraer último estado relevante de statusHistory
+    const lastStatus = Array.isArray(subscription?.statusHistory) && subscription.statusHistory.length > 0
+        ? subscription.statusHistory[subscription.statusHistory.length - 1]
+        : null;
+    const lastPauseDate = lastStatus && lastStatus.status === 'paused' ? lastStatus.date : null;
+    const lastCancelDate = lastStatus && lastStatus.status === 'cancelled' ? lastStatus.date : null;
+
     return (
         <>
 
@@ -975,7 +1085,9 @@ const Activation = () => {
                 </DialogActions>
             </Dialog>
 
-            <Dialog open={showConfirmModal} onClose={() => setShowConfirmModal(false)} maxWidth="sm" fullWidth>
+            <Dialog open={showConfirmModal} onClose={
+                loadingCancelSubscription || loadingPauseSubscription ? undefined : () => setShowConfirmModal(false)
+            } maxWidth="sm" fullWidth>
                 {console.log('Modal abierto:', showConfirmModal, 'Acción:', confirmAction)}
                 <DialogTitle>
                     {confirmAction === ACTION_TYPES.CANCEL
@@ -1000,7 +1112,9 @@ const Activation = () => {
                                         }
                                         return 'Cambiar plan';
                                     })()
-                                    : 'Confirmar acción'
+                                    : confirmAction === ACTION_TYPES.RESUME
+                                        ? SUBSCRIPTION_MESSAGES.RESUME.title
+                                        : 'Confirmar acción'
                     }
                 </DialogTitle>
                 <div className={classes.modalContent}>
@@ -1072,6 +1186,22 @@ const Activation = () => {
                             }
                             return <p>Cambiando plan...</p>;
                         })()
+                    ) : confirmAction === ACTION_TYPES.RESUME ? (
+                        <>
+                            <p className={classes.modalDescription}>
+                                {SUBSCRIPTION_MESSAGES.RESUME.description}
+                            </p>
+                            <ul className={classes.modalList}>
+                                {SUBSCRIPTION_MESSAGES.RESUME.benefits.map((benefit, index) => (
+                                    <li key={index} className={classes.modalListItem}>
+                                        {benefit}
+                                    </li>
+                                ))}
+                            </ul>
+                            <p className={`${classes.modalWarning} ${classes.modalWarningSuccess}`}>
+                                {SUBSCRIPTION_MESSAGES.RESUME.warning}
+                            </p>
+                        </>
                     ) : (
                         <>
                             <p className={classes.modalDescription}>
@@ -1100,7 +1230,11 @@ const Activation = () => {
                     )}
                 </div>
                 <DialogActions>
-                    <Button onClick={() => setShowConfirmModal(false)} color="transparent">
+                    <Button
+                        onClick={() => setShowConfirmModal(false)}
+                        color="transparent"
+                        disabled={loadingCancelSubscription || loadingPauseSubscription}
+                    >
                         {confirmAction === ACTION_TYPES.CANCEL
                             ? SUBSCRIPTION_MESSAGES.CANCEL.cancelText
                             : confirmAction === ACTION_TYPES.PAUSE
@@ -1123,13 +1257,28 @@ const Activation = () => {
                                             }
                                             return 'Cancelar';
                                         })()
-                                        : 'Cancelar'
+                                        : confirmAction === ACTION_TYPES.RESUME
+                                            ? SUBSCRIPTION_MESSAGES.RESUME.cancelText
+                                            : 'Cancelar'
                         }
                     </Button>
                     <Button
                         onClick={executeAction}
-                        color={confirmAction === ACTION_TYPES.CANCEL ? 'danger' : 'primary'}
-                        disabled={loadingCancelSubscription || loadingPauseSubscription}
+                        color={confirmAction === ACTION_TYPES.CANCEL ? 'danger' : confirmAction === ACTION_TYPES.RESUME ? 'success' : 'primary'}
+                        disabled={
+                            (confirmAction === ACTION_TYPES.CANCEL && loadingCancelSubscription) ||
+                            (confirmAction === ACTION_TYPES.PAUSE && loadingPauseSubscription) ||
+                            (confirmAction === ACTION_TYPES.RESUME && loadingPauseSubscription) ||
+                            (confirmAction === ACTION_TYPES.CHANGE_PLAN && loadingPauseSubscription) ||
+                            (confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL && loadingPauseSubscription)
+                        }
+                        loading={
+                            (confirmAction === ACTION_TYPES.CANCEL && loadingCancelSubscription) ||
+                            (confirmAction === ACTION_TYPES.PAUSE && loadingPauseSubscription) ||
+                            (confirmAction === ACTION_TYPES.RESUME && loadingPauseSubscription) ||
+                            (confirmAction === ACTION_TYPES.CHANGE_PLAN && loadingPauseSubscription) ||
+                            (confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL && loadingPauseSubscription)
+                        }
                     >
                         {confirmAction === ACTION_TYPES.CANCEL
                             ? SUBSCRIPTION_MESSAGES.CANCEL.confirmText
@@ -1153,7 +1302,9 @@ const Activation = () => {
                                             }
                                             return 'Confirmar';
                                         })()
-                                        : 'Confirmar'
+                                        : confirmAction === ACTION_TYPES.RESUME
+                                            ? SUBSCRIPTION_MESSAGES.RESUME.confirmText
+                                            : 'Confirmar'
                         }
                     </Button>
                 </DialogActions>

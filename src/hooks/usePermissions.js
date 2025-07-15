@@ -10,19 +10,20 @@ export const usePermissions = () => {
 
     // Validaciones de suscripción (con protección contra carga)
     const subscriptionDetail = configDetail?.subscriptionDetail
-    const isActivate = subscriptionDetail?.hasActiveSubscription ?? false
-    const paymentStatus = subscriptionDetail?.subscription?.paymentStatus
     const subscription = subscriptionDetail?.subscription
+    const preapprovalStatus = subscription?.preapprovalStatus
+    const isActivate = subscriptionDetail?.hasActiveSubscription ?? false
+    const paymentStatus = subscription?.paymentStatus
     
     // Estados de pago (con protección contra carga)
     const isPaymentAuthorized = !loadingConfig && paymentStatus === 'authorized' && subscription
     const isPaymentApproved = !loadingConfig && paymentStatus === 'approved' && subscription
     const isPaymentPending = !loadingConfig && paymentStatus === 'pending' && subscription
-    const isPaymentPaused = !loadingConfig && paymentStatus === 'paused' && subscription
-    const isPaymentCancelled = !loadingConfig && paymentStatus === 'cancelled' && subscription
+    const isPaymentPaused = !loadingConfig && (paymentStatus === 'paused' || preapprovalStatus === 'paused') && subscription
+    const isPaymentCancelled = !loadingConfig && (paymentStatus === 'cancelled' || preapprovalStatus === 'cancelled') && subscription
     
     // Estado de suscripción activa (con protección contra carga)
-    const isSubscriptionActive = !loadingConfig && (isActivate || isPaymentApproved)
+    const isSubscriptionActive = !loadingConfig && (isActivate || isPaymentApproved) && !isPaymentPaused && !isPaymentCancelled
     
     // Cargar permisos del usuario cuando se hace login
     useEffect(() => {
