@@ -1,6 +1,7 @@
 // src/pages/admin/MercadoPagoConnect.jsx
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import {
     Card as MaterialCard,
     CardContent,
@@ -32,7 +33,8 @@ import PauseCircleFilledIcon from '@material-ui/icons/PauseCircleFilled'
 import CancelIcon from '@material-ui/icons/Cancel'
 import moment from 'moment'
 import { getConfigRequest, cancelSubscriptionRequest, pauseSubscriptionRequest } from '../../store/config'
-import { SUBSCRIPTION_MESSAGES, ACTION_TYPES, PLAN_CHANGE_MESSAGES } from '../const'
+import { SUBSCRIPTION_MESSAGES, ACTION_TYPES, PLAN_CHANGE_MESSAGES, UNAVAILABLE_FEATURE_FALLBACK } from '../const'
+import FeatureAlert from 'components/FeatureAlert'
 
 const useStyles = makeStyles((theme) => ({
     card: {
@@ -240,28 +242,44 @@ const useStyles = makeStyles((theme) => ({
         color: '#444',
         margin: 0,
     },
+    featureAlert: {
+        margin: theme.spacing(2, 0),
+        fontSize: '1rem',
+        borderLeft: `6px solid #20b6c9`,
+        background: '#e3f2fd',
+        color: theme.palette.primary.main,
+        boxShadow: '0 2px 8px rgba(33,150,243,0.10)',
+    },
+    planGlow: {
+        boxShadow: `0 0 0 4px #fff, 0 0 16px 4px #20b6c9`,
+        animation: '$glowAnim 1.5s infinite alternate',
+    },
+    '@keyframes glowAnim': {
+        '0%': { boxShadow: `0 0 0 4px #fff, 0 0 8px 2px #20b6c9` },
+        '100%': { boxShadow: `0 0 0 4px #fff, 0 0 24px 8px #20b6c9` },
+    },
 }))
 
 const Activation = () => {
     const { configDetail, loadingCancelSubscription, loadingPauseSubscription } = useSelector((state) => state.config)
     const dispatch = useDispatch()
-    
+
     // Corregir las validaciones para que coincidan con la estructura real
     const subscriptionDetail = configDetail?.subscriptionDetail
     const isActivate = subscriptionDetail?.hasActiveSubscription ?? false
     const paymentStatus = subscriptionDetail?.subscription?.paymentStatus
     const subscription = subscriptionDetail?.subscription
-    
+
     // Validaciones según el estado real del pago
     const isPaymentAuthorized = paymentStatus === 'authorized' && subscription
     const isPaymentApproved = paymentStatus === 'approved' && subscription
     const isPaymentPending = paymentStatus === 'pending' && subscription
     const isPaymentPaused = paymentStatus === 'paused' && subscription
     const isPaymentCancelled = paymentStatus === 'cancelled' && subscription
-    
+
     // La suscripción está realmente activa solo si está aprobada o si hasActiveSubscription es true
     const isSubscriptionActive = isActivate || isPaymentApproved
-    
+
     const [mp, setMp] = React.useState(null)
     const [cardNumber, setCardNumber] = React.useState('')
     const [cardExp, setCardExp] = React.useState('')
@@ -280,6 +298,34 @@ const Activation = () => {
     const [showConfirmModal, setShowConfirmModal] = React.useState(false)
     const [confirmAction, setConfirmAction] = React.useState(null)
     const classes = useStyles()
+
+    const location = useLocation()
+    const [featureParam, setFeatureParam] = useState(null)
+    const [highlightPlans, setHighlightPlans] = useState([])
+    const [featureInfo, setFeatureInfo] = useState(null)
+
+    useEffect(() => {
+        const script = document.createElement('script')
+        script.src = 'https://sdk.mercadopago.com/js/v2'
+        script.async = true
+        script.onload = () => {
+            const mpInstance = new window.MercadoPago(
+                'APP_USR-4cfc2933-f53e-45a8-a2c6-f75b7e6bc0ef',
+                { locale: 'es-AR' }
+            )
+            setMp(mpInstance)
+        }
+        document.body.appendChild(script)
+    }, [])
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search)
+        const feature = params.get('feature')
+        if (feature) {
+            setFeatureParam(feature)
+            setViewMode('plan-selection')
+        }
+    }, [location.search])
 
     const handleConnect = async (card_token) => {
         console.log('send')
@@ -330,18 +376,18 @@ const Activation = () => {
             // Aquí iría la lógica para cambiar el plan
             // Por ahora solo cerramos el modal y actualizamos el estado
             console.log('Cambiando a plan:', selectedPlan)
-            
+
             // TODO: Implementar la llamada a la API para cambiar el plan
             // await dispatch(changePlanRequest({ planId: selectedPlan._id }))
-            
+
             setShowConfirmModal(false)
             setConfirmAction(null)
             setSelectedPlan(null)
             setViewMode('subscription-details')
-            
+
             // Actualizar la configuración para reflejar el cambio
             dispatch(getConfigRequest())
-            
+
         } catch (error) {
             console.error('Error en handleChangePlan:', error);
             setError('Error al cambiar el plan')
@@ -399,22 +445,6 @@ const Activation = () => {
     }
 
     useEffect(() => {
-        const script = document.createElement('script')
-        script.src = 'https://sdk.mercadopago.com/js/v2'
-        script.async = true
-        script.onload = () => {
-            const mpInstance = new window.MercadoPago(
-                'APP_USR-4cfc2933-f53e-45a8-a2c6-f75b7e6bc0ef',
-                {
-                    locale: 'es-AR',
-                }
-            )
-            setMp(mpInstance)
-        }
-        document.body.appendChild(script)
-    }, [])
-
-    useEffect(() => {
         const getData = async () => {
             try {
                 setLoadingPlans(true)
@@ -430,6 +460,22 @@ const Activation = () => {
         }
         getData()
     }, [])
+
+    useEffect(() => {
+        if (featureParam && plans.length > 0) {
+            const plansWithFeature = plans.filter(plan => plan.features?.[featureParam]?.enabled)
+            setHighlightPlans(plansWithFeature.map(p => p._id))
+
+            if (plansWithFeature.length > 0) {
+                // Tomar info de la feature (title, description)
+                const featureData = plansWithFeature[0]?.features?.[featureParam]
+                setFeatureInfo(featureData)
+            } else {
+                // Ningún plan tiene la feature habilitada, usar fallback
+                setFeatureInfo(UNAVAILABLE_FEATURE_FALLBACK)
+            }
+        }
+    }, [featureParam, plans])
 
     useEffect(() => {
         if (selectedPlan) {
@@ -588,6 +634,25 @@ const Activation = () => {
                         >
                             <ArrowBackIcon />
                         </IconButton>
+                        {featureParam && featureInfo && (
+                            <FeatureAlert severity="info" className={classes.featureAlert}>
+                                {featureInfo === UNAVAILABLE_FEATURE_FALLBACK ? (
+                                    <div>
+                                        <strong>{featureInfo.title}</strong>
+                                        {featureInfo.paragraphs.map((paragraph, index) => (
+                                            <p key={index} dangerouslySetInnerHTML={{ __html: paragraph }} />
+                                        ))}
+                                        <a href={featureInfo.cta.href} style={{ color: 'inherit', textDecoration: 'underline' }}>
+                                            {featureInfo.cta.label}
+                                        </a>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        Hemos resaltado nuestras sugerencias de planes que contienen la función de <b>{featureInfo.title}</b>.
+                                    </div>
+                                )}
+                            </FeatureAlert>
+                        )}
                         <Card className={classes.card}>
                             <CardHeader color="primary">
                                 <h4 className={classes.cardTitleWhite}>
@@ -603,12 +668,12 @@ const Activation = () => {
                                         .filter((plan) =>
                                             (isSubscriptionActive || isPaymentAuthorized)
                                                 ? plan._id !==
-                                                  subscription?.plan?._id
+                                                subscription?.plan?._id
                                                 : true
                                         )
                                         .map((plan) => (
                                             <GridItem xs={12} sm={6} md={4} key={plan._id}>
-                                                <Card>
+                                                <Card className={highlightPlans.includes(plan._id) ? `${classes.card} ${classes.planGlow}` : classes.card}>
                                                     <CardHeader className={classes.planCardHeaderGray}>
                                                         <h4 className={classes.planTitleDark}>
                                                             {plan.name}
@@ -616,8 +681,22 @@ const Activation = () => {
                                                         <p className={classes.planPriceDark}>
                                                             ${formatNumber(plan.price.toFixed(1))}
                                                         </p>
+                                                        {/* Lista de features habilitadas */}
+                                                       
                                                     </CardHeader>
                                                     <CardBody>
+                                                        <h4 className={classes.subtitle}>Funciones claves:</h4>
+                                                    {plan.features && (
+                                                            <ul style={{ margin: '12px 0 0 0', padding: 0 }}>
+                                                                {Object.entries(plan.features)
+                                                                    .filter(([, feat]) => feat.enabled)
+                                                                    .map(([key, feat]) => (
+                                                                        <li key={key} style={{ color: '#111', fontWeight: 500, fontSize: '0.97rem', marginBottom: 2 }}>
+                                                                            {feat.title}
+                                                                        </li>
+                                                                    ))}
+                                                            </ul>
+                                                        )}
                                                         <Button
                                                             type="button"
                                                             variant="contained"
@@ -629,11 +708,11 @@ const Activation = () => {
                                                                 // Determinar el tipo de cambio de plan
                                                                 const currentPlan = subscription?.plan;
                                                                 let changeType = 'SAME_PLAN';
-                                                                
+
                                                                 console.log('Plan actual:', currentPlan);
                                                                 console.log('Plan seleccionado:', plan);
                                                                 console.log('Estado actual del modal:', showConfirmModal);
-                                                                
+
                                                                 if (currentPlan) {
                                                                     if (plan.price > currentPlan.price) {
                                                                         changeType = 'UPGRADE';
@@ -641,9 +720,9 @@ const Activation = () => {
                                                                         changeType = 'DOWNGRADE';
                                                                     }
                                                                 }
-                                                                
+
                                                                 console.log('Tipo de cambio:', changeType);
-                                                                
+
                                                                 // Mostrar alerta si es downgrade o upgrade
                                                                 if (changeType !== 'SAME_PLAN') {
                                                                     console.log('Mostrando modal de confirmación');
@@ -731,6 +810,7 @@ const Activation = () => {
                         >
                             <ArrowBackIcon />
                         </IconButton>
+                       
                         <MaterialCard className={classes.card}>
                             <CardContent>
                                 {!isSubscriptionActive && !isPaymentAuthorized && (
@@ -884,6 +964,7 @@ const Activation = () => {
 
     return (
         <>
+
             {renderContent()}
             <Dialog open={openModal} onClose={() => setOpenModal(false)}>
                 <DialogTitle>¡Suscripción exítosa!</DialogTitle>
@@ -897,29 +978,29 @@ const Activation = () => {
             <Dialog open={showConfirmModal} onClose={() => setShowConfirmModal(false)} maxWidth="sm" fullWidth>
                 {console.log('Modal abierto:', showConfirmModal, 'Acción:', confirmAction)}
                 <DialogTitle>
-                    {confirmAction === ACTION_TYPES.CANCEL 
-                        ? SUBSCRIPTION_MESSAGES.CANCEL.title 
+                    {confirmAction === ACTION_TYPES.CANCEL
+                        ? SUBSCRIPTION_MESSAGES.CANCEL.title
                         : confirmAction === ACTION_TYPES.PAUSE
-                        ? SUBSCRIPTION_MESSAGES.PAUSE.title
-                        : confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL
-                        ? PLAN_CHANGE_MESSAGES.INITIAL.title
-                        : confirmAction === ACTION_TYPES.CHANGE_PLAN
-                        ? (() => {
-                            const currentPlan = subscription?.plan;
-                            const selectedPlanData = selectedPlan;
-                            
-                            if (currentPlan && selectedPlanData) {
-                                if (selectedPlanData.price > currentPlan.price) {
-                                    return PLAN_CHANGE_MESSAGES.UPGRADE.title;
-                                } else if (selectedPlanData.price < currentPlan.price) {
-                                    return PLAN_CHANGE_MESSAGES.DOWNGRADE.title;
-                                } else {
-                                    return PLAN_CHANGE_MESSAGES.SAME_PLAN.title;
-                                }
-                            }
-                            return 'Cambiar plan';
-                        })()
-                        : 'Confirmar acción'
+                            ? SUBSCRIPTION_MESSAGES.PAUSE.title
+                            : confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL
+                                ? PLAN_CHANGE_MESSAGES.INITIAL.title
+                                : confirmAction === ACTION_TYPES.CHANGE_PLAN
+                                    ? (() => {
+                                        const currentPlan = subscription?.plan;
+                                        const selectedPlanData = selectedPlan;
+
+                                        if (currentPlan && selectedPlanData) {
+                                            if (selectedPlanData.price > currentPlan.price) {
+                                                return PLAN_CHANGE_MESSAGES.UPGRADE.title;
+                                            } else if (selectedPlanData.price < currentPlan.price) {
+                                                return PLAN_CHANGE_MESSAGES.DOWNGRADE.title;
+                                            } else {
+                                                return PLAN_CHANGE_MESSAGES.SAME_PLAN.title;
+                                            }
+                                        }
+                                        return 'Cambiar plan';
+                                    })()
+                                    : 'Confirmar acción'
                     }
                 </DialogTitle>
                 <div className={classes.modalContent}>
@@ -943,65 +1024,65 @@ const Activation = () => {
                         (() => {
                             const currentPlan = subscription?.plan;
                             const selectedPlanData = selectedPlan;
-                            
-                                                            if (currentPlan && selectedPlanData) {
-                                    if (selectedPlanData.price > currentPlan.price) {
-                                        return (
-                                            <>
-                                                <p className={classes.modalDescription}>
-                                                    {PLAN_CHANGE_MESSAGES.UPGRADE.description}
-                                                </p>
-                                                <ul className={classes.modalList}>
-                                                    {PLAN_CHANGE_MESSAGES.UPGRADE.benefits.map((benefit, index) => (
-                                                        <li key={index} className={classes.modalListItem}>
-                                                            {benefit}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                                <p className={`${classes.modalWarning} ${classes.modalWarningSuccess}`}>
-                                                    {PLAN_CHANGE_MESSAGES.UPGRADE.warning}
-                                                </p>
-                                            </>
-                                        );
-                                    } else if (selectedPlanData.price < currentPlan.price) {
-                                        return (
-                                            <>
-                                                <p className={classes.modalDescription}>
-                                                    {PLAN_CHANGE_MESSAGES.DOWNGRADE.description}
-                                                </p>
-                                                <ul className={classes.modalList}>
-                                                    {PLAN_CHANGE_MESSAGES.DOWNGRADE.consequences.map((consequence, index) => (
-                                                        <li key={index} className={classes.modalListItem}>
-                                                            {consequence}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                                <p className={`${classes.modalWarning} ${classes.modalWarningWarning}`}>
-                                                    {PLAN_CHANGE_MESSAGES.DOWNGRADE.warning}
-                                                </p>
-                                            </>
-                                        );
-                                    } else {
-                                        return (
+
+                            if (currentPlan && selectedPlanData) {
+                                if (selectedPlanData.price > currentPlan.price) {
+                                    return (
+                                        <>
                                             <p className={classes.modalDescription}>
-                                                {PLAN_CHANGE_MESSAGES.SAME_PLAN.message}
+                                                {PLAN_CHANGE_MESSAGES.UPGRADE.description}
                                             </p>
-                                        );
-                                    }
+                                            <ul className={classes.modalList}>
+                                                {PLAN_CHANGE_MESSAGES.UPGRADE.benefits.map((benefit, index) => (
+                                                    <li key={index} className={classes.modalListItem}>
+                                                        {benefit}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                            <p className={`${classes.modalWarning} ${classes.modalWarningSuccess}`}>
+                                                {PLAN_CHANGE_MESSAGES.UPGRADE.warning}
+                                            </p>
+                                        </>
+                                    );
+                                } else if (selectedPlanData.price < currentPlan.price) {
+                                    return (
+                                        <>
+                                            <p className={classes.modalDescription}>
+                                                {PLAN_CHANGE_MESSAGES.DOWNGRADE.description}
+                                            </p>
+                                            <ul className={classes.modalList}>
+                                                {PLAN_CHANGE_MESSAGES.DOWNGRADE.consequences.map((consequence, index) => (
+                                                    <li key={index} className={classes.modalListItem}>
+                                                        {consequence}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                            <p className={`${classes.modalWarning} ${classes.modalWarningWarning}`}>
+                                                {PLAN_CHANGE_MESSAGES.DOWNGRADE.warning}
+                                            </p>
+                                        </>
+                                    );
+                                } else {
+                                    return (
+                                        <p className={classes.modalDescription}>
+                                            {PLAN_CHANGE_MESSAGES.SAME_PLAN.message}
+                                        </p>
+                                    );
                                 }
+                            }
                             return <p>Cambiando plan...</p>;
                         })()
                     ) : (
                         <>
                             <p className={classes.modalDescription}>
-                                {confirmAction === ACTION_TYPES.CANCEL 
-                                    ? SUBSCRIPTION_MESSAGES.CANCEL.description 
+                                {confirmAction === ACTION_TYPES.CANCEL
+                                    ? SUBSCRIPTION_MESSAGES.CANCEL.description
                                     : SUBSCRIPTION_MESSAGES.PAUSE.description
                                 }
                             </p>
                             <ul className={classes.modalList}>
-                                {(confirmAction === ACTION_TYPES.CANCEL 
-                                    ? SUBSCRIPTION_MESSAGES.CANCEL.consequences 
+                                {(confirmAction === ACTION_TYPES.CANCEL
+                                    ? SUBSCRIPTION_MESSAGES.CANCEL.consequences
                                     : SUBSCRIPTION_MESSAGES.PAUSE.consequences
                                 ).map((consequence, index) => (
                                     <li key={index} className={classes.modalListItem}>
@@ -1010,8 +1091,8 @@ const Activation = () => {
                                 ))}
                             </ul>
                             <p className={`${classes.modalWarning} ${classes.modalWarningWarning}`}>
-                                {confirmAction === ACTION_TYPES.CANCEL 
-                                    ? SUBSCRIPTION_MESSAGES.CANCEL.warning 
+                                {confirmAction === ACTION_TYPES.CANCEL
+                                    ? SUBSCRIPTION_MESSAGES.CANCEL.warning
                                     : SUBSCRIPTION_MESSAGES.PAUSE.warning
                                 }
                             </p>
@@ -1020,59 +1101,59 @@ const Activation = () => {
                 </div>
                 <DialogActions>
                     <Button onClick={() => setShowConfirmModal(false)} color="transparent">
-                        {confirmAction === ACTION_TYPES.CANCEL 
-                            ? SUBSCRIPTION_MESSAGES.CANCEL.cancelText 
+                        {confirmAction === ACTION_TYPES.CANCEL
+                            ? SUBSCRIPTION_MESSAGES.CANCEL.cancelText
                             : confirmAction === ACTION_TYPES.PAUSE
-                            ? SUBSCRIPTION_MESSAGES.PAUSE.cancelText
-                            : confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL
-                            ? PLAN_CHANGE_MESSAGES.INITIAL.cancelText
-                            : confirmAction === ACTION_TYPES.CHANGE_PLAN
-                            ? (() => {
-                                const currentPlan = subscription?.plan;
-                                const selectedPlanData = selectedPlan;
-                                
-                                if (currentPlan && selectedPlanData) {
-                                    if (selectedPlanData.price > currentPlan.price) {
-                                        return PLAN_CHANGE_MESSAGES.UPGRADE.cancelText;
-                                    } else if (selectedPlanData.price < currentPlan.price) {
-                                        return PLAN_CHANGE_MESSAGES.DOWNGRADE.cancelText;
-                                    } else {
-                                        return PLAN_CHANGE_MESSAGES.SAME_PLAN.cancelText;
-                                    }
-                                }
-                                return 'Cancelar';
-                            })()
-                            : 'Cancelar'
+                                ? SUBSCRIPTION_MESSAGES.PAUSE.cancelText
+                                : confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL
+                                    ? PLAN_CHANGE_MESSAGES.INITIAL.cancelText
+                                    : confirmAction === ACTION_TYPES.CHANGE_PLAN
+                                        ? (() => {
+                                            const currentPlan = subscription?.plan;
+                                            const selectedPlanData = selectedPlan;
+
+                                            if (currentPlan && selectedPlanData) {
+                                                if (selectedPlanData.price > currentPlan.price) {
+                                                    return PLAN_CHANGE_MESSAGES.UPGRADE.cancelText;
+                                                } else if (selectedPlanData.price < currentPlan.price) {
+                                                    return PLAN_CHANGE_MESSAGES.DOWNGRADE.cancelText;
+                                                } else {
+                                                    return PLAN_CHANGE_MESSAGES.SAME_PLAN.cancelText;
+                                                }
+                                            }
+                                            return 'Cancelar';
+                                        })()
+                                        : 'Cancelar'
                         }
                     </Button>
-                    <Button 
-                        onClick={executeAction} 
+                    <Button
+                        onClick={executeAction}
                         color={confirmAction === ACTION_TYPES.CANCEL ? 'danger' : 'primary'}
                         disabled={loadingCancelSubscription || loadingPauseSubscription}
                     >
-                        {confirmAction === ACTION_TYPES.CANCEL 
-                            ? SUBSCRIPTION_MESSAGES.CANCEL.confirmText 
+                        {confirmAction === ACTION_TYPES.CANCEL
+                            ? SUBSCRIPTION_MESSAGES.CANCEL.confirmText
                             : confirmAction === ACTION_TYPES.PAUSE
-                            ? SUBSCRIPTION_MESSAGES.PAUSE.confirmText
-                            : confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL
-                            ? PLAN_CHANGE_MESSAGES.INITIAL.confirmText
-                            : confirmAction === ACTION_TYPES.CHANGE_PLAN
-                            ? (() => {
-                                const currentPlan = subscription?.plan;
-                                const selectedPlanData = selectedPlan;
-                                
-                                if (currentPlan && selectedPlanData) {
-                                    if (selectedPlanData.price > currentPlan.price) {
-                                        return PLAN_CHANGE_MESSAGES.UPGRADE.confirmText;
-                                    } else if (selectedPlanData.price < currentPlan.price) {
-                                        return PLAN_CHANGE_MESSAGES.DOWNGRADE.confirmText;
-                                    } else {
-                                        return PLAN_CHANGE_MESSAGES.SAME_PLAN.confirmText;
-                                    }
-                                }
-                                return 'Confirmar';
-                            })()
-                            : 'Confirmar'
+                                ? SUBSCRIPTION_MESSAGES.PAUSE.confirmText
+                                : confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL
+                                    ? PLAN_CHANGE_MESSAGES.INITIAL.confirmText
+                                    : confirmAction === ACTION_TYPES.CHANGE_PLAN
+                                        ? (() => {
+                                            const currentPlan = subscription?.plan;
+                                            const selectedPlanData = selectedPlan;
+
+                                            if (currentPlan && selectedPlanData) {
+                                                if (selectedPlanData.price > currentPlan.price) {
+                                                    return PLAN_CHANGE_MESSAGES.UPGRADE.confirmText;
+                                                } else if (selectedPlanData.price < currentPlan.price) {
+                                                    return PLAN_CHANGE_MESSAGES.DOWNGRADE.confirmText;
+                                                } else {
+                                                    return PLAN_CHANGE_MESSAGES.SAME_PLAN.confirmText;
+                                                }
+                                            }
+                                            return 'Confirmar';
+                                        })()
+                                        : 'Confirmar'
                         }
                     </Button>
                 </DialogActions>

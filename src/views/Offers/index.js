@@ -15,6 +15,7 @@ import { Delete, Edit } from '@material-ui/icons'
 import CustomModal from '../../components/CustomModal'
 import { formatNumber } from '../../helpers/product'
 import EmptyTablePlaceholder from 'components/EmptyTablePlaceholder'
+import UpgradePrompt from '../../components/UpgradePrompt'
 // import { Edit } from '@material-ui/icons'
 // import moment from 'moment'
 // import { finalPrice, formatNumber } from '../../helpers/product'
@@ -88,115 +89,120 @@ export default function Offers() {
                 </div>
             ) : (
                 <>
-                    <Card>
-                        <CardHeader color="primary">
-                            <h4 className={classes.cardHeaderTitle}>Promociones activas</h4>
-                            <p className={classes.cardCategoryWhite}>
-                                Aquí puedes ver, agregar, editar y eliminar promociones activas para tu tienda.
-                            </p>
-                            <div className={classes.cardHeaderActions}>
-                                <div className={classes.cardHeaderActionsInner}>
-                                    <p className={classes.cardCategoryWhite}>
-                                        Agrega una nueva promoción
-                                    </p>
-                                    <Link to="/admin/offers/add-offers">
-                                        <Button
-                                            isLoading={false}
-                                            variant="contained"
-                                            color="white"
-                                            type="button"
-                                            size="sm"
-                                            justIcon
-                                        >
-                                            <AddIcon />
-                                        </Button>
-                                    </Link>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardBody>
-                            <div className={classes.tableWrapper}>
-                                {(!offers || offers.length === 0) ? (
-                                    <EmptyTablePlaceholder title="No hay promociones activas para mostrar" />
-                                ) : (
-                                    <Table
-                                        styles={{}}
-                                        tableHeaderColor="primary"
-                                        tableHead={[
-                                            'Nombre',
-                                            'Fecha de inicio',
-                                            'Fecha de finalización',
-                                            'Descuento por promoción',
-                                            'Estatus',
-                                            'Acciones',
-                                        ]}
-                                        tableData={offers.map((offer) => [
-                                            offer.name,
-                                            moment(offer.startDate).format(
-                                                'DD-MM-YYYY'
-                                            ),
-                                            moment(offer.startDate).format(
-                                                'DD-MM-YYYY'
-                                            ),
-                                            `${formatNumber(offer.discount)}%`,
-                                            `${ moment(offer.startDate).diff(
-                                                moment(),
-                                                'hour'
-                                            ) > 0 ? "Activa" : "Inactiva"}`,
-                                            <div
-                                                className={classes.actionsRow}
-                                                key={offer._id}
+                    <UpgradePrompt 
+                        featureKey="offers" 
+                        showPreview={true}
+                    >
+                        <Card>
+                            <CardHeader color="primary">
+                                <h4 className={classes.cardHeaderTitle}>Promociones activas</h4>
+                                <p className={classes.cardCategoryWhite}>
+                                    Aquí puedes ver, agregar, editar y eliminar promociones activas para tu tienda.
+                                </p>
+                                <div className={classes.cardHeaderActions}>
+                                    <div className={classes.cardHeaderActionsInner}>
+                                        <p className={classes.cardCategoryWhite}>
+                                            Agrega una nueva promoción
+                                        </p>
+                                        <Link to="/admin/offers/add-offers">
+                                            <Button
+                                                isLoading={false}
+                                                variant="contained"
+                                                color="white"
+                                                type="button"
+                                                size="sm"
+                                                justIcon
                                             >
-                                                <Tooltip
-                                                    title="Editar promoción"
-                                                    placement="top"
+                                                <AddIcon />
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardBody>
+                                <div className={classes.tableWrapper}>
+                                    {(!offers || offers.length === 0) ? (
+                                        <EmptyTablePlaceholder title="No hay promociones activas para mostrar" />
+                                    ) : (
+                                        <Table
+                                            styles={{}}
+                                            tableHeaderColor="primary"
+                                            tableHead={[
+                                                'Nombre',
+                                                'Fecha de inicio',
+                                                'Fecha de finalización',
+                                                'Descuento por promoción',
+                                                'Estatus',
+                                                'Acciones',
+                                            ]}
+                                            tableData={offers.map((offer) => [
+                                                offer.name,
+                                                moment(offer.startDate).format(
+                                                    'DD-MM-YYYY'
+                                                ),
+                                                moment(offer.startDate).format(
+                                                    'DD-MM-YYYY'
+                                                ),
+                                                `${formatNumber(offer.discount)}%`,
+                                                `${ moment(offer.startDate).diff(
+                                                    moment(),
+                                                    'hour'
+                                                ) > 0 ? "Activa" : "Inactiva"}`,
+                                                <div
+                                                    className={classes.actionsRow}
+                                                    key={offer._id}
                                                 >
-                                                    <div>
-                                                        <Button
-                                                            isLoading={false}
-                                                            variant="contained"
-                                                            color="primary"
-                                                            type="button"
-                                                            onClick={() =>
-                                                                history.push(
-                                                                    `/admin/offers/add-offers/${offer._id}`
-                                                                )
-                                                            }
-                                                        >
-                                                            <Edit />
-                                                        </Button>
-                                                    </div>
-                                                </Tooltip>
-                                                <Tooltip
-                                                    title="Eliminar promoción"
-                                                    placement="top"
-                                                >
-                                                    <div className={classes.actionButtonBox}>
-                                                        <Button
-                                                            isLoading={
-                                                                loadingDeleteOffer ===
-                                                                offer._id
-                                                            }
-                                                            variant="contained"
-                                                            color="primary"
-                                                            type="button"
-                                                            onClick={() =>
-                                                                setTargetForDelete(
+                                                    <Tooltip
+                                                        title="Editar promoción"
+                                                        placement="top"
+                                                    >
+                                                        <div>
+                                                            <Button
+                                                                isLoading={false}
+                                                                variant="contained"
+                                                                color="primary"
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    history.push(
+                                                                        `/admin/offers/add-offers/${offer._id}`
+                                                                    )
+                                                                }
+                                                            >
+                                                                <Edit />
+                                                            </Button>
+                                                        </div>
+                                                    </Tooltip>
+                                                    <Tooltip
+                                                        title="Eliminar promoción"
+                                                        placement="top"
+                                                    >
+                                                        <div className={classes.actionButtonBox}>
+                                                            <Button
+                                                                isLoading={
+                                                                    loadingDeleteOffer ===
                                                                     offer._id
-                                                                )
-                                                            }
-                                                        >
-                                                            <Delete />
-                                                        </Button>
-                                                    </div>
-                                                </Tooltip>
-                                            </div>,
-                                        ])}
-                                    />
-                                )}
-                            </div>
-                        </CardBody>
-                    </Card>
+                                                                }
+                                                                variant="contained"
+                                                                color="primary"
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    setTargetForDelete(
+                                                                        offer._id
+                                                                    )
+                                                                }
+                                                            >
+                                                                <Delete />
+                                                            </Button>
+                                                        </div>
+                                                    </Tooltip>
+                                                </div>,
+                                            ])}
+                                        />
+                                    )}
+                                </div>
+                            </CardBody>
+                        </Card>
+                    </UpgradePrompt>
                 </>
             )}
 

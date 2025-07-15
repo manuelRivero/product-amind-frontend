@@ -7,6 +7,7 @@ const initialState = {
     loadingCancelSubscription: false,
     loadingPauseSubscription: false,
     configDetail: null,
+    planDetails: null,
     error: false,
     tenant: null,
 }
@@ -115,6 +116,12 @@ export const configSlice = createSlice({
         [getConfigRequest.fulfilled]: (state, action) => {
             state.loadingConfig = false
             state.configDetail = action.payload.data.config
+            // Extraer los detalles del plan de suscripción
+            if (action.payload.data.config?.subscriptionDetail?.subscription?.plan) {
+                state.planDetails = action.payload.data.config.subscriptionDetail.subscription.plan
+            } else {
+                state.planDetails = null
+            }
         },
         [getConfigRequest.rejected]: (state, action) => {
             state.loadingConfig = false
@@ -128,6 +135,12 @@ export const configSlice = createSlice({
             state.loadingCancelSubscription = false
             // Refresh config after successful cancellation
             state.configDetail = action.payload.data.config
+            // Actualizar planDetails después de cancelar
+            if (action.payload.data.config?.subscriptionDetail?.subscription?.plan) {
+                state.planDetails = action.payload.data.config.subscriptionDetail.subscription.plan
+            } else {
+                state.planDetails = null
+            }
         },
         [cancelSubscriptionRequest.rejected]: (state, action) => {
             state.loadingCancelSubscription = false
@@ -141,6 +154,12 @@ export const configSlice = createSlice({
             state.loadingPauseSubscription = false
             // Refresh config after successful pause
             state.configDetail = action.payload.data.config
+            // Actualizar planDetails después de pausar
+            if (action.payload.data.config?.subscriptionDetail?.subscription?.plan) {
+                state.planDetails = action.payload.data.config.subscriptionDetail.subscription.plan
+            } else {
+                state.planDetails = null
+            }
         },
         [pauseSubscriptionRequest.rejected]: (state, action) => {
             state.loadingPauseSubscription = false

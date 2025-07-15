@@ -21,35 +21,36 @@ import Card from 'components/Card/Card'
 import CardHeader from 'components/Card/CardHeader'
 import CardBody from 'components/Card/CardBody'
 import { StorePreview } from 'components/StorePreview'
+import UpgradePrompt from '../../components/UpgradePrompt'
 import TextField from '@material-ui/core/TextField'
 import MenuItem from '@material-ui/core/MenuItem'
 
 // Lista de países soportados por Mercado Pago (ejemplo, puedes expandirla)
 const MP_COUNTRIES = [
-  { code: 'AR', name: 'Argentina', dial: '+54', phoneLength: 10 },
-  { code: 'BR', name: 'Brasil', dial: '+55', phoneLength: 11 },
-  { code: 'CL', name: 'Chile', dial: '+56', phoneLength: 9 },
-  { code: 'CO', name: 'Colombia', dial: '+57', phoneLength: 10 },
-  { code: 'MX', name: 'México', dial: '+52', phoneLength: 10 },
-  { code: 'PE', name: 'Perú', dial: '+51', phoneLength: 9 },
-  { code: 'UY', name: 'Uruguay', dial: '+598', phoneLength: 8 },
-  // ... puedes agregar más países
+    { code: 'AR', name: 'Argentina', dial: '+54', phoneLength: 10 },
+    { code: 'BR', name: 'Brasil', dial: '+55', phoneLength: 11 },
+    { code: 'CL', name: 'Chile', dial: '+56', phoneLength: 9 },
+    { code: 'CO', name: 'Colombia', dial: '+57', phoneLength: 10 },
+    { code: 'MX', name: 'México', dial: '+52', phoneLength: 10 },
+    { code: 'PE', name: 'Perú', dial: '+51', phoneLength: 9 },
+    { code: 'UY', name: 'Uruguay', dial: '+598', phoneLength: 8 },
+    // ... puedes agregar más países
 ]
 
 // Fuentes populares para títulos y body
 const TITLE_FONTS = [
-  'Montserrat',
-  'Oswald',
-  'Merriweather',
-  'Playfair Display',
-  'Roboto Slab',
+    'Montserrat',
+    'Oswald',
+    'Merriweather',
+    'Playfair Display',
+    'Roboto Slab',
 ]
 const BODY_FONTS = [
-  'Roboto',
-  'Open Sans',
-  'Lato',
-  'Source Sans Pro',
-  'Nunito',
+    'Roboto',
+    'Open Sans',
+    'Lato',
+    'Source Sans Pro',
+    'Nunito',
 ]
 
 const schema = yup.object({
@@ -58,15 +59,15 @@ const schema = yup.object({
     title: yup.string().required('El título es obligatorio'),
     country: yup.string().required('Selecciona un país'),
     phone: yup
-      .string()
-      .required('El número es obligatorio')
-      .test('solo-numeros', 'Solo se permiten números', value => /^\d+$/.test(value || ''))
-      .test('longitud', 'El número es demasiado corto o largo', function(value) {
-        const { country } = this.parent
-        const countryObj = MP_COUNTRIES.find(c => c.code === country)
-        if (!countryObj) return false
-        return value && value.length === countryObj.phoneLength
-      }),
+        .string()
+        .required('El número es obligatorio')
+        .test('solo-numeros', 'Solo se permiten números', value => /^\d+$/.test(value || ''))
+        .test('longitud', 'El número es demasiado corto o largo', function (value) {
+            const { country } = this.parent
+            const countryObj = MP_COUNTRIES.find(c => c.code === country)
+            if (!countryObj) return false
+            return value && value.length === countryObj.phoneLength
+        }),
     description: yup.string().required('La descripción es obligatoria'),
     primaryColor: yup.string().required('El color primario es obligatorio'),
     contrastTextColor: yup
@@ -214,11 +215,17 @@ export default function ConfigPage() {
     const classes = useStyles()
     const dispatch = useDispatch()
     const { user } = useSelector((state) => state.auth)
-    const { loadingConfig, configDetail } = useSelector((state) => state.config)
+    const { loadingConfig, configDetail, planDetails } = useSelector((state) => state.config)
     const [preview, setPreview] = useState(null)
     const [loading, setLoading] = useState(false)
     const [showSuccessModal, setShowSuccessModal] = useState(false)
     const fileInputRef = useRef(null)
+
+    // Debug: Verificar si el plan se está cargando
+    console.log('🔍 Debug - planDetails:', planDetails)
+    console.log('🔍 Debug - configDetail:', configDetail)
+    console.log('🔍 Debug - themeCustomization enabled:', planDetails?.features?.themeCustomization?.enabled)
+
     //form
     const {
         reset,
@@ -259,9 +266,9 @@ export default function ConfigPage() {
         }
     }
     const handleDeleteImage = () => {
-        setValue('logo', null)
         setPreview(null)
     }
+
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
         maxFiles: 1,
@@ -303,7 +310,7 @@ export default function ConfigPage() {
         if (!configDetail) {
             dispatch(getConfigRequest({ access: user.token }))
         }
-    }, [ configDetail])
+    }, [configDetail])
 
     useEffect(() => {
         if (configDetail) {
@@ -429,90 +436,90 @@ export default function ConfigPage() {
                                         name="country"
                                         control={control}
                                         render={({ field, fieldState }) => (
-                                          <TextField
-                                            fullWidth
-                                            select
-                                            error={fieldState.error ? true : false}
-                                            value={field.value}
-                                            label="País"
-                                            variant="outlined"
-                                            className={classes.input}
-                                            onChange={field.onChange}
-                                            style={{ backgroundColor: '#FFF' }}
-                                            disabled
-                                          >
-                                            {MP_COUNTRIES.map((c) => (
-                                              <MenuItem key={c.code} value={c.code}>
-                                                {c.name} ({c.dial})
-                                              </MenuItem>
-                                            ))}
-                                          </TextField>
+                                            <TextField
+                                                fullWidth
+                                                select
+                                                error={fieldState.error ? true : false}
+                                                value={field.value}
+                                                label="País"
+                                                variant="outlined"
+                                                className={classes.input}
+                                                onChange={field.onChange}
+                                                style={{ backgroundColor: '#FFF' }}
+                                                disabled
+                                            >
+                                                {MP_COUNTRIES.map((c) => (
+                                                    <MenuItem key={c.code} value={c.code}>
+                                                        {c.name} ({c.dial})
+                                                    </MenuItem>
+                                                ))}
+                                            </TextField>
                                         )}
-                                      />
+                                    />
                                 </div>
                                 <div className={classes.flex1}>
-                                  <Controller
-                                    name="phone"
-                                    control={control}
-                                    render={({ field, fieldState }) => {
-                                      const countryObj = MP_COUNTRIES.find(c => c.code === watch('country'))
-                                      return (
-                                        <TextField
-                                          {...field}
-                                          className={classes.input}
-                                          error={fieldState.error ? true : false}
-                                          helperText={fieldState.error ? fieldState.error.message : ''}
-                                          label={`Télefono de contacto (${countryObj ? countryObj.dial : ''})`}
-                                          variant="outlined"
-                                          fullWidth
-                                          inputProps={{
-                                            maxLength: countryObj ? countryObj.phoneLength : 15,
-                                            inputMode: 'numeric',
-                                            pattern: '[0-9]*',
-                                          }}
-                                          onChange={e => {
-                                            let val = e.target.value.replace(/\D/g, '')
-                                            if (countryObj && countryObj.code === 'AR') {
-                                              // Si empieza con 549, remover 549
-                                              if (val.startsWith('549')) {
-                                                val = val.slice(3)
-                                              } else if (val.startsWith('54')) {
-                                                val = val.slice(2)
-                                              }
-                                              // Si después de remover 54 queda un 9 antes de la característica, también removerlo
-                                              if (val.length > 10 && val.startsWith('9')) {
-                                                val = val.slice(1)
-                                              }
-                                              // Tomar siempre los últimos 10 dígitos
-                                              if (val.length > 10) {
-                                                val = val.slice(-10)
-                                              }
-                                            }
-                                            field.onChange(val)
-                                          }}
-                                          onPaste={e => {
-                                            e.preventDefault()
-                                            let paste = (e.clipboardData || window.clipboardData).getData('text')
-                                            paste = paste.replace(/\D/g, '')
-                                            if (countryObj && countryObj.code === 'AR') {
-                                              if (paste.startsWith('549')) {
-                                                paste = paste.slice(3)
-                                              } else if (paste.startsWith('54')) {
-                                                paste = paste.slice(2)
-                                              }
-                                              if (paste.length > 10 && paste.startsWith('9')) {
-                                                paste = paste.slice(1)
-                                              }
-                                              if (paste.length > 10) {
-                                                paste = paste.slice(-10)
-                                              }
-                                            }
-                                            field.onChange(paste)
-                                          }}
-                                        />
-                                      )
-                                    }}
-                                  />
+                                    <Controller
+                                        name="phone"
+                                        control={control}
+                                        render={({ field, fieldState }) => {
+                                            const countryObj = MP_COUNTRIES.find(c => c.code === watch('country'))
+                                            return (
+                                                <TextField
+                                                    {...field}
+                                                    className={classes.input}
+                                                    error={fieldState.error ? true : false}
+                                                    helperText={fieldState.error ? fieldState.error.message : ''}
+                                                    label={`Télefono de contacto (${countryObj ? countryObj.dial : ''})`}
+                                                    variant="outlined"
+                                                    fullWidth
+                                                    inputProps={{
+                                                        maxLength: countryObj ? countryObj.phoneLength : 15,
+                                                        inputMode: 'numeric',
+                                                        pattern: '[0-9]*',
+                                                    }}
+                                                    onChange={e => {
+                                                        let val = e.target.value.replace(/\D/g, '')
+                                                        if (countryObj && countryObj.code === 'AR') {
+                                                            // Si empieza con 549, remover 549
+                                                            if (val.startsWith('549')) {
+                                                                val = val.slice(3)
+                                                            } else if (val.startsWith('54')) {
+                                                                val = val.slice(2)
+                                                            }
+                                                            // Si después de remover 54 queda un 9 antes de la característica, también removerlo
+                                                            if (val.length > 10 && val.startsWith('9')) {
+                                                                val = val.slice(1)
+                                                            }
+                                                            // Tomar siempre los últimos 10 dígitos
+                                                            if (val.length > 10) {
+                                                                val = val.slice(-10)
+                                                            }
+                                                        }
+                                                        field.onChange(val)
+                                                    }}
+                                                    onPaste={e => {
+                                                        e.preventDefault()
+                                                        let paste = (e.clipboardData || window.clipboardData).getData('text')
+                                                        paste = paste.replace(/\D/g, '')
+                                                        if (countryObj && countryObj.code === 'AR') {
+                                                            if (paste.startsWith('549')) {
+                                                                paste = paste.slice(3)
+                                                            } else if (paste.startsWith('54')) {
+                                                                paste = paste.slice(2)
+                                                            }
+                                                            if (paste.length > 10 && paste.startsWith('9')) {
+                                                                paste = paste.slice(1)
+                                                            }
+                                                            if (paste.length > 10) {
+                                                                paste = paste.slice(-10)
+                                                            }
+                                                        }
+                                                        field.onChange(paste)
+                                                    }}
+                                                />
+                                            )
+                                        }}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -536,243 +543,247 @@ export default function ConfigPage() {
                             />
                         </div>
                         <div>
-                            <h4 className={classes.sectionSubtitle}>Colores y tipografía</h4>
-                            <div className={classes.colorPreviewRow}>
-                                <div style={{ flex: 1 }}>
-                                    <div className={classes.colorSection}>
-                                        <div className={classes.colorRow}>
-                                            <div className={classes.flexBasis200}>
-                                                <Controller
-                                                    name="primaryColor"
-                                                    control={control}
-                                                    render={({ field, fieldState }) => (
-                                                        <>
-                                                            <div style={{ display: 'flex' }}>
-                                                                <p style={{ marginTop: 0, marginBottom: 0 }}>
-                                                                    Color principal
-                                                                </p>
-                                                                <Tooltip
-                                                                    title="Este es el color principal de tu tienda, por ejemplo la cabecera y botónes tenndrán este color"
-                                                                    placement="top"
-                                                                >
-                                                                    <span style={{ marginLeft: 8 }}>
-                                                                        <QuestionMarkIcon />
-                                                                    </span>
-                                                                </Tooltip>
-                                                            </div>
-                                                            <input
-                                                                type="color"
-                                                                value={field.value}
-                                                                onChange={field.onChange}
-                                                            />
-                                                            {fieldState.error && (
-                                                                <TextDanger>
-                                                                    <p className={classes.errorText}>
-                                                                        {fieldState.error.message}
+                            <h4 className={classes.sectionSubtitle}>Personalización del tema</h4>
+                            <UpgradePrompt
+                                featureKey="themeCustomization"
+                            >
+                                <div className={classes.colorPreviewRow}>
+                                    <div style={{ flex: 1 }}>
+                                        <div className={classes.colorSection}>
+                                            <div className={classes.colorRow}>
+                                                <div className={classes.flexBasis200}>
+                                                    <Controller
+                                                        name="primaryColor"
+                                                        control={control}
+                                                        render={({ field, fieldState }) => (
+                                                            <>
+                                                                <div style={{ display: 'flex' }}>
+                                                                    <p style={{ marginTop: 0, marginBottom: 0 }}>
+                                                                        Color principal
                                                                     </p>
-                                                                </TextDanger>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                />
+                                                                    <Tooltip
+                                                                        title="Este es el color principal de tu tienda, por ejemplo la cabecera y botónes tenndrán este color"
+                                                                        placement="top"
+                                                                    >
+                                                                        <span style={{ marginLeft: 8 }}>
+                                                                            <QuestionMarkIcon />
+                                                                        </span>
+                                                                    </Tooltip>
+                                                                </div>
+                                                                <input
+                                                                    type="color"
+                                                                    value={field.value}
+                                                                    onChange={field.onChange}
+                                                                />
+                                                                {fieldState.error && (
+                                                                    <TextDanger>
+                                                                        <p className={classes.errorText}>
+                                                                            {fieldState.error.message}
+                                                                        </p>
+                                                                    </TextDanger>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    />
+                                                </div>
+                                                <div className={classes.flexBasis200}>
+                                                    <Controller
+                                                        name="contrastTextColor"
+                                                        control={control}
+                                                        render={({ field, fieldState }) => (
+                                                            <>
+                                                                <div style={{ display: 'flex' }}>
+                                                                    <p style={{ marginTop: 0, marginBottom: 0 }}>
+                                                                        Color de contraste
+                                                                    </p>
+                                                                    <Tooltip
+                                                                        title="Este es el color que tomaran todos los elementos que estén encima del color principal por ejemplo el texto de un botón"
+                                                                        placement="top"
+                                                                    >
+                                                                        <span style={{ marginLeft: 8 }}>
+                                                                            <QuestionMarkIcon />
+                                                                        </span>
+                                                                    </Tooltip>
+                                                                </div>
+                                                                <input
+                                                                    type="color"
+                                                                    value={field.value}
+                                                                    onChange={field.onChange}
+                                                                />
+                                                                {fieldState.error && (
+                                                                    <TextDanger>
+                                                                        <p className={classes.errorText}>
+                                                                            {fieldState.error.message}
+                                                                        </p>
+                                                                    </TextDanger>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    />
+                                                </div>
+                                                <div className={classes.flexBasis200}>
+                                                    <Controller
+                                                        name="textColor"
+                                                        control={control}
+                                                        render={({ field, fieldState }) => (
+                                                            <>
+                                                                <div style={{ display: 'flex' }}>
+                                                                    <p style={{ marginTop: 0, marginBottom: 0 }}>
+                                                                        Color del texto
+                                                                    </p>
+                                                                    <Tooltip
+                                                                        title="Este es el color que tomará el texto principal y secundario de la tienda."
+                                                                        placement="top"
+                                                                    >
+                                                                        <span style={{ marginLeft: 8 }}>
+                                                                            <QuestionMarkIcon />
+                                                                        </span>
+                                                                    </Tooltip>
+                                                                </div>
+                                                                <input
+                                                                    type="color"
+                                                                    value={field.value}
+                                                                    onChange={field.onChange}
+                                                                />
+                                                                {fieldState.error && (
+                                                                    <TextDanger>
+                                                                        <p className={classes.errorText}>
+                                                                            {fieldState.error.message}
+                                                                        </p>
+                                                                    </TextDanger>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    />
+                                                </div>
+                                                <div className={classes.flexBasis200}>
+                                                    <Controller
+                                                        name="backgroundColor"
+                                                        control={control}
+                                                        render={({ field, fieldState }) => (
+                                                            <>
+                                                                <div style={{ display: 'flex' }}>
+                                                                    <p style={{ marginTop: 0, marginBottom: 0 }}>
+                                                                        Color de fondo
+                                                                    </p>
+                                                                    <Tooltip
+                                                                        title="Este es el color de fondo general de la tienda."
+                                                                        placement="top"
+                                                                    >
+                                                                        <span style={{ marginLeft: 8 }}>
+                                                                            <QuestionMarkIcon />
+                                                                        </span>
+                                                                    </Tooltip>
+                                                                </div>
+                                                                <input
+                                                                    type="color"
+                                                                    value={field.value}
+                                                                    onChange={field.onChange}
+                                                                />
+                                                                {fieldState.error && (
+                                                                    <TextDanger>
+                                                                        <p className={classes.errorText}>
+                                                                            {fieldState.error.message}
+                                                                        </p>
+                                                                    </TextDanger>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    />
+                                                </div>
                                             </div>
-                                            <div className={classes.flexBasis200}>
-                                                <Controller
-                                                    name="contrastTextColor"
-                                                    control={control}
-                                                    render={({ field, fieldState }) => (
-                                                        <>
-                                                            <div style={{ display: 'flex' }}>
-                                                                <p style={{ marginTop: 0, marginBottom: 0 }}>
-                                                                    Color de contraste
-                                                                </p>
-                                                                <Tooltip
-                                                                    title="Este es el color que tomaran todos los elementos que estén encima del color principal por ejemplo el texto de un botón"
-                                                                    placement="top"
-                                                                >
-                                                                    <span style={{ marginLeft: 8 }}>
-                                                                        <QuestionMarkIcon />
-                                                                    </span>
-                                                                </Tooltip>
-                                                            </div>
-                                                            <input
-                                                                type="color"
-                                                                value={field.value}
-                                                                onChange={field.onChange}
-                                                            />
-                                                            {fieldState.error && (
-                                                                <TextDanger>
-                                                                    <p className={classes.errorText}>
-                                                                        {fieldState.error.message}
+                                            <div className={classes.fontRow}>
+                                                <div className={classes.flex1}>
+                                                    <Controller
+                                                        name="titleFont"
+                                                        control={control}
+                                                        render={({ field, fieldState }) => (
+                                                            <>
+                                                                <div style={{ display: 'flex' }}>
+                                                                    <p style={{ marginTop: 0, marginBottom: 0 }}>
+                                                                        Fuente para los títulos
                                                                     </p>
-                                                                </TextDanger>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                />
-                                            </div>
-                                            <div className={classes.flexBasis200}>
-                                                <Controller
-                                                    name="textColor"
-                                                    control={control}
-                                                    render={({ field, fieldState }) => (
-                                                        <>
-                                                            <div style={{ display: 'flex' }}>
-                                                                <p style={{ marginTop: 0, marginBottom: 0 }}>
-                                                                    Color del texto
-                                                                </p>
-                                                                <Tooltip
-                                                                    title="Este es el color que tomará el texto principal y secundario de la tienda."
-                                                                    placement="top"
-                                                                >
-                                                                    <span style={{ marginLeft: 8 }}>
-                                                                        <QuestionMarkIcon />
-                                                                    </span>
-                                                                </Tooltip>
-                                                            </div>
-                                                            <input
-                                                                type="color"
-                                                                value={field.value}
-                                                                onChange={field.onChange}
-                                                            />
-                                                            {fieldState.error && (
-                                                                <TextDanger>
-                                                                    <p className={classes.errorText}>
-                                                                        {fieldState.error.message}
+                                                                    <Tooltip
+                                                                        title="Esta es la fuente principal de tu tienda, se utiliza para titulos, subtitulos y textos principales."
+                                                                        placement="top"
+                                                                    >
+                                                                        <span style={{ marginLeft: 8 }}>
+                                                                            <QuestionMarkIcon />
+                                                                        </span>
+                                                                    </Tooltip>
+                                                                </div>
+                                                                <FontPicker
+                                                                    families={TITLE_FONTS}
+                                                                    apiKey={process.env.REACT_APP_FONTS_KEY}
+                                                                    activeFontFamily={field.value}
+                                                                    onChange={(nextFont) => field.onChange(nextFont.family)}
+                                                                />
+                                                                {fieldState.error && (
+                                                                    <TextDanger>
+                                                                        <p className={classes.errorText}>
+                                                                            {fieldState.error.message}
+                                                                        </p>
+                                                                    </TextDanger>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    />
+                                                </div>
+                                                <div className={classes.flex1}>
+                                                    <Controller
+                                                        name="bodyFont"
+                                                        control={control}
+                                                        render={({ field, fieldState }) => (
+                                                            <>
+                                                                <div style={{ display: 'flex' }}>
+                                                                    <p style={{ marginTop: 0, marginBottom: 0 }}>
+                                                                        Fuente para el cuerpo
                                                                     </p>
-                                                                </TextDanger>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                />
-                                            </div>
-                                            <div className={classes.flexBasis200}>
-                                                <Controller
-                                                    name="backgroundColor"
-                                                    control={control}
-                                                    render={({ field, fieldState }) => (
-                                                        <>
-                                                            <div style={{ display: 'flex' }}>
-                                                                <p style={{ marginTop: 0, marginBottom: 0 }}>
-                                                                    Color de fondo
-                                                                </p>
-                                                                <Tooltip
-                                                                    title="Este es el color de fondo general de la tienda."
-                                                                    placement="top"
-                                                                >
-                                                                    <span style={{ marginLeft: 8 }}>
-                                                                        <QuestionMarkIcon />
-                                                                    </span>
-                                                                </Tooltip>
-                                                            </div>
-                                                            <input
-                                                                type="color"
-                                                                value={field.value}
-                                                                onChange={field.onChange}
-                                                            />
-                                                            {fieldState.error && (
-                                                                <TextDanger>
-                                                                    <p className={classes.errorText}>
-                                                                        {fieldState.error.message}
-                                                                    </p>
-                                                                </TextDanger>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className={classes.fontRow}>
-                                            <div className={classes.flex1}>
-                                                <Controller
-                                                    name="titleFont"
-                                                    control={control}
-                                                    render={({ field, fieldState }) => (
-                                                        <>
-                                                            <div style={{ display: 'flex' }}>
-                                                                <p style={{ marginTop: 0, marginBottom: 0 }}>
-                                                                    Fuente para los títulos
-                                                                </p>
-                                                                <Tooltip
-                                                                    title="Esta es la fuente principal de tu tienda, se utiliza para titulos, subtitulos y textos principales."
-                                                                    placement="top"
-                                                                >
-                                                                    <span style={{ marginLeft: 8 }}>
-                                                                        <QuestionMarkIcon />
-                                                                    </span>
-                                                                </Tooltip>
-                                                            </div>
-                                                            <FontPicker
-                                                                families={TITLE_FONTS}
-                                                                apiKey={process.env.REACT_APP_FONTS_KEY}
-                                                                activeFontFamily={field.value}
-                                                                onChange={(nextFont) => field.onChange(nextFont.family)}
-                                                            />
-                                                            {fieldState.error && (
-                                                                <TextDanger>
-                                                                    <p className={classes.errorText}>
-                                                                        {fieldState.error.message}
-                                                                    </p>
-                                                                </TextDanger>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                />
-                                            </div>
-                                            <div className={classes.flex1}>
-                                                <Controller
-                                                    name="bodyFont"
-                                                    control={control}
-                                                    render={({ field, fieldState }) => (
-                                                        <>
-                                                            <div style={{ display: 'flex' }}>
-                                                                <p style={{ marginTop: 0, marginBottom: 0 }}>
-                                                                    Fuente para el cuerpo
-                                                                </p>
-                                                                <Tooltip
-                                                                    title="Esta fuente se utiliza para el cuerpo en general y textos secundarios"
-                                                                    placement="top"
-                                                                >
-                                                                    <span style={{ marginLeft: 8 }}>
-                                                                        <QuestionMarkIcon />
-                                                                    </span>
-                                                                </Tooltip>
-                                                            </div>
-                                                            <FontPicker
-                                                                pickerId="body"
-                                                                families={BODY_FONTS}
-                                                                apiKey={process.env.REACT_APP_FONTS_KEY}
-                                                                activeFontFamily={field.value}
-                                                                onChange={(nextFont) => field.onChange(nextFont.family)}
-                                                            />
-                                                            {fieldState.error && (
-                                                                <TextDanger>
-                                                                    <p className={classes.errorText}>
-                                                                        {fieldState.error.message}
-                                                                    </p>
-                                                                </TextDanger>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                />
+                                                                    <Tooltip
+                                                                        title="Esta fuente se utiliza para el cuerpo en general y textos secundarios"
+                                                                        placement="top"
+                                                                    >
+                                                                        <span style={{ marginLeft: 8 }}>
+                                                                            <QuestionMarkIcon />
+                                                                        </span>
+                                                                    </Tooltip>
+                                                                </div>
+                                                                <FontPicker
+                                                                    pickerId="body"
+                                                                    families={BODY_FONTS}
+                                                                    apiKey={process.env.REACT_APP_FONTS_KEY}
+                                                                    activeFontFamily={field.value}
+                                                                    onChange={(nextFont) => field.onChange(nextFont.family)}
+                                                                />
+                                                                {fieldState.error && (
+                                                                    <TextDanger>
+                                                                        <p className={classes.errorText}>
+                                                                            {fieldState.error.message}
+                                                                        </p>
+                                                                    </TextDanger>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+                                    <div style={{ minWidth: 340, maxWidth: 420, flex: 1 }}>
+                                        <StorePreview
+                                            logo={preview}
+                                            title={watch('title')}
+                                            description={watch('description')}
+                                            primaryColor={watch('primaryColor')}
+                                            contrastTextColor={watch('contrastTextColor')}
+                                            textColor={watch('textColor')}
+                                            backgroundColor={watch('backgroundColor')}
+                                            titleFont={watch('titleFont')}
+                                            bodyFont={watch('bodyFont')}
+                                        />
+                                    </div>
                                 </div>
-                                <div style={{ minWidth: 340, maxWidth: 420, flex: 1 }}>
-                                    <StorePreview
-                                        logo={preview}
-                                        title={watch('title')}
-                                        description={watch('description')}
-                                        primaryColor={watch('primaryColor')}
-                                        contrastTextColor={watch('contrastTextColor')}
-                                        textColor={watch('textColor')}
-                                        backgroundColor={watch('backgroundColor')}
-                                        titleFont={watch('titleFont')}
-                                        bodyFont={watch('bodyFont')}
-                                    />
-                                </div>
-                            </div>
+                            </UpgradePrompt>
                         </div>
                         {Object.keys(errors).length > 0 && (
                             <p>
@@ -800,7 +811,7 @@ export default function ConfigPage() {
                 subTitle="Configuración guardada exitosamente"
                 hasCancel={false}
                 hasConfirm={true}
-                cancelCb={() => {}}
+                cancelCb={() => { }}
                 confirmCb={() => setShowSuccessModal(false)}
             />
         </>

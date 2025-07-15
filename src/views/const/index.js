@@ -106,4 +106,18 @@ export const PLAN_TYPES = {
     BASIC: 'basic',
     PROFESSIONAL: 'professional',
     ENTERPRISE: 'enterprise'
+};
+
+// Constantes para funcionalidades no disponibles
+export const UNAVAILABLE_FEATURE_FALLBACK = {
+    title: "Esta funcionalidad aún no está disponible",
+    paragraphs: [
+        "Sabemos que esta funcionalidad puede marcar una gran diferencia en tu tienda, por eso estamos trabajando para incluirlo muy pronto en nuestros planes.",
+        "En este momento, todavía no forma parte de ningún plan activo.",
+        "Si te interesa acceder a esta herramienta o querés influir en cómo la priorizamos, <strong>nos encantaría escucharte</strong>."
+    ],
+    cta: {
+        label: "👉 Contanos cómo te gustaría usar esta funcionalidad",
+        href: "/contacto"
+    }
 }; 
