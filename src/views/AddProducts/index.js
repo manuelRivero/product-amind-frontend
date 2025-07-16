@@ -35,6 +35,9 @@ import { Delete, DeleteForever } from '@material-ui/icons'
 import { NumericFormat } from 'react-number-format'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import { getCategories } from 'store/categories'
+import Card from 'components/Card/Card.js'
+import CardHeader from 'components/Card/CardHeader.js'
+import CardBody from 'components/Card/CardBody.js'
 
 // schema
 const featureSchema = yup.object({
@@ -165,6 +168,25 @@ const useStyles = makeStyles({
         '& .MuiInputBase-input': {
             background: '#fff !important',
         },
+    },
+    card: {
+        marginBottom: '20px',
+    },
+    cardTitleWhite: {
+        color: '#FFFFFF',
+        marginTop: '0px',
+        minHeight: 'auto',
+        fontWeight: '300',
+        fontFamily: "'Roboto",
+        marginBottom: '3px',
+        textDecoration: 'none',
+    },
+    cardCategoryWhite: {
+        color: 'rgba(255, 255, 255, 0.62)',
+        margin: '0',
+        fontSize: '14px',
+        marginTop: '0',
+        marginBottom: '0',
     },
 })
 
@@ -408,427 +430,236 @@ export default function AddProducts() {
             >
                 <ArrowBackIcon />
             </IconButton>
-            <form onSubmit={handleSubmit(submit)}>
-                <Box>
-                    <h3>Imágenes de tu producto</h3>
-                </Box>
-                <div className={classes.imagesRow}>
-                    {console.log('fields', fields)}
-                    {fields.map((file, index) => {
-                        console.log('file', file)
-                        return (
-                            <div
-                                className={classes.imagesWrapper}
-                                key={`file-${index}`}
-                            >
-                                <IconButton
-                                    className={classes.trashICon}
-                                    onClick={() => handleDeleteImage(index)}
-                                >
-                                    <DeleteForever />
-                                </IconButton>
-                                <img
-                                    className={classes.productImage}
-                                    src={file.preview}
-                                    alt="product-image"
-                                />
-                            </div>
-                        )
-                    })}
-                    <div {...getRootProps()} className={classes.dropZone}>
-                        <img
-                            src={uploadImage}
-                            alt="Subir archivo"
-                            className={classes.uploadImage}
-                        />
-                        <input {...getInputProps()} />
-
-                        {isDragActive ? (
-                            <p>Suelta tu archivo aquí</p>
-                        ) : (
-                            <p>
-                                Arrastra tu archivo o has click para seleccionar
-                                desde tu ordenador
-                            </p>
-                        )}
-                    </div>
-                </div>
-                <Box>
-                    {errors.images && (
-                        <TextDanger>
-                            <p className={classes.errorText}>
-                                {errors.images.message}
-                            </p>
-                        </TextDanger>
-                    )}
-                </Box>
-                <Box>
-                    <h3>Información de tu producto</h3>
-                </Box>
-                <Box className={classes.inputRow}>
-                    <Box flex="0 1 812px">
-                        <Controller
-                            name="name"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <TextInput
-                                    error={fieldState.error ? true : false}
-                                    errorMessage={fieldState.error}
-                                    icon={null}
-                                    label={'Nombre del producto'}
-                                    value={field.value}
-                                    onChange={field.onChange}
-                                />
-                            )}
-                        />
-                    </Box>
-                </Box>
-                <Box className={classes.inputRow}>
-                    <Box flex="0 1 250px">
-                        <Controller
-                            name="price"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <Box>
-                                    <NumericFormat
-                                        className={classes.input}
-                                        value={field.value}
-                                        onChange={field.onChange}
-                                        customInput={TextField}
-                                        label="Precio en Pesos"
-                                        variant="outlined"
-                                        thousandSeparator=","
-                                        decimalSeparator="."
-                                        decimalScale={2} // Máximo 2 decimales
-                                        prefix="$"
-                                        error={fieldState.error ? true : false}
-                                    />
-                                    {fieldState.error && (
-                                        <Typography
-                                            color="error"
-                                            variant="caption"
-                                            sx={{
-                                                display: 'block',
-                                                marginTop: 1,
-                                                fontSize: '14px',
-                                            }}
-                                        >
-                                            {fieldState.error.message}
-                                        </Typography>
-                                    )}
-                                </Box>
-                            )}
-                        />
-                    </Box>
-                    <Box flex="0 1 250px">
-                        <Controller
-                            name="discount"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <TextInput
-                                    error={fieldState.error ? true : false}
-                                    errorMessage={fieldState.error}
-                                    icon={null}
-                                    label={'Descuento en %'}
-                                    value={field.value}
-                                    onChange={(e) =>
-                                        field.onChange(
-                                            e.target.value.replace(/[^\d]/g, '')
-                                        )
-                                    }
-                                />
-                            )}
-                        />
-                    </Box>
-                    <Box flex="0 1 250px">
-                        <Controller
-                            name="category"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <>
-                                    <TextField
-                                        fullWidth
-                                        select
-                                        error={fieldState.error ? true : false}
-                                        errorMessage={fieldState.error}
-                                        SelectProps={{
-                                            MenuProps: {
-                                                anchorOrigin: {
-                                                    vertical: 'bottom',
-                                                    horizontal: 'left',
-                                                },
-                                                transformOrigin: {
-                                                    vertical: 'top',
-                                                    horizontal: 'left',
-                                                },
-                                                getContentAnchorEl: null, // Esto asegura que el dropdown no se ancle al centro del campo
-                                            },
-                                        }}
-                                        variant="outlined"
-                                        value={field.value}
-                                        label="Categoría"
-                                        style={{
-                                            backgroundColor: '#FFF',
-                                        }}
-                                        onChange={field.onChange}
-                                    >
-                                        {categoriesData &&
-                                            categoriesData.data.map(
-                                                (category) => (
-                                                    <MenuItem
-                                                        key={category._id}
-                                                        value={category._id}
-                                                        onClick={() =>
-                                                            setValue(
-                                                                'category',
-                                                                category._id
-                                                            )
-                                                        }
-                                                    >
-                                                        {category.name}
-                                                    </MenuItem>
-                                                )
-                                            )}
-                                    </TextField>
-                                    {fieldState.error && (
-                                        <Typography
-                                            variant="caption"
-                                            color="error"
-                                            sx={{
-                                                display: 'block',
-                                                marginTop: 1,
-                                            }}
-                                        >
-                                            {fieldState.error.message}
-                                        </Typography>
-                                    )}
-                                </>
-                            )}
-                        />
-                    </Box>
-                    <Box flex="0 1 250px">
+            <Card className={classes.card}>
+                <CardHeader color="primary">
+                    <h4 className={classes.cardTitleWhite}>
+                        {params.id ? 'Editar producto' : 'Agregar producto'}
+                    </h4>
+                    <p className={classes.cardCategoryWhite}>
+                        Completa la información para {params.id ? 'editar' : 'agregar'} un producto a tu tienda.
+                    </p>
+                </CardHeader>
+                <CardBody>
+                    <form onSubmit={handleSubmit(submit)}>
                         <Box>
-                            <p style={{ margin: 0 }}>Estatus</p>
-                            <Box>
-                                <Controller
-                                    name="status"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <label htmlFor="available">
-                                            Disponible
-                                            <Checkbox
-                                                id="available"
-                                                classes={{
-                                                    checked: classes.checked,
-                                                }}
-                                                checked={
-                                                    field.value === 0
-                                                        ? true
-                                                        : false
-                                                }
-                                                onChange={() =>
-                                                    field.onChange(0)
-                                                }
-                                                inputProps={{
-                                                    'aria-label':
-                                                        'primary checkbox',
-                                                }}
-                                            />
-                                        </label>
-                                    )}
+                            <h3>Imágenes de tu producto</h3>
+                        </Box>
+                        <div className={classes.imagesRow}>
+                            {console.log('fields', fields)}
+                            {fields.map((file, index) => {
+                                console.log('file', file)
+                                return (
+                                    <div
+                                        className={classes.imagesWrapper}
+                                        key={`file-${index}`}
+                                    >
+                                        <IconButton
+                                            className={classes.trashICon}
+                                            onClick={() => handleDeleteImage(index)}
+                                        >
+                                            <DeleteForever />
+                                        </IconButton>
+                                        <img
+                                            className={classes.productImage}
+                                            src={file.preview}
+                                            alt="product-image"
+                                        />
+                                    </div>
+                                )
+                            })}
+                            <div {...getRootProps()} className={classes.dropZone}>
+                                <img
+                                    src={uploadImage}
+                                    alt="Subir archivo"
+                                    className={classes.uploadImage}
                                 />
+                                <input {...getInputProps()} />
 
+                                {isDragActive ? (
+                                    <p>Suelta tu archivo aquí</p>
+                                ) : (
+                                    <p>
+                                        Arrastra tu archivo o has click para seleccionar
+                                        desde tu ordenador
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                        <Box>
+                            {errors.images && (
+                                <TextDanger>
+                                    <p className={classes.errorText}>
+                                        {errors.images.message}
+                                    </p>
+                                </TextDanger>
+                            )}
+                        </Box>
+                        <Box>
+                            <h3>Información de tu producto</h3>
+                        </Box>
+                        <Box className={classes.inputRow}>
+                            <Box flex="0 1 812px">
                                 <Controller
-                                    name="status"
+                                    name="name"
                                     control={control}
-                                    render={({ field }) => (
-                                        <label htmlFor="disabled">
-                                            No disponible
-                                            <Checkbox
-                                                id="disabled"
-                                                checked={
-                                                    field.value === 1
-                                                        ? true
-                                                        : false
-                                                }
-                                                onChange={() =>
-                                                    field.onChange(1)
-                                                }
-                                                inputProps={{
-                                                    'aria-label':
-                                                        'primary checkbox',
-                                                }}
-                                            />
-                                        </label>
+                                    render={({ field, fieldState }) => (
+                                        <TextInput
+                                            error={fieldState.error ? true : false}
+                                            errorMessage={fieldState.error}
+                                            icon={null}
+                                            label={'Nombre del producto'}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                        />
                                     )}
                                 />
-                                <Box>
-                                    {console.log('errors', errors)}
-                                    {errors.status && (
-                                        <TextDanger>
-                                            <p className={classes.errorText}>
-                                                {errors.status.message}
-                                            </p>
-                                        </TextDanger>
-                                    )}
-                                </Box>
                             </Box>
                         </Box>
-                    </Box>
-                    <Box flex="0 1 350px">
-                        <p style={{ margin: 0 }}>Tipo de producto</p>
-
-                        <Controller
-                            name="unique"
-                            control={control}
-                            render={({ field }) => (
-                                <label htmlFor="unique-variant">
-                                    Producto único ( sin variantes de color o
-                                    talla)
-                                    <Checkbox
-                                        id="unique-variant"
-                                        classes={{
-                                            checked: classes.checked,
-                                        }}
-                                        checked={field.value}
-                                        onChange={() => {
-                                            handleSetUnique(field.value)
-                                        }}
-                                        inputProps={{
-                                            'aria-label': 'primary checkbox',
-                                        }}
-                                    />
-                                </label>
-                            )}
-                        />
-                        <Controller
-                            name="unique"
-                            control={control}
-                            render={({ field }) => (
-                                <label htmlFor="unique-variant">
-                                    Producto con colores o tallas
-                                    <Checkbox
-                                        id="unique-variant"
-                                        classes={{
-                                            checked: classes.checked,
-                                        }}
-                                        checked={!field.value}
-                                        onChange={() => field.onChange(false)}
-                                        inputProps={{
-                                            'aria-label': 'primary checkbox',
-                                        }}
-                                    />
-                                </label>
-                            )}
-                        />
-                    </Box>
-                    {watchUnique && (
-                        <Box flex="0 1 250px">
-                            <Controller
-                                name="stock"
-                                control={control}
-                                render={({ field, fieldState }) => (
-                                    <TextInput
-                                        error={fieldState.error ? true : false}
-                                        errorMessage={fieldState.error}
-                                        icon={null}
-                                        label={'Stock del producto'}
-                                        value={field.value}
-                                        onChange={(e) =>
-                                            field.onChange(
-                                                e.target.value.replace(
-                                                    /[^\d]/g,
-                                                    ''
+                        <Box className={classes.inputRow}>
+                            <Box flex="0 1 250px">
+                                <Controller
+                                    name="price"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <Box>
+                                            <NumericFormat
+                                                className={classes.input}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                customInput={TextField}
+                                                label="Precio en Pesos"
+                                                variant="outlined"
+                                                thousandSeparator=","
+                                                decimalSeparator="."
+                                                decimalScale={2} // Máximo 2 decimales
+                                                prefix="$"
+                                                error={fieldState.error ? true : false}
+                                            />
+                                            {fieldState.error && (
+                                                <Typography
+                                                    color="error"
+                                                    variant="caption"
+                                                    sx={{
+                                                        display: 'block',
+                                                        marginTop: 1,
+                                                        fontSize: '14px',
+                                                    }}
+                                                >
+                                                    {fieldState.error.message}
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                    )}
+                                />
+                            </Box>
+                            <Box flex="0 1 250px">
+                                <Controller
+                                    name="discount"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <TextInput
+                                            error={fieldState.error ? true : false}
+                                            errorMessage={fieldState.error}
+                                            icon={null}
+                                            label={'Descuento en %'}
+                                            value={field.value}
+                                            onChange={(e) =>
+                                                field.onChange(
+                                                    e.target.value.replace(/[^\d]/g, '')
                                                 )
-                                            )
-                                        }
-                                    />
-                                )}
-                            />
-                        </Box>
-                    )}
-                </Box>
-
-                <>
-                    {!watchUnique &&
-                        featuresArray.fields.map((field, index) => {
-                            const hasSize = watch(
-                                `featuresArray.${index}.hasSize`
-                            )
-                            return (
-                                <Box
-                                    key={field.id}
-                                    style={{ marginBottom: 16 }}
-                                >
-                                    <Divider style={{ marginBottom: 16 }} />
-                                    <Box
-                                        style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                        }}
-                                    >
-                                        <h4 style={{ margin: 0 }}>
-                                            Variante {index + 1}
-                                        </h4>
-                                        <IconButton
-                                            onClick={() =>
-                                                featuresArray.remove(index)
                                             }
-                                        >
-                                            <Delete />
-                                        </IconButton>
-                                    </Box>
-                                    <p style={{ margin: 0 }}>Color</p>
-
-                                    <Box style={{ marginBottom: 16 }}>
-                                        <Controller
-                                            name={`featuresArray.${index}.color`}
-                                            control={control}
-                                            render={({ field, fieldState }) => {
-                                                console.log(
-                                                    'fieldState',
-                                                    fieldState
-                                                )
-
-                                                return (
-                                                    <TextInput
-                                                        error={
-                                                            !!fieldState.error
-                                                        }
-                                                        errorMessage={
-                                                            fieldState.error
-                                                                ?.message || ''
-                                                        }
-                                                        icon={null}
-                                                        label="Color del producto"
-                                                        value={
-                                                            field.value || ''
-                                                        }
-                                                        onChange={
-                                                            field.onChange
-                                                        }
-                                                    />
-                                                )
-                                            }}
                                         />
-                                    </Box>
-                                    <p style={{ margin: 0 }}>Talla</p>
+                                    )}
+                                />
+                            </Box>
+                            <Box flex="0 1 250px">
+                                <Controller
+                                    name="category"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <>
+                                            <TextField
+                                                fullWidth
+                                                select
+                                                error={fieldState.error ? true : false}
+                                                errorMessage={fieldState.error}
+                                                SelectProps={{
+                                                    MenuProps: {
+                                                        anchorOrigin: {
+                                                            vertical: 'bottom',
+                                                            horizontal: 'left',
+                                                        },
+                                                        transformOrigin: {
+                                                            vertical: 'top',
+                                                            horizontal: 'left',
+                                                        },
+                                                        getContentAnchorEl: null, // Esto asegura que el dropdown no se ancle al centro del campo
+                                                    },
+                                                }}
+                                                variant="outlined"
+                                                value={field.value}
+                                                label="Categoría"
+                                                style={{
+                                                    backgroundColor: '#FFF',
+                                                }}
+                                                onChange={field.onChange}
+                                            >
+                                                {categoriesData &&
+                                                    categoriesData.data.map(
+                                                        (category) => (
+                                                            <MenuItem
+                                                                key={category._id}
+                                                                value={category._id}
+                                                                onClick={() =>
+                                                                    setValue(
+                                                                        'category',
+                                                                        category._id
+                                                                    )
+                                                                }
+                                                            >
+                                                                {category.name}
+                                                            </MenuItem>
+                                                        )
+                                                    )}
+                                            </TextField>
+                                            {fieldState.error && (
+                                                <Typography
+                                                    variant="caption"
+                                                    color="error"
+                                                    sx={{
+                                                        display: 'block',
+                                                        marginTop: 1,
+                                                    }}
+                                                >
+                                                    {fieldState.error.message}
+                                                </Typography>
+                                            )}
+                                        </>
+                                    )}
+                                />
+                            </Box>
+                            <Box flex="0 1 250px">
+                                <Box>
+                                    <p style={{ margin: 0 }}>Estatus</p>
                                     <Box>
                                         <Controller
-                                            name={`featuresArray.${index}.hasSize`}
+                                            name="status"
                                             control={control}
                                             render={({ field }) => (
-                                                <label
-                                                    htmlFor={`features-size-${index}`}
-                                                >
-                                                    Activar variante de talla
-                                                    <Switch
-                                                        id={`features-size-${index}`}
+                                                <label htmlFor="available">
+                                                    Disponible
+                                                    <Checkbox
+                                                        id="available"
+                                                        classes={{
+                                                            checked: classes.checked,
+                                                        }}
                                                         checked={
-                                                            field.value || false
+                                                            field.value === 0
+                                                                ? true
+                                                                : false
                                                         }
-                                                        onChange={
-                                                            field.onChange
+                                                        onChange={() =>
+                                                            field.onChange(0)
                                                         }
                                                         inputProps={{
                                                             'aria-label':
@@ -838,113 +669,316 @@ export default function AddProducts() {
                                                 </label>
                                             )}
                                         />
-                                    </Box>
-                                    {hasSize && (
+
                                         <Controller
-                                            name={`featuresArray.${index}.size`}
+                                            name="status"
                                             control={control}
-                                            render={({ field, fieldState }) => (
-                                                <TextInput
-                                                    error={!!fieldState.error}
-                                                    errorMessage={
-                                                        fieldState.error
-                                                            ?.message || ''
-                                                    }
-                                                    icon={null}
-                                                    label="Talla del producto"
-                                                    value={field.value || ''}
-                                                    onChange={field.onChange}
-                                                />
+                                            render={({ field }) => (
+                                                <label htmlFor="disabled">
+                                                    No disponible
+                                                    <Checkbox
+                                                        id="disabled"
+                                                        checked={
+                                                            field.value === 1
+                                                                ? true
+                                                                : false
+                                                        }
+                                                        onChange={() =>
+                                                            field.onChange(1)
+                                                        }
+                                                        inputProps={{
+                                                            'aria-label':
+                                                                'primary checkbox',
+                                                        }}
+                                                    />
+                                                </label>
                                             )}
                                         />
-                                    )}
-                                    <Box style={{ marginTop: 16 }}>
-                                        <Controller
-                                            name={`featuresArray.${index}.stock`}
-                                            control={control}
-                                            render={({ field, fieldState }) => (
-                                                <TextInput
-                                                    error={!!fieldState.error}
-                                                    errorMessage={
-                                                        fieldState.error
-                                                            ?.message || ''
-                                                    }
-                                                    icon={null}
-                                                    label="Stock del producto"
-                                                    value={field.value || ''}
-                                                    onChange={(e) =>
-                                                        field.onChange(
-                                                            e.target.value.replace(
-                                                                /[^\d]/g,
-                                                                ''
-                                                            )
-                                                        )
-                                                    }
-                                                />
+                                        <Box>
+                                            {console.log('errors', errors)}
+                                            {errors.status && (
+                                                <TextDanger>
+                                                    <p className={classes.errorText}>
+                                                        {errors.status.message}
+                                                    </p>
+                                                </TextDanger>
                                             )}
-                                        />
+                                        </Box>
                                     </Box>
                                 </Box>
-                            )
-                        })}
-                    {errors.features && (
-                        <p>
-                            Las variantes son obligatorias, debes agregar al
-                            menos 1
-                        </p>
-                    )}
-                    {!watchUnique && (
+                            </Box>
+                            <Box flex="0 1 350px">
+                                <p style={{ margin: 0 }}>Tipo de producto</p>
+
+                                <Controller
+                                    name="unique"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <label htmlFor="unique-variant">
+                                            Producto único ( sin variantes de color o
+                                            talla)
+                                            <Checkbox
+                                                id="unique-variant"
+                                                classes={{
+                                                    checked: classes.checked,
+                                                }}
+                                                checked={field.value}
+                                                onChange={() => {
+                                                    handleSetUnique(field.value)
+                                                }}
+                                                inputProps={{
+                                                    'aria-label': 'primary checkbox',
+                                                }}
+                                            />
+                                        </label>
+                                    )}
+                                />
+                                <Controller
+                                    name="unique"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <label htmlFor="unique-variant">
+                                            Producto con colores o tallas
+                                            <Checkbox
+                                                id="unique-variant"
+                                                classes={{
+                                                    checked: classes.checked,
+                                                }}
+                                                checked={!field.value}
+                                                onChange={() => field.onChange(false)}
+                                                inputProps={{
+                                                    'aria-label': 'primary checkbox',
+                                                }}
+                                            />
+                                        </label>
+                                    )}
+                                />
+                            </Box>
+                            {watchUnique && (
+                                <Box flex="0 1 250px">
+                                    <Controller
+                                        name="stock"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <TextInput
+                                                error={fieldState.error ? true : false}
+                                                errorMessage={fieldState.error}
+                                                icon={null}
+                                                label={'Stock del producto'}
+                                                value={field.value}
+                                                onChange={(e) =>
+                                                    field.onChange(
+                                                        e.target.value.replace(
+                                                            /[^\d]/g,
+                                                            ''
+                                                        )
+                                                    )
+                                                }
+                                            />
+                                        )}
+                                    />
+                                </Box>
+                            )}
+                        </Box>
+
+                        <>
+                            {!watchUnique &&
+                                featuresArray.fields.map((field, index) => {
+                                    const hasSize = watch(
+                                        `featuresArray.${index}.hasSize`
+                                    )
+                                    return (
+                                        <Box
+                                            key={field.id}
+                                            style={{ marginBottom: 16 }}
+                                        >
+                                            <Divider style={{ marginBottom: 16 }} />
+                                            <Box
+                                                style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                }}
+                                            >
+                                                <h4 style={{ margin: 0 }}>
+                                                    Variante {index + 1}
+                                                </h4>
+                                                <IconButton
+                                                    onClick={() =>
+                                                        featuresArray.remove(index)
+                                                    }
+                                                >
+                                                    <Delete />
+                                                </IconButton>
+                                            </Box>
+                                            <p style={{ margin: 0 }}>Color</p>
+
+                                            <Box style={{ marginBottom: 16 }}>
+                                                <Controller
+                                                    name={`featuresArray.${index}.color`}
+                                                    control={control}
+                                                    render={({ field, fieldState }) => {
+                                                        console.log(
+                                                            'fieldState',
+                                                            fieldState
+                                                        )
+
+                                                        return (
+                                                            <TextInput
+                                                                error={
+                                                                    !!fieldState.error
+                                                                }
+                                                                errorMessage={
+                                                                    fieldState.error
+                                                                        ?.message || ''
+                                                                }
+                                                                icon={null}
+                                                                label="Color del producto"
+                                                                value={
+                                                                    field.value || ''
+                                                                }
+                                                                onChange={
+                                                                    field.onChange
+                                                                }
+                                                            />
+                                                        )
+                                                    }}
+                                                />
+                                            </Box>
+                                            <p style={{ margin: 0 }}>Talla</p>
+                                            <Box>
+                                                <Controller
+                                                    name={`featuresArray.${index}.hasSize`}
+                                                    control={control}
+                                                    render={({ field }) => (
+                                                        <label
+                                                            htmlFor={`features-size-${index}`}
+                                                        >
+                                                            Activar variante de talla
+                                                            <Switch
+                                                                id={`features-size-${index}`}
+                                                                checked={
+                                                                    field.value || false
+                                                                }
+                                                                onChange={
+                                                                    field.onChange
+                                                                }
+                                                                inputProps={{
+                                                                    'aria-label':
+                                                                        'primary checkbox',
+                                                                }}
+                                                            />
+                                                        </label>
+                                                    )}
+                                                />
+                                            </Box>
+                                            {hasSize && (
+                                                <Controller
+                                                    name={`featuresArray.${index}.size`}
+                                                    control={control}
+                                                    render={({ field, fieldState }) => (
+                                                        <TextInput
+                                                            error={!!fieldState.error}
+                                                            errorMessage={
+                                                                fieldState.error
+                                                                    ?.message || ''
+                                                            }
+                                                            icon={null}
+                                                            label="Talla del producto"
+                                                            value={field.value || ''}
+                                                            onChange={field.onChange}
+                                                        />
+                                                    )}
+                                                />
+                                            )}
+                                            <Box style={{ marginTop: 16 }}>
+                                                <Controller
+                                                    name={`featuresArray.${index}.stock`}
+                                                    control={control}
+                                                    render={({ field, fieldState }) => (
+                                                        <TextInput
+                                                            error={!!fieldState.error}
+                                                            errorMessage={
+                                                                fieldState.error
+                                                                    ?.message || ''
+                                                            }
+                                                            icon={null}
+                                                            label="Stock del producto"
+                                                            value={field.value || ''}
+                                                            onChange={(e) =>
+                                                                field.onChange(
+                                                                    e.target.value.replace(
+                                                                        /[^\d]/g,
+                                                                        ''
+                                                                    )
+                                                                )
+                                                            }
+                                                        />
+                                                    )}
+                                                />
+                                            </Box>
+                                        </Box>
+                                    )
+                                })}
+                            {errors.features && (
+                                <p>
+                                    Las variantes son obligatorias, debes agregar al
+                                    menos 1
+                                </p>
+                            )}
+                            {!watchUnique && (
+                                <Box className={classes.buttonsRow}>
+                                    <Button
+                                        onClick={() => featuresArray.append({})}
+                                        variant="contained"
+                                        color="primary"
+                                        type="button"
+                                    >
+                                        Agregar variante
+                                    </Button>
+                                </Box>
+                            )}
+                        </>
+
+                        <Box className={classes.descriptionRow}>
+                            <Controller
+                                name="description"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <TextInput
+                                        rows={5}
+                                        multiline={true}
+                                        errorMessage={fieldState.error}
+                                        error={fieldState.error ? true : false}
+                                        icon={null}
+                                        label={'Descripción'}
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                    />
+                                )}
+                            />
+                        </Box>
+                        {productError ||
+                            (editProductError && (
+                                <p>Hubo un error al guardar el producto</p>
+                            ))}
+                        {Object.keys(errors).length > 0 && (
+                            <p>
+                                Al parecer faltan campos obligatorios en el formulario
+                            </p>
+                        )}
                         <Box className={classes.buttonsRow}>
                             <Button
-                                onClick={() => featuresArray.append({})}
+                                isLoading={loadingProduct | loadingEditProduct}
                                 variant="contained"
                                 color="primary"
-                                type="button"
+                                type="submit"
                             >
-                                Agregar variante
+                                Guardar
                             </Button>
                         </Box>
-                    )}
-                </>
-
-                <Box className={classes.descriptionRow}>
-                    <Controller
-                        name="description"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <TextInput
-                                rows={5}
-                                multiline={true}
-                                errorMessage={fieldState.error}
-                                error={fieldState.error ? true : false}
-                                icon={null}
-                                label={'Descripción'}
-                                value={field.value}
-                                onChange={field.onChange}
-                            />
-                        )}
-                    />
-                </Box>
-                {productError ||
-                    (editProductError && (
-                        <p>Hubo un error al guardar el producto</p>
-                    ))}
-                {Object.keys(errors).length > 0 && (
-                    <p>
-                        Al parecer faltan campos obligatorios en el formulario
-                    </p>
-                )}
-                <Box className={classes.buttonsRow}>
-                    <Button
-                        isLoading={loadingProduct | loadingEditProduct}
-                        variant="contained"
-                        color="primary"
-                        type="submit"
-                    >
-                        Guardar
-                    </Button>
-                </Box>
-            </form>
+                    </form>
+                </CardBody>
+            </Card>
 
             <CustomModal
                 open={params.id ? editProductSuccess : productSuccess}
