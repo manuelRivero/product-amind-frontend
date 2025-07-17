@@ -33,6 +33,11 @@ import moment from 'moment'
 import { getConfigRequest, cancelSubscriptionRequest, pauseSubscriptionRequest, resumeSubscriptionRequest } from '../../store/config'
 import { SUBSCRIPTION_MESSAGES, ACTION_TYPES, PLAN_CHANGE_MESSAGES, UNAVAILABLE_FEATURE_FALLBACK } from '../const'
 import FeatureAlert from 'components/FeatureAlert'
+import { 
+    PlanFeaturesList, 
+    PLAN_DISPLAY_TEXTS,
+    formatBillingCycle
+} from '../helpers'
 
 const useStyles = makeStyles((theme) => ({
     card: {
@@ -243,18 +248,40 @@ const useStyles = makeStyles((theme) => ({
     featureAlert: {
         margin: theme.spacing(2, 0),
         fontSize: '1rem',
-        borderLeft: `6px solid #20b6c9`,
+        borderLeft: '6px solid #20b6c9',
         background: '#e3f2fd',
         color: theme.palette.primary.main,
         boxShadow: '0 2px 8px rgba(33,150,243,0.10)',
     },
     planGlow: {
-        boxShadow: `0 0 0 4px #fff, 0 0 16px 4px #20b6c9`,
+        boxShadow: '0 0 0 4px #fff, 0 0 16px 4px #20b6c9',
         animation: '$glowAnim 1.5s infinite alternate',
     },
     '@keyframes glowAnim': {
-        '0%': { boxShadow: `0 0 0 4px #fff, 0 0 8px 2px #20b6c9` },
-        '100%': { boxShadow: `0 0 0 4px #fff, 0 0 24px 8px #20b6c9` },
+        '0%': { boxShadow: '0 0 0 4px #fff, 0 0 8px 2px #20b6c9' },
+        '100%': { boxShadow: '0 0 0 4px #fff, 0 0 24px 8px #20b6c9' },
+    },
+    planPriceBig: {
+        fontSize: '2.1rem',
+        fontWeight: 700,
+        color: '#2e7d32',
+        margin: 0,
+        lineHeight: 1.1,
+        display: 'inline-block',
+    },
+    planBillingCycle: {
+        fontSize: '1rem',
+        color: '#666',
+        marginLeft: 8,
+        fontWeight: 400,
+        display: 'inline-block',
+        verticalAlign: 'bottom',
+    },
+    planDescription: {
+        fontSize: '1rem',
+        color: '#444',
+        margin: '4px 0 0 0',
+        fontWeight: 400,
     },
 }))
 
@@ -930,7 +957,7 @@ const Activation = () => {
                                     </div>
                                 ) : (
                                     <div>
-                                        Hemos resaltado nuestras sugerencias de planes que contienen la función de <b>{featureInfo.title}</b>.
+                                        {PLAN_DISPLAY_TEXTS.FEATURE_HIGHLIGHT_MESSAGE} <b>{featureInfo.title}</b>.
                                     </div>
                                 )}
                             </FeatureAlert>
@@ -938,15 +965,15 @@ const Activation = () => {
                         <Card className={classes.card}>
                             <CardHeader color="primary">
                                 <h4 className={classes.cardTitleWhite}>
-                                    Selecciona tu plan
+                                    {PLAN_DISPLAY_TEXTS.PLAN_SELECTION_TITLE}
                                 </h4>
                                 <p className={classes.cardCategoryWhite}>
-                                    Elige el plan que mejor se adapte a las necesidades de tu tienda. Puedes cambiar de plan en cualquier momento según el crecimiento de tu negocio.
+                                    {PLAN_DISPLAY_TEXTS.PLAN_SELECTION_DESCRIPTION}
                                 </p>
                             </CardHeader>
                             <CardBody>
                                 <GridContainer>
-                                    {plans
+                                                                            {plans
                                         .filter((plan) =>
                                             (isSubscriptionActive || isPaymentAuthorized)
                                                 ? plan._id !==
@@ -960,25 +987,22 @@ const Activation = () => {
                                                         <h4 className={classes.planTitleDark}>
                                                             {plan.name}
                                                         </h4>
-                                                        <p className={classes.planPriceDark}>
-                                                            ${formatNumber(plan.price.toFixed(1))}
-                                                        </p>
-                                                        {/* Lista de features habilitadas */}
-
-                                                    </CardHeader>
-                                                    <CardBody>
-                                                        <h4 className={classes.subtitle}>Funciones claves:</h4>
-                                                        {plan.features && (
-                                                            <ul style={{ margin: '12px 0 0 0', padding: 0 }}>
-                                                                {Object.entries(plan.features)
-                                                                    .filter(([, feat]) => feat.enabled)
-                                                                    .map(([key, feat]) => (
-                                                                        <li key={key} style={{ color: '#111', fontWeight: 500, fontSize: '0.97rem', marginBottom: 2 }}>
-                                                                            {feat.title}
-                                                                        </li>
-                                                                    ))}
-                                                            </ul>
+                                                        {plan.description && (
+                                                            <div className={classes.planDescription}>{plan.description}</div>
                                                         )}
+                                                        <div style={{ marginTop: 8, marginBottom: 2 }}>
+                                                            <span className={classes.planPriceBig}>
+                                                                ${formatNumber(plan.price.toFixed(1))}
+                                                            </span>
+                                                            {plan.billingCycle && (
+                                                                <span className={classes.planBillingCycle}>
+                                                                    {formatBillingCycle(plan.billingCycle)}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </CardHeader>
+                                                                                <CardBody>
+                                                        <PlanFeaturesList features={plan.features} />
                                                         <Button
                                                             type="button"
                                                             variant="contained"
@@ -1021,7 +1045,7 @@ const Activation = () => {
                                                                 }
                                                             }}
                                                         >
-                                                            Seleccionar {plan.name}
+                                                            {PLAN_DISPLAY_TEXTS.SELECT_BUTTON_PREFIX} {plan.name}
                                                         </Button>
                                                     </CardBody>
                                                 </Card>
@@ -1038,7 +1062,7 @@ const Activation = () => {
                                         className={classes.button}
                                         onClick={() => setViewMode('subscription-details')}
                                     >
-                                        Continuar con mi plan actual
+                                        {PLAN_DISPLAY_TEXTS.CONTINUE_BUTTON}
                                     </Button>
                                 </div>
                             </CardBody>
