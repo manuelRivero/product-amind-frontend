@@ -296,12 +296,17 @@ const Activation = () => {
     const paymentStatus = subscription?.paymentStatus
     const isActivate = subscriptionDetail?.hasActiveSubscription ?? false
 
-    // Validaciones mejoradas considerando preapprovalStatus
-    const isPaymentAuthorized = paymentStatus === 'authorized' && subscription
-    const isPaymentApproved = paymentStatus === 'approved' && subscription
-    const isPaymentPending = paymentStatus === 'pending' && subscription
-    const isPaymentPaused = (paymentStatus === 'paused' || preapprovalStatus === 'paused') && subscription
-    const isPaymentCancelled = (paymentStatus === 'cancelled' || preapprovalStatus === 'cancelled') && subscription
+    // Obtener el último estado del historial de estados
+    const statusHistory = subscription?.statusHistory || []
+    const lastStatusHistory = statusHistory.length > 0 ? statusHistory[statusHistory.length - 1] : null
+    const lastStatus = lastStatusHistory?.status
+
+    // Validaciones mejoradas considerando preapprovalStatus y el último estado del historial
+    const isPaymentAuthorized = (paymentStatus === 'authorized' || lastStatus === 'authorized') && subscription
+    const isPaymentApproved = (paymentStatus === 'approved' || lastStatus === 'approved') && subscription
+    const isPaymentPending = (paymentStatus === 'pending' || lastStatus === 'pending') && subscription
+    const isPaymentPaused = (paymentStatus === 'paused' || preapprovalStatus === 'paused' || lastStatus === 'paused') && subscription
+    const isPaymentCancelled = (paymentStatus === 'cancelled' || preapprovalStatus === 'cancelled' || lastStatus === 'cancelled') && subscription
 
     // La suscripción está realmente activa solo si está aprobada o hasActiveSubscription es true y no está pausada/cancelada
     const isSubscriptionActive = (isActivate || isPaymentApproved) && !isPaymentPaused && !isPaymentCancelled
@@ -1089,12 +1094,9 @@ const Activation = () => {
 
     const currentViewMode = getCurrentViewMode();
 
-    // Extraer último estado relevante de statusHistory
-    const lastStatus = Array.isArray(subscription?.statusHistory) && subscription.statusHistory.length > 0
-        ? subscription.statusHistory[subscription.statusHistory.length - 1]
-        : null;
-    const lastPauseDate = lastStatus && lastStatus.status === 'paused' ? lastStatus.date : null;
-    const lastCancelDate = lastStatus && lastStatus.status === 'cancelled' ? lastStatus.date : null;
+    // Extraer último estado relevante de statusHistory (ya extraído arriba)
+    const lastPauseDate = lastStatusHistory && lastStatusHistory.status === 'paused' ? lastStatusHistory.date : null;
+    const lastCancelDate = lastStatusHistory && lastStatusHistory.status === 'cancelled' ? lastStatusHistory.date : null;
 
     return (
         <>

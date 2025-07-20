@@ -18,6 +18,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import LoadinScreen from '../components/LoadingScreen'
 import { usePermissions } from '../hooks/usePermissions'
 import PermissionError from '../components/PermissionError'
+import { IconButton } from '@material-ui/core'
+import CloseIcon from '@material-ui/icons/Close'
 
 let ps
 
@@ -57,15 +59,33 @@ export default function Admin({ ...rest }) {
     const { user } = useSelector((state) => state.auth)
     const { configDetail, error: configError, errorDetails } = useSelector((state) => state.config)
     const { 
-        isSubscriptionActive, 
-        isPaymentAuthorized, 
-        isPaymentPending, 
-        isPaymentPaused, 
-        isPaymentCancelled, 
         loadingConfig: loadingConfigPermissions,
         permissionsError,
         hasUserPermission
     } = usePermissions()
+
+    // Obtener el estado real de la suscripción considerando statusHistory (igual que en Activation)
+    const subscriptionDetail = configDetail?.subscriptionDetail
+    const subscription = subscriptionDetail?.subscription
+    const preapprovalStatus = subscription?.preapprovalStatus
+    const paymentStatus = subscription?.paymentStatus
+    const isActivate = subscriptionDetail?.hasActiveSubscription ?? false
+
+    // Obtener el último estado del historial de estados
+    const statusHistory = subscription?.statusHistory || []
+    const lastStatusHistory = statusHistory.length > 0 ? statusHistory[statusHistory.length - 1] : null
+    const lastStatus = lastStatusHistory?.status
+
+    // Validaciones mejoradas considerando preapprovalStatus y el último estado del historial
+    const isPaymentAuthorized = (paymentStatus === 'authorized' || lastStatus === 'authorized') && subscription
+    const isPaymentApproved = (paymentStatus === 'approved' || lastStatus === 'approved') && subscription
+    const isPaymentPending = (paymentStatus === 'pending' || lastStatus === 'pending') && subscription
+    const isPaymentPaused = (paymentStatus === 'paused' || preapprovalStatus === 'paused' || lastStatus === 'paused') && subscription
+    const isPaymentCancelled = (paymentStatus === 'cancelled' || preapprovalStatus === 'cancelled' || lastStatus === 'cancelled') && subscription
+
+    // La suscripción está realmente activa solo si está aprobada o hasActiveSubscription es true y no está pausada/cancelada
+    const isSubscriptionActive = (isActivate || isPaymentApproved) && !isPaymentPaused && !isPaymentCancelled
+
     // styles
     const classes = useStyles()
     // ref to help us initialize PerfectScrollbar on windows devices
@@ -78,6 +98,7 @@ export default function Admin({ ...rest }) {
     const [color] = React.useState('blue')
     const [mobileOpen, setMobileOpen] = React.useState(false)
     const [error, setError] = React.useState(null)
+    const [showSubscriptionBanner, setShowSubscriptionBanner] = React.useState(true)
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen)
@@ -88,12 +109,17 @@ export default function Admin({ ...rest }) {
             setMobileOpen(false)
         }
     }
-    const handleDashboardRoutes = () => {
+    const filteredRoutes = React.useMemo(() => {
         return dashboardRoutes.filter((prop) => {
             // Verificar si es una ruta de admin
             const isAdminRoute = prop.layout === '/admin'
             
-            // Verificar suscripción activa
+            // Si la suscripción está pausada o cancelada, solo mostrar la ruta de activación
+            if (isPaymentPaused || isPaymentCancelled) {
+                return isAdminRoute && prop.path === '/mercado-pago'
+            }
+            
+            // Verificar suscripción activa usando las validaciones reales
             const hasSubscription = !prop.needConfig || (prop.needConfig && isSubscriptionActive)
             
             // Verificar permisos de usuario
@@ -104,7 +130,7 @@ export default function Admin({ ...rest }) {
             
             return isAdminRoute && hasSubscription && hasPermission
         })
-    }
+    }, [isPaymentPaused, isPaymentCancelled, isSubscriptionActive, hasUserPermission])
     React.useEffect(() => {
         if(mainPanel.current === null) {
             return
@@ -208,9 +234,7 @@ export default function Admin({ ...rest }) {
     }, [configError, errorDetails])
 
     // Mensaje de estado de suscripción
-    const subscriptionDetail = configDetail?.subscriptionDetail
-    const subscription = subscriptionDetail?.subscription
-    const showSubscriptionBanner = configDetail && !isSubscriptionActive && subscription
+    const shouldShowSubscriptionBanner = configDetail && !isSubscriptionActive && subscription
     let subscriptionBannerTitle = ''
     let subscriptionBannerMessage = ''
     if (showSubscriptionBanner) {
@@ -277,7 +301,7 @@ export default function Admin({ ...rest }) {
     return (
         <div className={classes.wrapper}>
             <Sidebar
-                routes={handleDashboardRoutes()}
+                routes={filteredRoutes}
                 handleDrawerToggle={handleDrawerToggle}
                 open={mobileOpen}
                 color={color}
@@ -285,7 +309,7 @@ export default function Admin({ ...rest }) {
             />
             <div className={classes.mainPanel} ref={mainPanel}>
                 <Navbar
-                    routes={handleDashboardRoutes()}
+                    routes={filteredRoutes}
                     handleDrawerToggle={handleDrawerToggle}
                     {...rest}
                 />
@@ -300,7 +324,7 @@ export default function Admin({ ...rest }) {
                                     {childRoutes}
                                 </Switch>
                                 {/* Mensaje cuando no hay suscripción activa */}
-                                {showSubscriptionBanner && (
+                                {shouldShowSubscriptionBanner && showSubscriptionBanner && (
                                     <div style={{
                                         position: 'fixed',
                                         bottom: '20px',
@@ -312,8 +336,21 @@ export default function Admin({ ...rest }) {
                                         boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                                         zIndex: 1000
                                     }}>
-                                        <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
+                                        <div style={{ 
+                                            fontWeight: 'bold', 
+                                            marginBottom: '5px',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center'
+                                        }}>
                                             {subscriptionBannerTitle}
+                                            <IconButton 
+                                                onClick={() => setShowSubscriptionBanner(false)}
+                                                size="small"
+                                                style={{ padding: 4 }}
+                                            >
+                                                <CloseIcon fontSize="small" />
+                                            </IconButton>
                                         </div>
                                         <div style={{ fontSize: '14px' }}>
                                             {subscriptionBannerMessage}
