@@ -297,8 +297,8 @@ const Activation = () => {
     const isActivate = subscriptionDetail?.hasActiveSubscription ?? false
 
     // Obtener el último estado del historial de estados
-    const statusHistory = subscription?.statusHistory || []
-    const lastStatusHistory = statusHistory.length > 0 ? statusHistory[statusHistory.length - 1] : null
+    const statusHistoryuserActionHistory = subscription?.statusHistoryuserActionHistory || []
+    const lastStatusHistory = statusHistoryuserActionHistory.length > 0 ? statusHistoryuserActionHistory[statusHistoryuserActionHistory.length - 1] : null
     const lastStatus = lastStatusHistory?.status
 
     // Validaciones mejoradas considerando preapprovalStatus y el último estado del historial
@@ -1094,7 +1094,7 @@ const Activation = () => {
 
     const currentViewMode = getCurrentViewMode();
 
-    // Extraer último estado relevante de statusHistory (ya extraído arriba)
+    // Extraer último estado relevante de statusHistoryuserActionHistory (ya extraído arriba)
     const lastPauseDate = lastStatusHistory && lastStatusHistory.status === 'paused' ? lastStatusHistory.date : null;
     const lastCancelDate = lastStatusHistory && lastStatusHistory.status === 'cancelled' ? lastStatusHistory.date : null;
 
