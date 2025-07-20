@@ -70,6 +70,9 @@ export default function Admin({ ...rest }) {
     const preapprovalStatus = subscription?.preapprovalStatus
     const paymentStatus = subscription?.paymentStatus
     const isActivate = subscriptionDetail?.hasActiveSubscription ?? false
+    
+    // Obtener la última acción del usuario
+    const currentUserAction = configDetail?.currentUserAction
 
     // Obtener el último estado del historial de estados
     const statusHistory = subscription?.statusHistory || []
@@ -77,14 +80,46 @@ export default function Admin({ ...rest }) {
     const lastStatus = lastStatusHistory?.status
 
     // Validaciones mejoradas considerando preapprovalStatus y el último estado del historial
-    const isPaymentAuthorized = (paymentStatus === 'authorized' || lastStatus === 'authorized') && subscription
     const isPaymentApproved = (paymentStatus === 'approved' || lastStatus === 'approved') && subscription
-    const isPaymentPending = (paymentStatus === 'pending' || lastStatus === 'pending') && subscription
     const isPaymentPaused = (paymentStatus === 'paused' || preapprovalStatus === 'paused' || lastStatus === 'paused') && subscription
     const isPaymentCancelled = (paymentStatus === 'cancelled' || preapprovalStatus === 'cancelled' || lastStatus === 'cancelled') && subscription
 
     // La suscripción está realmente activa solo si está aprobada o hasActiveSubscription es true y no está pausada/cancelada
     const isSubscriptionActive = (isActivate || isPaymentApproved) && !isPaymentPaused && !isPaymentCancelled
+
+    // Función para obtener el mensaje de la acción del usuario
+    const getUserActionMessage = () => {
+        if (!currentUserAction || currentUserAction.status === 'completed') {
+            return null
+        }
+
+        const actionMessages = {
+            pause: {
+                pending: 'Tu solicitud de pausar la suscripción está siendo procesada. Por favor aguarda...',
+                failed: 'No se pudo pausar la suscripción. Inténtalo nuevamente.'
+            },
+            cancel: {
+                pending: 'Tu solicitud de cancelar la suscripción está siendo procesada. Por favor aguarda...',
+                failed: 'No se pudo cancelar la suscripción. Inténtalo nuevamente.'
+            },
+            resume: {
+                pending: 'Tu solicitud de reactivar la suscripción está siendo procesada. Por favor aguarda...',
+                failed: 'No se pudo reactivar la suscripción. Inténtalo nuevamente.'
+            },
+            change_plan: {
+                pending: 'Tu solicitud de cambiar de plan está siendo procesada. Por favor aguarda...',
+                failed: 'No se pudo cambiar el plan. Inténtalo nuevamente.'
+            },
+            create: {
+                pending: 'Tu solicitud de crear la suscripción está siendo procesada. Por favor aguarda...',
+                failed: 'No se pudo crear la suscripción. Inténtalo nuevamente.'
+            }
+        }
+
+        return actionMessages[currentUserAction.action]?.[currentUserAction.status] || null
+    }
+
+    const userActionMessage = getUserActionMessage()
 
     // styles
     const classes = useStyles()
@@ -98,7 +133,7 @@ export default function Admin({ ...rest }) {
     const [color] = React.useState('blue')
     const [mobileOpen, setMobileOpen] = React.useState(false)
     const [error, setError] = React.useState(null)
-    const [showSubscriptionBanner, setShowSubscriptionBanner] = React.useState(true)
+    const [showUserActionBanner, setShowUserActionBanner] = React.useState(true)
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen)
@@ -233,28 +268,7 @@ export default function Admin({ ...rest }) {
         }
     }, [configError, errorDetails])
 
-    // Mensaje de estado de suscripción
-    const shouldShowSubscriptionBanner = configDetail && !isSubscriptionActive && subscription
-    let subscriptionBannerTitle = ''
-    let subscriptionBannerMessage = ''
-    if (showSubscriptionBanner) {
-        if (isPaymentPaused) {
-            subscriptionBannerTitle = 'Suscripción pausada'
-            subscriptionBannerMessage = 'Tu suscripción está pausada. Reactívala para acceder a todas las funciones.'
-        } else if (isPaymentCancelled) {
-            subscriptionBannerTitle = 'Suscripción cancelada'
-            subscriptionBannerMessage = 'Tu suscripción fue cancelada. Contrata un plan para reactivar tu tienda.'
-        } else if (isPaymentPending) {
-            subscriptionBannerTitle = 'Suscripción pendiente'
-            subscriptionBannerMessage = 'Tu pago está pendiente. Espera a que se procese.'
-        } else if (isPaymentAuthorized) {
-            subscriptionBannerTitle = 'Pago autorizado'
-            subscriptionBannerMessage = 'Tu pago está autorizado. Espera a que se procese.'
-        } else {
-            subscriptionBannerTitle = 'Suscripción inactiva'
-            subscriptionBannerMessage = 'Activa tu suscripción para acceder a todas las funciones.'
-        }
-    }
+
 
 
     if (loadingTenant || loadingConfig || loadingConfigPermissions) {
@@ -324,17 +338,22 @@ export default function Admin({ ...rest }) {
                                     {childRoutes}
                                 </Switch>
                                 {/* Mensaje cuando no hay suscripción activa */}
-                                {shouldShowSubscriptionBanner && showSubscriptionBanner && (
+                            
+                                {/* Mensaje de acción del usuario */}
+                                {userActionMessage && showUserActionBanner && (
                                     <div style={{
                                         position: 'fixed',
-                                        bottom: '20px',
-                                        right: '20px',
-                                        backgroundColor: '#fff',
+                                        top: '20px',
+                                        left: '50%',
+                                        transform: 'translateX(-50%)',
+                                        backgroundColor: currentUserAction?.status === 'failed' ? '#ffebee' : '#e3f2fd',
+                                        color: currentUserAction?.status === 'failed' ? '#c62828' : '#1565c0',
                                         borderRadius: '8px',
                                         padding: '15px',
-                                        maxWidth: '300px',
+                                        maxWidth: '400px',
                                         boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                                        zIndex: 1000
+                                        zIndex: 1002,
+                                        border: `1px solid ${currentUserAction?.status === 'failed' ? '#ef5350' : '#42a5f5'}`
                                     }}>
                                         <div style={{ 
                                             fontWeight: 'bold', 
@@ -343,9 +362,9 @@ export default function Admin({ ...rest }) {
                                             justifyContent: 'space-between',
                                             alignItems: 'center'
                                         }}>
-                                            {subscriptionBannerTitle}
+                                            {currentUserAction?.status === 'failed' ? 'Error' : 'Procesando...'}
                                             <IconButton 
-                                                onClick={() => setShowSubscriptionBanner(false)}
+                                                onClick={() => setShowUserActionBanner(false)}
                                                 size="small"
                                                 style={{ padding: 4 }}
                                             >
@@ -353,7 +372,7 @@ export default function Admin({ ...rest }) {
                                             </IconButton>
                                         </div>
                                         <div style={{ fontSize: '14px' }}>
-                                            {subscriptionBannerMessage}
+                                            {userActionMessage}
                                         </div>
                                     </div>
                                 )}
