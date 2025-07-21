@@ -145,8 +145,8 @@ export const configSlice = createSlice({
             state.loadingConfig = false
             state.configDetail = action.payload.data.config
             // Extraer los detalles del plan de suscripción
-            if (action.payload.data.config?.subscriptionDetail?.subscription?.plan) {
-                state.planDetails = action.payload.data.config.subscriptionDetail.subscription.plan
+            if (action.payload.data.config?.plan) {
+                state.planDetails = action.payload.data.config.plan
             } else {
                 state.planDetails = null
             }
@@ -164,8 +164,8 @@ export const configSlice = createSlice({
             // Refresh config after successful cancellation
             state.configDetail = action.payload.data.config
             // Actualizar planDetails después de cancelar
-            if (action.payload.data.config?.subscriptionDetail?.subscription?.plan) {
-                state.planDetails = action.payload.data.config.subscriptionDetail.subscription.plan
+            if (action.payload.data.config?.plan) {
+                state.planDetails = action.payload.data.config.plan
             } else {
                 state.planDetails = null
             }
@@ -183,8 +183,8 @@ export const configSlice = createSlice({
             // Refresh config after successful pause
             state.configDetail = action.payload.data.config
             // Actualizar planDetails después de pausar
-            if (action.payload.data.config?.subscriptionDetail?.subscription?.plan) {
-                state.planDetails = action.payload.data.config.subscriptionDetail.subscription.plan
+            if (action.payload.data.config?.plan) {
+                state.planDetails = action.payload.data.config.plan
             } else {
                 state.planDetails = null
             }

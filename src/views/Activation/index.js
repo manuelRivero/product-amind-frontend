@@ -33,8 +33,8 @@ import moment from 'moment'
 import { getConfigRequest, cancelSubscriptionRequest, pauseSubscriptionRequest, resumeSubscriptionRequest } from '../../store/config'
 import { SUBSCRIPTION_MESSAGES, ACTION_TYPES, PLAN_CHANGE_MESSAGES, UNAVAILABLE_FEATURE_FALLBACK } from '../const'
 import FeatureAlert from 'components/FeatureAlert'
-import { 
-    PlanFeaturesList, 
+import {
+    PlanFeaturesList,
     PLAN_DISPLAY_TEXTS,
     formatBillingCycle
 } from '../helpers'
@@ -289,28 +289,50 @@ const Activation = () => {
     const { configDetail, loadingCancelSubscription, loadingPauseSubscription } = useSelector((state) => state.config)
     const dispatch = useDispatch()
 
-    // Corregir las validaciones para que coincidan con la estructura real
-    const subscriptionDetail = configDetail?.subscriptionDetail
-    const subscription = subscriptionDetail?.subscription
-    const preapprovalStatus = subscription?.preapprovalStatus
-    const paymentStatus = subscription?.paymentStatus
-    const isActivate = subscriptionDetail?.hasActiveSubscription ?? false
+    // Nueva lógica de validación de estados de suscripción
+    const mpSubscriptionId = configDetail?.mpSubscriptionId
+    const paymentStatus = configDetail?.paymentStatus
+    const preapprovalStatus = configDetail?.preapprovalStatus
+    // Tomar el último status de userActionHistory (ordenado por fecha ascendente)
+    const lastStatusObj = Array.isArray(configDetail?.userActionHistory) && configDetail.userActionHistory.length > 0
+        ? configDetail.userActionHistory[configDetail.userActionHistory.length - 1]
+        : null;
+    const lastStatus = lastStatusObj?.action;
+    const lastPauseDate = lastStatusObj && lastStatusObj.status === 'paused' ? lastStatusObj.date : null;
+    const lastCancelDate = lastStatusObj && lastStatusObj.status === 'cancelled' ? lastStatusObj.date : null;
 
-    // Obtener el último estado del historial de estados
-    const statusHistoryuserActionHistory = subscription?.statusHistoryuserActionHistory || []
-    const lastStatusHistory = statusHistoryuserActionHistory.length > 0 ? statusHistoryuserActionHistory[statusHistoryuserActionHistory.length - 1] : null
-    const lastStatus = lastStatusHistory?.status
+    // Flags de estado
+    const isPaymentApproved = (preapprovalStatus === 'authorized' && paymentStatus === 'approved');
+    const isPaymentPending = (preapprovalStatus === 'authorized' && paymentStatus === 'pending');
+    const isPaymentPaused = (preapprovalStatus === 'paused' || paymentStatus === 'paused' || lastStatus === 'paused');
+    const isPaymentCancelled = (preapprovalStatus === 'cancelled' || paymentStatus === 'cancelled' || lastStatus === 'cancelled');
+    const isSubscriptionActive = (isPaymentApproved || isPaymentPaused || isPaymentPending) && !isPaymentCancelled;
 
-    // Validaciones mejoradas considerando preapprovalStatus y el último estado del historial
-    const isPaymentAuthorized = (paymentStatus === 'authorized' || lastStatus === 'authorized') && subscription
-    const isPaymentApproved = (paymentStatus === 'approved' || lastStatus === 'approved') && subscription
-    const isPaymentPending = (paymentStatus === 'pending' || lastStatus === 'pending') && subscription
-    const isPaymentPaused = (paymentStatus === 'paused' || preapprovalStatus === 'paused' || lastStatus === 'paused') && subscription
-    const isPaymentCancelled = (paymentStatus === 'cancelled' || preapprovalStatus === 'cancelled' || lastStatus === 'cancelled') && subscription
+    // Función para determinar el modo de vista
+    const getViewMode = () => {
+        if (isPaymentCancelled) return 'payment-cancelled';
+        if (isPaymentPaused) return 'payment-paused';
+        if (isPaymentPending) return 'payment-pending';
+        if (isPaymentApproved && !isSubscriptionActive) return 'payment-authorized';
+        if (isSubscriptionActive) return 'subscription-details';
+        return 'plan-selection';
+    };
 
-    // La suscripción está realmente activa solo si está aprobada o hasActiveSubscription es true y no está pausada/cancelada
-    const isSubscriptionActive = (isActivate || isPaymentApproved) && !isPaymentPaused && !isPaymentCancelled
+    const [viewMode, setViewMode] = React.useState(getViewMode());
 
+    // Actualizar viewMode cuando cambian los flags
+    React.useEffect(() => {
+        setViewMode(getViewMode());
+    }, [isPaymentApproved, isPaymentPending, isPaymentPaused, isPaymentCancelled, isSubscriptionActive]);
+
+    console.log('isPaymentApproved', isPaymentApproved)
+    console.log('isPaymentPending', isPaymentPending)
+    console.log('isPaymentPaused', isPaymentPaused)
+    console.log('isPaymentCancelled', isPaymentCancelled)
+    console.log('isSubscriptionActive', isSubscriptionActive)
+    console.log('lastStatus', lastStatus)
+    console.log('lastPauseDate', lastPauseDate)
+    console.log('lastCancelDate', lastCancelDate)
     const [mp, setMp] = React.useState(null)
     const [cardNumber, setCardNumber] = React.useState('')
     const [cardExp, setCardExp] = React.useState('')
@@ -323,9 +345,6 @@ const Activation = () => {
     const [error, setError] = React.useState(null)
     const [openModal, setOpenModal] = React.useState(false)
     const [selectedPlan, setSelectedPlan] = React.useState(null)
-    const [viewMode, setViewMode] = React.useState(
-        !isSubscriptionActive && !isPaymentAuthorized && !isPaymentPending ? 'plan-selection' : 'subscription-details'
-    )
     const [showConfirmModal, setShowConfirmModal] = React.useState(false)
     const [confirmAction, setConfirmAction] = React.useState(null)
     const classes = useStyles()
@@ -379,7 +398,6 @@ const Activation = () => {
         }
     }
 
-    const mpSubscriptionId = configDetail?.subscriptionDetail?.subscription?.mpSubscriptionId
 
     const handleCancelSubscription = async () => {
         try {
@@ -536,17 +554,11 @@ const Activation = () => {
         }
     }, [selectedPlan])
 
-    // Debug useEffect para monitorear cambios en el modal
-    useEffect(() => {
-        console.log('showConfirmModal cambió a:', showConfirmModal);
-        console.log('confirmAction cambió a:', confirmAction);
-    }, [showConfirmModal, confirmAction])
-
     if (loadingPlans) {
         return <LoadinScreen />
     }
     const renderContent = () => {
-        switch (currentViewMode) {
+        switch (viewMode) {
             case 'payment-pending':
                 return (
                     <Card className={classes.card}>
@@ -598,14 +610,14 @@ const Activation = () => {
                                     <div className={classes.subscriptionDetailBullet}></div>
                                     <span className={classes.subscriptionDetailLabel}>Plan:</span>
                                     <span className={classes.subscriptionDetailValue}>
-                                        {subscription?.plan?.name}
+                                        {configDetail?.plan?.name}
                                     </span>
                                 </li>
                                 <li className={classes.subscriptionDetailItem}>
                                     <div className={classes.subscriptionDetailBullet}></div>
                                     <span className={classes.subscriptionDetailLabel}>Fecha de activación:</span>
                                     <span className={classes.subscriptionDetailValue}>
-                                        {moment(subscription?.startDate).format('DD/MM/YYYY')}
+                                        {moment(configDetail?.startDate).format('DD/MM/YYYY')}
                                     </span>
                                 </li>
                                 {lastPauseDate && (
@@ -680,14 +692,14 @@ const Activation = () => {
                                     <div className={classes.subscriptionDetailBullet}></div>
                                     <span className={classes.subscriptionDetailLabel}>Plan:</span>
                                     <span className={classes.subscriptionDetailValue}>
-                                        {subscription?.plan?.name}
+                                        {configDetail?.plan?.name}
                                     </span>
                                 </li>
                                 <li className={classes.subscriptionDetailItem}>
                                     <div className={classes.subscriptionDetailBullet}></div>
                                     <span className={classes.subscriptionDetailLabel}>Fecha de activación:</span>
                                     <span className={classes.subscriptionDetailValue}>
-                                        {moment(subscription?.startDate).format('DD/MM/YYYY')}
+                                        {moment(configDetail?.startDate).format('DD/MM/YYYY')}
                                     </span>
                                 </li>
                                 {lastCancelDate && (
@@ -729,21 +741,21 @@ const Activation = () => {
                                     <div className={classes.subscriptionDetailBullet}></div>
                                     <span className={classes.subscriptionDetailLabel}>Plan:</span>
                                     <span className={classes.subscriptionDetailValue}>
-                                        {subscription?.plan?.name}
+                                        {configDetail?.plan?.name}
                                     </span>
                                 </li>
                                 <li className={classes.subscriptionDetailItem}>
                                     <div className={classes.subscriptionDetailBullet}></div>
                                     <span className={classes.subscriptionDetailLabel}>Fecha de activación:</span>
                                     <span className={classes.subscriptionDetailValue}>
-                                        {moment(subscription?.startDate).format('DD/MM/YYYY')}
+                                        {moment(configDetail?.startDate).format('DD/MM/YYYY')}
                                     </span>
                                 </li>
                                 <li className={classes.subscriptionDetailItem}>
                                     <div className={classes.subscriptionDetailBullet}></div>
                                     <span className={classes.subscriptionDetailLabel}>Fecha del próximo cobro:</span>
                                     <span className={classes.subscriptionDetailValue}>
-                                        {moment(subscription?.nextPaymentDate).format('DD/MM/YYYY')}
+                                        {moment(configDetail?.nextPaymentDate).format('DD/MM/YYYY')}
                                     </span>
                                 </li>
                             </ul>
@@ -807,14 +819,14 @@ const Activation = () => {
                                     <div className={classes.subscriptionDetailBullet}></div>
                                     <span className={classes.subscriptionDetailLabel}>Plan:</span>
                                     <span className={classes.subscriptionDetailValue}>
-                                        {subscription?.plan?.name}
+                                        {configDetail?.plan?.name}
                                     </span>
                                 </li>
                                 <li className={classes.subscriptionDetailItem}>
                                     <div className={classes.subscriptionDetailBullet}></div>
                                     <span className={classes.subscriptionDetailLabel}>Fecha de autorización:</span>
                                     <span className={classes.subscriptionDetailValue}>
-                                        {moment(subscription?.startDate).format('DD/MM/YYYY')}
+                                        {moment(configDetail?.startDate).format('DD/MM/YYYY')}
                                     </span>
                                 </li>
                             </ul>
@@ -834,7 +846,7 @@ const Activation = () => {
                             </p>
                         </CardHeader>
                         <CardBody>
-                            {!isSubscriptionActive && !isPaymentAuthorized && (
+                            {!isSubscriptionActive && !isPaymentApproved && (
                                 <>
                                     <TextInput
                                         error={false}
@@ -910,7 +922,7 @@ const Activation = () => {
                                 </>
                             )}
 
-                            {(isSubscriptionActive || isPaymentAuthorized) && (
+                            {(isSubscriptionActive || isPaymentApproved) && (
                                 <>
                                     <img
                                         src={Success}
@@ -978,11 +990,11 @@ const Activation = () => {
                             </CardHeader>
                             <CardBody>
                                 <GridContainer>
-                                                                            {plans
+                                    {plans
                                         .filter((plan) =>
-                                            (isSubscriptionActive || isPaymentAuthorized)
+                                            (isSubscriptionActive || isPaymentApproved)
                                                 ? plan._id !==
-                                                subscription?.plan?._id
+                                                configDetail?.plan?._id
                                                 : true
                                         )
                                         .map((plan) => (
@@ -1006,7 +1018,7 @@ const Activation = () => {
                                                             )}
                                                         </div>
                                                     </CardHeader>
-                                                                                <CardBody>
+                                                    <CardBody>
                                                         <PlanFeaturesList features={plan.features} />
                                                         <Button
                                                             type="button"
@@ -1017,7 +1029,7 @@ const Activation = () => {
                                                             className={`${classes.button} ${classes.planButton}`}
                                                             onClick={() => {
                                                                 // Determinar el tipo de cambio de plan
-                                                                const currentPlan = subscription?.plan;
+                                                                const currentPlan = configDetail?.plan;
                                                                 let changeType = 'SAME_PLAN';
 
                                                                 console.log('Plan actual:', currentPlan);
@@ -1080,24 +1092,6 @@ const Activation = () => {
         }
     };
 
-    // Determinar el modo de vista basado en el estado
-    const getCurrentViewMode = () => {
-        if (isPaymentPending) return 'payment-pending';
-        if (isPaymentPaused) return 'payment-paused';
-        if (isPaymentCancelled) return 'payment-cancelled';
-        if (isPaymentAuthorized && !isSubscriptionActive) return 'payment-authorized';
-        if (selectedPlan) return 'plan-details';
-        if (viewMode === 'plan-selection') return 'plan-selection';
-        if (isSubscriptionActive) return 'subscription-details';
-        return 'subscription-details';
-    };
-
-    const currentViewMode = getCurrentViewMode();
-
-    // Extraer último estado relevante de statusHistoryuserActionHistory (ya extraído arriba)
-    const lastPauseDate = lastStatusHistory && lastStatusHistory.status === 'paused' ? lastStatusHistory.date : null;
-    const lastCancelDate = lastStatusHistory && lastStatusHistory.status === 'cancelled' ? lastStatusHistory.date : null;
-
     return (
         <>
 
@@ -1124,7 +1118,7 @@ const Activation = () => {
                                 ? PLAN_CHANGE_MESSAGES.INITIAL.title
                                 : confirmAction === ACTION_TYPES.CHANGE_PLAN
                                     ? (() => {
-                                        const currentPlan = subscription?.plan;
+                                        const currentPlan = configDetail?.plan;
                                         const selectedPlanData = selectedPlan;
 
                                         if (currentPlan && selectedPlanData) {
@@ -1162,7 +1156,7 @@ const Activation = () => {
                         </>
                     ) : confirmAction === ACTION_TYPES.CHANGE_PLAN ? (
                         (() => {
-                            const currentPlan = subscription?.plan;
+                            const currentPlan = configDetail?.plan;
                             const selectedPlanData = selectedPlan;
 
                             if (currentPlan && selectedPlanData) {
@@ -1269,7 +1263,7 @@ const Activation = () => {
                                     ? PLAN_CHANGE_MESSAGES.INITIAL.cancelText
                                     : confirmAction === ACTION_TYPES.CHANGE_PLAN
                                         ? (() => {
-                                            const currentPlan = subscription?.plan;
+                                            const currentPlan = configDetail?.plan;
                                             const selectedPlanData = selectedPlan;
 
                                             if (currentPlan && selectedPlanData) {
@@ -1314,7 +1308,7 @@ const Activation = () => {
                                     ? PLAN_CHANGE_MESSAGES.INITIAL.confirmText
                                     : confirmAction === ACTION_TYPES.CHANGE_PLAN
                                         ? (() => {
-                                            const currentPlan = subscription?.plan;
+                                            const currentPlan = configDetail?.plan;
                                             const selectedPlanData = selectedPlan;
 
                                             if (currentPlan && selectedPlanData) {
