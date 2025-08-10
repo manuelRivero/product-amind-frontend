@@ -18,7 +18,6 @@ import GridItem from 'components/Grid/GridItem.js'
 import { makeStyles } from '@material-ui/core/styles'
 import { useDispatch, useSelector } from 'react-redux'
 
-import Success from 'assets/img/success-icon.png'
 import client from '../../api/client'
 import TextInput from '../../components/TextInput/Index'
 import LoadinScreen from '../../components/LoadingScreen'
@@ -38,8 +37,14 @@ import {
     PLAN_DISPLAY_TEXTS,
     formatBillingCycle
 } from '../helpers'
+import PlanComparisonModal from '../../components/PlanComparisonModal'
+import ProductSelectionModal from '../../components/ProductSelectionModal'
+import CategorySelectionModal from '../../components/CategorySelectionModal'
 
 const useStyles = makeStyles((theme) => ({
+    input: {
+        marginBottom: theme.spacing(2),
+    },
     card: {
         maxWidth: 1000,
         margin: 'auto',
@@ -325,14 +330,6 @@ const Activation = () => {
         setViewMode(getViewMode());
     }, [isPaymentApproved, isPaymentPending, isPaymentPaused, isPaymentCancelled, isSubscriptionActive]);
 
-    console.log('isPaymentApproved', isPaymentApproved)
-    console.log('isPaymentPending', isPaymentPending)
-    console.log('isPaymentPaused', isPaymentPaused)
-    console.log('isPaymentCancelled', isPaymentCancelled)
-    console.log('isSubscriptionActive', isSubscriptionActive)
-    console.log('lastStatus', lastStatus)
-    console.log('lastPauseDate', lastPauseDate)
-    console.log('lastCancelDate', lastCancelDate)
     const [mp, setMp] = React.useState(null)
     const [cardNumber, setCardNumber] = React.useState('')
     const [cardExp, setCardExp] = React.useState('')
@@ -347,13 +344,18 @@ const Activation = () => {
     const [selectedPlan, setSelectedPlan] = React.useState(null)
     const [showConfirmModal, setShowConfirmModal] = React.useState(false)
     const [confirmAction, setConfirmAction] = React.useState(null)
+    const [showComparisonModal, setShowComparisonModal] = React.useState(false)
+    const [showProductSelectionModal, setShowProductSelectionModal] = React.useState(false)
+    const [showCategorySelectionModal, setShowCategorySelectionModal] = React.useState(false)
     const classes = useStyles()
 
     const location = useLocation()
     const [featureParam, setFeatureParam] = useState(null)
     const [highlightPlans, setHighlightPlans] = useState([])
     const [featureInfo, setFeatureInfo] = useState(null)
-
+    const [selectedProductForPlanChange, setSelectedProductForPlanChange] = useState(null)
+    const [selectedCategoryForPlanChange, setSelectedCategoryForPlanChange] = useState(null)
+    const [showCardForm, setShowCardForm] = useState(false)
     useEffect(() => {
         const script = document.createElement('script')
         script.src = 'https://sdk.mercadopago.com/js/v2'
@@ -385,6 +387,10 @@ const Activation = () => {
                 {
                     card_token,
                     preapproval_plan_id: selectedPlan._id,
+                    planData: selectedProductForPlanChange && selectedCategoryForPlanChange ? {
+                        product_ids: selectedProductForPlanChange?.productsToRemove.map(p => p._id),
+                        category_ids: selectedCategoryForPlanChange?.categoriesToRemove.map(c => c._id)
+                    } : null
                 }
             )
             console.log('authUrl', response.data)
@@ -437,24 +443,90 @@ const Activation = () => {
     const handleChangePlan = async () => {
         try {
             console.log('Ejecutando handleChangePlan');
-            // Aquí iría la lógica para cambiar el plan
-            // Por ahora solo cerramos el modal y actualizamos el estado
             console.log('Cambiando a plan:', selectedPlan)
 
-            // TODO: Implementar la llamada a la API para cambiar el plan
-            // await dispatch(changePlanRequest({ planId: selectedPlan._id }))
+            // Verificar si el nuevo plan tiene límite de productos menor
+            const currentPlan = configDetail?.plan;
+            const currentProductLimit = currentPlan?.features?.createProducts?.limits?.maxProducts || Infinity;
+            const newProductLimit = selectedPlan?.features?.createProducts?.limits?.maxProducts || Infinity;
 
-            setShowConfirmModal(false)
-            setConfirmAction(null)
-            setSelectedPlan(null)
-            setViewMode('subscription-details')
+            console.log('Límites de productos:');
+            console.log('- Plan actual:', currentPlan?.name, 'Límite:', currentProductLimit);
+            console.log('- Plan nuevo:', selectedPlan?.name, 'Límite:', newProductLimit);
+            console.log('- Estructura del plan nuevo:', selectedPlan);
+            console.log('- Features del plan nuevo:', selectedPlan?.features);
+            console.log('- ¿Nuevo límite es menor?', newProductLimit !== Infinity && newProductLimit < currentProductLimit);
 
-            // Actualizar la configuración para reflejar el cambio
-            dispatch(getConfigRequest())
+            // Si el nuevo plan tiene límite menor, obtener productos y mostrar modal de selección
+            if (newProductLimit !== Infinity && newProductLimit < currentProductLimit) {
+                console.log('Límite menor detectado, obteniendo productos...');
+                setShowProductSelectionModal(true);
+                setShowConfirmModal(false);
+            } else {
+                console.log('No hay límite menor, procediendo con cambio directo');
+                await proceedWithPlanChange();
+            }
+
+            // Si no hay límite menor o no hay productos que excedan el límite, proceder con el cambio
 
         } catch (error) {
             console.error('Error en handleChangePlan:', error);
             setError('Error al cambiar el plan')
+        }
+    }
+
+    const proceedWithPlanChange = async () => {
+        try {
+
+
+            setShowConfirmModal(false)
+            setShowProductSelectionModal(false)
+            setConfirmAction(null)
+            setSelectedPlan(null)
+            setViewMode('subscription-details')
+            setShowCardForm(true)
+
+        } catch (error) {
+            console.error('Error en proceedWithPlanChange:', error);
+            setError('Error al cambiar el plan')
+        }
+    }
+
+    const handleProductSelectionConfirm = async (selectionData) => {
+        try {
+            setSelectedProductForPlanChange(selectionData)
+            console.log('Productos seleccionados:', selectionData);
+            const currentPlan = configDetail?.plan;
+            const currentCategorieLimit = currentPlan?.features?.createCategories?.limits?.maxCategories || Infinity;
+            const newCategoriesLimit = selectedPlan?.features?.createCategories?.limits?.maxCategories || Infinity;
+            console.log("limit", currentCategorieLimit > newCategoriesLimit)
+            if (currentCategorieLimit > newCategoriesLimit) {
+                setShowProductSelectionModal(false)
+                setShowCategorySelectionModal(true)
+            }
+            // TODO: Implementar la lógica para eliminar productos no seleccionados
+            // await dispatch(removeProductsRequest({ productIds: selectionData.productsToRemove.map(p => p._id) }))
+
+            // Proceder con el cambio de plan
+            // await proceedWithPlanChange();
+
+        } catch (error) {
+            console.error('Error en handleProductSelectionConfirm:', error);
+            setError('Error al procesar la selección de productos')
+        }
+    }
+
+    const handleCategorySelectionConfirm = async (selectionData) => {
+        try {
+            setSelectedCategoryForPlanChange(selectionData)
+            console.log('Categorías seleccionados:', selectionData);
+            setShowCardForm(true)
+            setViewMode('payment-form')
+            setShowCategorySelectionModal(false)
+
+        } catch (error) {
+            console.error('Error en handleProductSelectionConfirm:', error);
+            setError('Error al procesar la selección de productos')
         }
     }
 
@@ -469,12 +541,15 @@ const Activation = () => {
         } else if (confirmAction === ACTION_TYPES.PAUSE) {
             handlePauseSubscription()
         } else if (confirmAction === ACTION_TYPES.CHANGE_PLAN) {
-            handleChangePlan()
+            console.log('Cambiando de plan')
+            setViewMode('plan-selection')
+            setShowConfirmModal(false)
         } else if (confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL) {
-            // Cerrar el modal y mostrar la selección de planes
+            console.log('Cambiando de plan inicial')
+
             setShowConfirmModal(false)
             setConfirmAction(null)
-            setViewMode('plan-selection')
+            setViewMode('payment-form')
         } else if (confirmAction === ACTION_TYPES.RESUME) {
             handleResumeSubscription()
         }
@@ -638,7 +713,7 @@ const Activation = () => {
                                     disabled={!mp || loading}
                                     loading={loading}
                                     className={classes.button}
-                                    onClick={() => handleConfirmAction(ACTION_TYPES.CHANGE_PLAN_INITIAL)}
+                                    onClick={() => handleConfirmAction(ACTION_TYPES.CHANGE_PLAN)}
                                 >
                                     Cambiar de plan
                                 </Button>
@@ -767,7 +842,7 @@ const Activation = () => {
                                     disabled={!mp || loading}
                                     loading={loading}
                                     className={classes.button}
-                                    onClick={() => handleConfirmAction(ACTION_TYPES.CHANGE_PLAN_INITIAL)}
+                                    onClick={() => handleConfirmAction(ACTION_TYPES.CHANGE_PLAN)}
                                 >
                                     Cambiar de plan
                                 </Button>
@@ -834,21 +909,22 @@ const Activation = () => {
                     </Card>
                 );
 
-            case 'plan-details':
+            case 'payment-form':
                 return (
                     <Card className={classes.card}>
                         <CardHeader color="primary">
                             <h4 className={classes.cardTitleWhite}>
-                                Activar tienda
+                                Activar suscripción
                             </h4>
                             <p className={classes.cardCategoryWhite}>
-                                Para comenzar a operar tu tienda, selecciona un plan y completa el pago con tu tarjeta.
+                                 Completa el pago con tu tarjeta.
                             </p>
                         </CardHeader>
                         <CardBody>
-                            {!isSubscriptionActive && !isPaymentApproved && (
+                            {showCardForm && (
                                 <>
                                     <TextInput
+                                        className={classes.input}
                                         error={false}
                                         errorMessage={null}
                                         icon={null}
@@ -860,6 +936,7 @@ const Activation = () => {
                                         }}
                                     />
                                     <TextInput
+                                        className={classes.input}
                                         error={false}
                                         errorMessage={null}
                                         icon={null}
@@ -871,6 +948,7 @@ const Activation = () => {
                                         }}
                                     />
                                     <TextInput
+                                        className={classes.input}
                                         error={false}
                                         errorMessage={null}
                                         icon={null}
@@ -882,6 +960,7 @@ const Activation = () => {
                                         }}
                                     />
                                     <TextInput
+                                        className={classes.input}
                                         error={false}
                                         errorMessage={null}
                                         icon={null}
@@ -893,6 +972,7 @@ const Activation = () => {
                                         }}
                                     />
                                     <TextInput
+                                        className={classes.input}
                                         error={false}
                                         errorMessage={null}
                                         icon={null}
@@ -917,33 +997,8 @@ const Activation = () => {
                                         className={classes.button}
                                         onClick={submitCardDetails}
                                     >
-                                        Activar Tienda
+                                        Aceptar
                                     </Button>
-                                </>
-                            )}
-
-                            {(isSubscriptionActive || isPaymentApproved) && (
-                                <>
-                                    <img
-                                        src={Success}
-                                        alt="Success"
-                                        className={classes.successImage}
-                                    />
-                                    {isSubscriptionActive ? (
-                                        <>
-                                            <h6>¡Subscripción al día!</h6>
-                                            <p>
-                                                Puedes operar tu tienda con normalidad.
-                                            </p>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <h6>¡Pago autorizado exitosamente!</h6>
-                                            <p>
-                                                Tu tarjeta fue autorizada. Estamos procesando el pago para activar tu tienda.
-                                            </p>
-                                        </>
-                                    )}
                                 </>
                             )}
                         </CardBody>
@@ -1031,11 +1086,6 @@ const Activation = () => {
                                                                 // Determinar el tipo de cambio de plan
                                                                 const currentPlan = configDetail?.plan;
                                                                 let changeType = 'SAME_PLAN';
-
-                                                                console.log('Plan actual:', currentPlan);
-                                                                console.log('Plan seleccionado:', plan);
-                                                                console.log('Estado actual del modal:', showConfirmModal);
-
                                                                 if (currentPlan) {
                                                                     if (plan.price > currentPlan.price) {
                                                                         changeType = 'UPGRADE';
@@ -1046,20 +1096,16 @@ const Activation = () => {
 
                                                                 console.log('Tipo de cambio:', changeType);
 
-                                                                // Mostrar alerta si es downgrade o upgrade
-                                                                if (changeType !== 'SAME_PLAN') {
-                                                                    console.log('Mostrando modal de confirmación');
-                                                                    console.log('Antes de setConfirmAction:', confirmAction);
-                                                                    setConfirmAction(ACTION_TYPES.CHANGE_PLAN);
-                                                                    console.log('Después de setConfirmAction:', ACTION_TYPES.CHANGE_PLAN);
-                                                                    setSelectedPlan(plan);
-                                                                    console.log('Antes de setShowConfirmModal:', showConfirmModal);
-                                                                    setShowConfirmModal(true);
-                                                                    console.log('Después de setShowConfirmModal: true');
-                                                                } else {
+                                                                // Si es el mismo plan, no hacer nada
+                                                                if (changeType === 'SAME_PLAN') {
                                                                     console.log('Mismo plan, no mostrar modal');
-                                                                    setSelectedPlan(plan);
+                                                                    return;
                                                                 }
+
+                                                                // Si es un plan diferente, mostrar modal de comparación
+                                                                console.log('Plan diferente, mostrando modal de comparación');
+                                                                setSelectedPlan(plan);
+                                                                setShowComparisonModal(true);
                                                             }}
                                                         >
                                                             {PLAN_DISPLAY_TEXTS.SELECT_BUTTON_PREFIX} {plan.name}
@@ -1138,7 +1184,7 @@ const Activation = () => {
                     }
                 </DialogTitle>
                 <div className={classes.modalContent}>
-                    {confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL ? (
+                    {confirmAction === ACTION_TYPES.CHANGE_PLAN ? (
                         <>
                             <p className={classes.modalDescription}>
                                 {PLAN_CHANGE_MESSAGES.INITIAL.description}
@@ -1154,58 +1200,6 @@ const Activation = () => {
                                 {PLAN_CHANGE_MESSAGES.INITIAL.warning}
                             </p>
                         </>
-                    ) : confirmAction === ACTION_TYPES.CHANGE_PLAN ? (
-                        (() => {
-                            const currentPlan = configDetail?.plan;
-                            const selectedPlanData = selectedPlan;
-
-                            if (currentPlan && selectedPlanData) {
-                                if (selectedPlanData.price > currentPlan.price) {
-                                    return (
-                                        <>
-                                            <p className={classes.modalDescription}>
-                                                {PLAN_CHANGE_MESSAGES.UPGRADE.description}
-                                            </p>
-                                            <ul className={classes.modalList}>
-                                                {PLAN_CHANGE_MESSAGES.UPGRADE.benefits.map((benefit, index) => (
-                                                    <li key={index} className={classes.modalListItem}>
-                                                        {benefit}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                            <p className={`${classes.modalWarning} ${classes.modalWarningSuccess}`}>
-                                                {PLAN_CHANGE_MESSAGES.UPGRADE.warning}
-                                            </p>
-                                        </>
-                                    );
-                                } else if (selectedPlanData.price < currentPlan.price) {
-                                    return (
-                                        <>
-                                            <p className={classes.modalDescription}>
-                                                {PLAN_CHANGE_MESSAGES.DOWNGRADE.description}
-                                            </p>
-                                            <ul className={classes.modalList}>
-                                                {PLAN_CHANGE_MESSAGES.DOWNGRADE.consequences.map((consequence, index) => (
-                                                    <li key={index} className={classes.modalListItem}>
-                                                        {consequence}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                            <p className={`${classes.modalWarning} ${classes.modalWarningWarning}`}>
-                                                {PLAN_CHANGE_MESSAGES.DOWNGRADE.warning}
-                                            </p>
-                                        </>
-                                    );
-                                } else {
-                                    return (
-                                        <p className={classes.modalDescription}>
-                                            {PLAN_CHANGE_MESSAGES.SAME_PLAN.message}
-                                        </p>
-                                    );
-                                }
-                            }
-                            return <p>Cambiando plan...</p>;
-                        })()
                     ) : confirmAction === ACTION_TYPES.RESUME ? (
                         <>
                             <p className={classes.modalDescription}>
@@ -1307,21 +1301,7 @@ const Activation = () => {
                                 : confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL
                                     ? PLAN_CHANGE_MESSAGES.INITIAL.confirmText
                                     : confirmAction === ACTION_TYPES.CHANGE_PLAN
-                                        ? (() => {
-                                            const currentPlan = configDetail?.plan;
-                                            const selectedPlanData = selectedPlan;
-
-                                            if (currentPlan && selectedPlanData) {
-                                                if (selectedPlanData.price > currentPlan.price) {
-                                                    return PLAN_CHANGE_MESSAGES.UPGRADE.confirmText;
-                                                } else if (selectedPlanData.price < currentPlan.price) {
-                                                    return PLAN_CHANGE_MESSAGES.DOWNGRADE.confirmText;
-                                                } else {
-                                                    return PLAN_CHANGE_MESSAGES.SAME_PLAN.confirmText;
-                                                }
-                                            }
-                                            return 'Confirmar';
-                                        })()
+                                        ? PLAN_CHANGE_MESSAGES.INITIAL.confirmText
                                         : confirmAction === ACTION_TYPES.RESUME
                                             ? SUBSCRIPTION_MESSAGES.RESUME.confirmText
                                             : 'Confirmar'
@@ -1340,6 +1320,33 @@ const Activation = () => {
                     </DialogActions>
                 </Dialog>
             )}
+
+            {/* Modal de comparación de planes */}
+            <PlanComparisonModal
+                open={showComparisonModal}
+                onClose={() => setShowComparisonModal(false)}
+                currentPlan={configDetail?.plan}
+                newPlan={selectedPlan}
+                onConfirm={() => {
+                    setShowComparisonModal(false);
+                    // Proceder con el flujo normal de cambio de plan
+                    handleChangePlan()
+                }}
+            />
+
+            {configDetail && showProductSelectionModal && <ProductSelectionModal
+                open={showProductSelectionModal}
+                onClose={() => setShowProductSelectionModal(false)}
+                newPlan={selectedPlan}
+                onConfirm={handleProductSelectionConfirm}
+            />}
+
+            {configDetail && showCategorySelectionModal && <CategorySelectionModal
+                open={showCategorySelectionModal}
+                onClose={() => showCategorySelectionModal(false)}
+                newPlan={selectedPlan}
+                onConfirm={handleCategorySelectionConfirm}
+            />}
         </>
     )
 }

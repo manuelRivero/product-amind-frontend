@@ -1,6 +1,7 @@
 import client from 'api/client'
 
 export const getCategories = (access, filters, limit = 10, ids=[]) => {
+    console.log("api", access, filters, limit, ids)
     const handleFilters = () => {
         let filterQuery = ''
         Object.keys(filters).map((key, index) => {
@@ -12,15 +13,13 @@ export const getCategories = (access, filters, limit = 10, ids=[]) => {
         })
         return filterQuery
     }
+    console.log('handleFilters', handleFilters())
     return client.get(
         `api/categories/get-categories${handleFilters()}`,
         {
             params:{
                 limit,
                 ids
-            },
-            headers: {
-                'x-token': access,
             },
         }
     )

@@ -11,3 +11,6 @@ export const pauseSubscription = (id) => {
 export const resumeSubscription = (id) => {
     return client.put(`api/subscriptions/${id}/resume`)
 } 
+export const changePlan = (planData) => {
+    return client.post(`api/mercado-pago/subscribe-user/`, planData)
+} 

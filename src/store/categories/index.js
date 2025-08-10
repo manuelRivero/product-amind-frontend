@@ -20,6 +20,7 @@ const initialState = {
 export const getCategories = createAsyncThunk(
     '/get/categories',
     async (args) => {
+        console.log("thunk")
         const [categories] = await Promise.all([
             getCategoriesRequest(args.access, args.filters, args.limit, args.ids),
         ])
@@ -68,7 +69,8 @@ export const categoriesSlice = createSlice({
                 data: action.payload.data.categories,
             }
         },
-        [getCategories.rejected]: (state) => {
+        [getCategories.rejected]: (state, action) => {
+            console.log("action", action)
             state.loadingCategoriesData = false
             state.categoriesDataError = true
         },

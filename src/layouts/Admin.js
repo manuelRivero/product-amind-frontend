@@ -64,28 +64,24 @@ export default function Admin({ ...rest }) {
         hasUserPermission
     } = usePermissions()
 
-    // Obtener el estado real de la suscripción considerando statusHistory (igual que en Activation)
-    const subscriptionDetail = configDetail?.subscriptionDetail
-    const subscription = subscriptionDetail?.subscription
-    const preapprovalStatus = subscription?.preapprovalStatus
-    const paymentStatus = subscription?.paymentStatus
-    const isActivate = subscriptionDetail?.hasActiveSubscription ?? false
+    // Nueva lógica de validación de estados de suscripción (igual que en Activation)
+    const paymentStatus = configDetail?.paymentStatus
+    const preapprovalStatus = configDetail?.preapprovalStatus
+    // Tomar el último status de userActionHistory (ordenado por fecha ascendente)
+    const lastStatusObj = Array.isArray(configDetail?.userActionHistory) && configDetail.userActionHistory.length > 0
+        ? configDetail.userActionHistory[configDetail.userActionHistory.length - 1]
+        : null;
+    const lastStatus = lastStatusObj?.action;
+  
+    // Flags de estado (igual que en Activation)
+    const isPaymentApproved = (preapprovalStatus === 'authorized' && paymentStatus === 'approved');
+    const isPaymentPending = (preapprovalStatus === 'authorized' && paymentStatus === 'pending');
+    const isPaymentPaused = (preapprovalStatus === 'paused' || paymentStatus === 'paused' || lastStatus === 'paused');
+    const isPaymentCancelled = (preapprovalStatus === 'cancelled' || paymentStatus === 'cancelled' || lastStatus === 'cancelled');
+    const isSubscriptionActive = (isPaymentApproved || isPaymentPaused || isPaymentPending) && !isPaymentCancelled;
     
     // Obtener la última acción del usuario
     const currentUserAction = configDetail?.currentUserAction
-
-    // Obtener el último estado del historial de estados
-    const statusHistory = subscription?.statusHistory || []
-    const lastStatusHistory = statusHistory.length > 0 ? statusHistory[statusHistory.length - 1] : null
-    const lastStatus = lastStatusHistory?.status
-
-    // Validaciones mejoradas considerando preapprovalStatus y el último estado del historial
-    const isPaymentApproved = (paymentStatus === 'approved' || lastStatus === 'approved') && subscription
-    const isPaymentPaused = (paymentStatus === 'paused' || preapprovalStatus === 'paused' || lastStatus === 'paused') && subscription
-    const isPaymentCancelled = (paymentStatus === 'cancelled' || preapprovalStatus === 'cancelled' || lastStatus === 'cancelled') && subscription
-
-    // La suscripción está realmente activa solo si está aprobada o hasActiveSubscription es true y no está pausada/cancelada
-    const isSubscriptionActive = (isActivate || isPaymentApproved) && !isPaymentPaused && !isPaymentCancelled
 
     // Función para obtener el mensaje de la acción del usuario
     const getUserActionMessage = () => {
@@ -153,6 +149,16 @@ export default function Admin({ ...rest }) {
             if (isPaymentPaused || isPaymentCancelled) {
                 return isAdminRoute && prop.path === '/mercado-pago'
             }
+
+            if (isPaymentPending) {
+                return isAdminRoute && prop.path === '/mercado-pago'
+            }
+            
+            // Si el pago está aprobado pero la suscripción no está activa, mostrar todas las rutas
+            if (isPaymentApproved && !isSubscriptionActive) {
+                const hasPermission = !prop.permission || hasUserPermission(prop.permission.resource, prop.permission.action)
+                return isAdminRoute && hasPermission
+            }
             
             // Verificar suscripción activa usando las validaciones reales
             const hasSubscription = !prop.needConfig || (prop.needConfig && isSubscriptionActive)
@@ -165,7 +171,7 @@ export default function Admin({ ...rest }) {
             
             return isAdminRoute && hasSubscription && hasPermission
         })
-    }, [isPaymentPaused, isPaymentCancelled, isSubscriptionActive, hasUserPermission])
+    }, [isPaymentPaused, isPaymentCancelled, isPaymentApproved, isSubscriptionActive, hasUserPermission])
     React.useEffect(() => {
         if(mainPanel.current === null) {
             return

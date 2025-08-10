@@ -32,7 +32,7 @@ export const SUBSCRIPTION_MESSAGES = {
             "Tus clientes podrán volver a comprar en tu tienda.",
             "No perderás la configuración ni los datos de tu tienda."
         ],
-        warning: "La reactivación puede demorar unos minutos en reflejarse.",
+        warning: "La reactivación puede demorar en reflejarse hasta que el pago sea efectivo.",
         confirmText: "Reactivar",
         cancelText: "Cancelar"
     }
@@ -59,7 +59,6 @@ export const PLAN_CHANGE_MESSAGES = {
         description: 'Al cambiar a un plan con menos capacidad:',
         consequences: [
             'Todas las funciones del admin seguirán disponibles',
-            'Podrás seguir creando productos, banners y promociones',
             'El límite será en la cantidad que puedes manejar',
             'Si excedes los límites, algunas opciones se deshabilitarán temporalmente',
             'Puedes volver a cambiar de plan en cualquier momento'
@@ -79,13 +78,10 @@ export const PLAN_CHANGE_MESSAGES = {
         title: '¿Quieres cambiar tu plan de suscripción?',
         description: 'Puedes cambiar tu plan en cualquier momento:',
         benefits: [
-            'Mantendrás todas tus funciones de administración',
-            'Podrás seguir creando productos, banners y promociones',
             'Los cambios se aplicarán inmediatamente',
             'Puedes volver a cambiar cuando quieras',
-            'No perderás tu información existente'
         ],
-        warning: 'Al cambiar de plan, mantendrás acceso a todas las funciones del admin. Solo cambiarán los límites de cantidad.',
+        warning: 'Las funcionabilidades se basan en el plan que elijas',
         confirmText: 'Sí, ver planes disponibles',
         cancelText: 'No, mantener plan actual'
     }
