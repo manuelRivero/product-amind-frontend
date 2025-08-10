@@ -478,13 +478,20 @@ const Activation = () => {
     const proceedWithPlanChange = async () => {
         try {
 
+            const currentPlan = configDetail?.plan;
+            const currentCategorieLimit = currentPlan?.features?.createCategories?.limits?.maxCategories || Infinity;
+            const newCategoriesLimit = selectedPlan?.features?.createCategories?.limits?.maxCategories || Infinity;
+            console.log("limit", currentCategorieLimit > newCategoriesLimit)
+            if (currentCategorieLimit > newCategoriesLimit) {
+                setShowProductSelectionModal(false)
+                setShowCategorySelectionModal(true)
+            } else {
+                setShowConfirmModal(false)
+                setViewMode('payment-form')
+                setShowCardForm(true)
+            }
 
-            setShowConfirmModal(false)
-            setShowProductSelectionModal(false)
-            setConfirmAction(null)
-            setSelectedPlan(null)
-            setViewMode('subscription-details')
-            setShowCardForm(true)
+
 
         } catch (error) {
             console.error('Error en proceedWithPlanChange:', error);
@@ -495,7 +502,6 @@ const Activation = () => {
     const handleProductSelectionConfirm = async (selectionData) => {
         try {
             setSelectedProductForPlanChange(selectionData)
-            console.log('Productos seleccionados:', selectionData);
             const currentPlan = configDetail?.plan;
             const currentCategorieLimit = currentPlan?.features?.createCategories?.limits?.maxCategories || Infinity;
             const newCategoriesLimit = selectedPlan?.features?.createCategories?.limits?.maxCategories || Infinity;
@@ -504,11 +510,6 @@ const Activation = () => {
                 setShowProductSelectionModal(false)
                 setShowCategorySelectionModal(true)
             }
-            // TODO: Implementar la lógica para eliminar productos no seleccionados
-            // await dispatch(removeProductsRequest({ productIds: selectionData.productsToRemove.map(p => p._id) }))
-
-            // Proceder con el cambio de plan
-            // await proceedWithPlanChange();
 
         } catch (error) {
             console.error('Error en handleProductSelectionConfirm:', error);
@@ -917,7 +918,7 @@ const Activation = () => {
                                 Activar suscripción
                             </h4>
                             <p className={classes.cardCategoryWhite}>
-                                 Completa el pago con tu tarjeta.
+                                Completa el pago con tu tarjeta.
                             </p>
                         </CardHeader>
                         <CardBody>
@@ -1045,9 +1046,10 @@ const Activation = () => {
                             </CardHeader>
                             <CardBody>
                                 <GridContainer>
+                                    {console.log('plans', isSubscriptionActive, isPaymentApproved)}
                                     {plans
                                         .filter((plan) =>
-                                            (isSubscriptionActive || isPaymentApproved)
+                                            (isSubscriptionActive)
                                                 ? plan._id !==
                                                 configDetail?.plan?._id
                                                 : true
