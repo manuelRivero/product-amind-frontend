@@ -7,6 +7,7 @@ const initialState = {
     loadingCancelSubscription: false,
     loadingPauseSubscription: false,
     configDetail: null,
+    themeConfig: null,
     planDetails: null,
     error: false,
     tenant: null,
@@ -144,6 +145,7 @@ export const configSlice = createSlice({
         [getConfigRequest.fulfilled]: (state, action) => {
             state.loadingConfig = false
             state.configDetail = action.payload.data.config
+            state.themeConfig = action.payload.data.theme
             // Extraer los detalles del plan de suscripción
             if (action.payload.data.config?.plan) {
                 state.planDetails = action.payload.data.config.plan

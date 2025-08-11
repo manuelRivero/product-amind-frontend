@@ -215,7 +215,7 @@ export default function ConfigPage() {
     const classes = useStyles()
     const dispatch = useDispatch()
     const { user } = useSelector((state) => state.auth)
-    const { loadingConfig, configDetail, planDetails } = useSelector((state) => state.config)
+    const { loadingConfig, configDetail, planDetails, themeConfig } = useSelector((state) => state.config)
     const [preview, setPreview] = useState(null)
     const [loading, setLoading] = useState(false)
     const [showSuccessModal, setShowSuccessModal] = useState(false)
@@ -307,32 +307,32 @@ export default function ConfigPage() {
     }
 
     useEffect(() => {
-        if (!configDetail) {
+        if (!configDetail || !themeConfig) {
             dispatch(getConfigRequest({ access: user.token }))
         }
-    }, [configDetail])
+    }, [configDetail, themeConfig])
 
     useEffect(() => {
-        if (configDetail) {
-            setPreview(configDetail.metadata.logo)
+        if (themeConfig) {
+            setPreview(themeConfig.metadata.logo)
             setTimeout(() => {
                 reset({
-                    title: configDetail.metadata.title,
-                    description: configDetail.metadata.description,
-                    primaryColor: configDetail.palette.primary.main,
+                    title: themeConfig.metadata.title,
+                    description: themeConfig.metadata.description,
+                    primaryColor: themeConfig.palette.primary.main,
                     contrastTextColor:
-                        configDetail.palette.primary.contrastText,
-                    textColor: configDetail.palette.textColor || '#2F4858',
-                    backgroundColor: configDetail.palette.backgroundColor || '#f5f6fa',
-                    phone: configDetail.phone,
-                    logoUrl: configDetail.metadata.logo,
-                    titleFont: configDetail.typography?.title ?? '',
-                    bodyFont: configDetail.typography?.body ?? '',
-                    country: configDetail.metadata.country || 'AR',
+                        themeConfig.palette.primary.contrastText,
+                    textColor: themeConfig.palette.textColor || '#2F4858',
+                    backgroundColor: themeConfig.palette.backgroundColor || '#f5f6fa',
+                    phone: themeConfig.phone,
+                    logoUrl: themeConfig.metadata.logo,
+                    titleFont: themeConfig.typography?.title ?? '',
+                    bodyFont: themeConfig.typography?.body ?? '',
+                    country: themeConfig.metadata.country || 'AR',
                 })
             }, 1000)
         }
-    }, [configDetail])
+    }, [themeConfig])
 
     if (loadingConfig) {
         return <LoadinScreen />
