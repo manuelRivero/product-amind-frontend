@@ -35,12 +35,13 @@ export const getSale = (access, id) => {
     })
 }
 
-export const changeSaleStatus = (access, id, status, paymentMethod) =>{
+export const changeSaleStatus = (access, id, status, paymentMethod, reason) =>{
     
     return client.put(`api/sale/edit`, {
         id,
         status,
-        paymentMethod : paymentMethod ? paymentMethod : null
+        paymentMethod : paymentMethod ? paymentMethod : null,
+        reason: reason ? reason : null
     },{
         headers: {
             'x-token': access,

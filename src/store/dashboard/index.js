@@ -112,7 +112,8 @@ export const changePendingSalesStatus = createAsyncThunk(
                 args.access,
                 args.id,
                 args.status,
-                args.paymentMethod
+                args.paymentMethod,
+                args.reason
             )
             return response
         } catch (error) {

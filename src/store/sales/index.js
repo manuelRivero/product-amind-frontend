@@ -52,7 +52,8 @@ export const changeSalesStatus = createAsyncThunk(
                 args.access,
                 args.id,
                 args.status,
-                args.paymentMethod
+                args.paymentMethod,
+                args.reason
             )
             return response
         } catch (error) {
@@ -70,7 +71,8 @@ export const changeDetailSalesStatus = createAsyncThunk(
                 args.access,
                 args.id,
                 args.status,
-                args.paymentMethod
+                args.paymentMethod,
+                args.reason
             )
             return response
         } catch (error) {

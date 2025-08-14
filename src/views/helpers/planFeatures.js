@@ -49,6 +49,7 @@ export const getFeatureLimitationText = (featureKey, feature) => {
     return null
   }
 
+  // En el nuevo modelo, los límites están en feature.limits
   const limits = feature.limits
   if (!limits) {
     return null
@@ -58,7 +59,8 @@ export const getFeatureLimitationText = (featureKey, feature) => {
     return config.unlimitedText
   }
 
-  const limitValue = limits[config.limitationKey]
+  // En el nuevo modelo, usamos limits.max directamente
+  const limitValue = limits.max
   if (limitValue !== undefined && limitValue !== null) {
     return config.limitationText(limitValue)
   }
@@ -74,18 +76,23 @@ export const hasFeatureLimitations = (featureKey, feature) => {
 
 // Utility function to get enabled features from a plan
 export const getEnabledFeatures = (plan) => {
-  if (!plan.features) {
+  if (!plan.features || !Array.isArray(plan.features)) {
     return []
   }
 
-  return Object.entries(plan.features)
-    .filter(([, feature]) => feature.enabled)
-    .map(([key, feature]) => ({ key, ...feature }))
+  return plan.features
+    .filter(f => f.feature?.enabled)
+    .map(f => ({ key: f.feature.name, ...f.feature }))
 }
 
 // Utility function to check if a plan has a specific feature enabled
 export const isFeatureEnabled = (plan, featureKey) => {
-  return plan.features?.[featureKey]?.enabled || false
+  if (!plan.features || !Array.isArray(plan.features)) {
+    return false
+  }
+  
+  const feature = plan.features.find(f => f.feature.name === featureKey)
+  return feature?.feature?.enabled || false
 } 
 
 // Utility function to format billing cycle text

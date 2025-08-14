@@ -177,7 +177,7 @@ const useStyles = makeStyles((theme) => ({
 
 /**
  * Componente que muestra contenido condicional basado en permisos del plan
- * @param {string} featureKey - Clave de la feature requerida
+ * @param {string} featureKey - Nombre de la feature requerida
  * @param {React.ReactNode} children - Contenido a mostrar si tiene permisos
  * @param {boolean} showUpgradePrompt - Si mostrar el prompt de actualización
  * @param {boolean} showPreview - Si mostrar preview con blur y overlay

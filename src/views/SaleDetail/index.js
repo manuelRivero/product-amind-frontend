@@ -16,11 +16,6 @@ import {
     Box,
     CircularProgress,
     ClickAwayListener,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
     Fade,
     Grid,
     IconButton,
@@ -41,6 +36,8 @@ import * as yup from 'yup'
 import { saleStatus } from '../../const/sales'
 import PropTypes from 'prop-types'
 import { changeDetailSalesStatus } from '../../store/sales'
+import StatusChangeModal from '../../components/StatusChangeModal'
+import { useStatusChange } from '../../hooks/useStatusChange'
 
 const styles = {
     cardCategoryWhite: {
@@ -294,26 +291,31 @@ const ChangeStatusDropdown = ({ sale }) => {
             status: saleStatus[sale.status],
         },
     })
-    const [confirmOpen, setConfirmOpen] = React.useState(false)
-    const [nextStatus, setNextStatus] = React.useState('')
     const [anchorEl, setAnchorEl] = React.useState(null)
     const [open, setOpen] = React.useState(false)
+    const { modalState, openModal, closeModal } = useStatusChange()
 
     const handleClick = (event) => {
         setOpen(!open)
         setAnchorEl(anchorEl ? null : event.currentTarget)
     }
 
-    const onStatusChange = async (status) => {
-        setOpen(false)
-        setAnchorEl(anchorEl ? null : event.currentTarget)
-        dispatch(
-            changeDetailSalesStatus({
-                access: user.token,
-                id: sale._id,
-                status,
-            })
-        )
+    const onStatusChange = async (status, reason = null) => {
+        try {
+            setOpen(false)
+            setAnchorEl(anchorEl ? null : event.currentTarget)
+            const result = await dispatch(
+                changeDetailSalesStatus({
+                    access: user.token,
+                    id: sale._id,
+                    status,
+                    reason,
+                })
+            ).unwrap()
+            return result
+        } catch (error) {
+            throw new Error(error.message || 'Error al cambiar el estado de la orden')
+        }
     }
 
     return (
@@ -391,8 +393,7 @@ const ChangeStatusDropdown = ({ sale }) => {
                                                 <MenuItem
                                                     key={index}
                                                     onClick={() => {
-                                                        setNextStatus(status)
-                                                        setConfirmOpen(true)
+                                                        openModal(status)
                                                     }}
                                                     className={
                                                         sale.status === status
@@ -410,38 +411,19 @@ const ChangeStatusDropdown = ({ sale }) => {
                     )}
                 </Popper>
             </Box>
-            <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
-                <DialogTitle>Confirmar cambio de estado</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        ¿Estás seguro de que deseas cambiar el estado a{' '}
-                        <strong>{nextStatus}</strong>?
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button
-                        onClick={() => setConfirmOpen(false)}
-                        color="secondary"
-                    >
-                        Cancelar
-                    </Button>
-                    <Button
-                        onClick={() => {
-                            const index =
-                                statusOptions.findIndex(
-                                    (option) => option === nextStatus
-                                ) + 1
-                            onStatusChange(index)
-                            setConfirmOpen(false)
-                            setOpen(false)
-                        }}
-                        color="primary"
-                        variant="contained"
-                    >
-                        Confirmar
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            <StatusChangeModal
+                open={modalState.open}
+                onClose={closeModal}
+                onConfirm={async (data) => {
+                    const { nextStatus, cancelReason } = data
+                    const statusIndex = statusOptions.findIndex(option => option === nextStatus) + 1
+                    return await onStatusChange(statusIndex, cancelReason)
+                }}
+                nextStatus={modalState.nextStatus}
+                loading={loadingSaleDetailStatus}
+                requireCancelReason={true}
+                actionType="ORDER_CANCELLATION"
+            />
         </>
     )
 }

@@ -68,6 +68,10 @@ const schema = yup.object({
             if (!countryObj) return false
             return value && value.length === countryObj.phoneLength
         }),
+    province: yup.string(),
+    locality: yup.string(),
+    postalCode: yup.string(),
+    address: yup.string(),
     description: yup.string().required('La descripción es obligatoria'),
     primaryColor: yup.string().required('El color primario es obligatorio'),
     contrastTextColor: yup
@@ -244,6 +248,10 @@ export default function ConfigPage() {
             logo: '',
             logoUrl: '',
             phone: '',
+            province: '',
+            locality: '',
+            postalCode: '',
+            address: '',
             titleFont: '',
             bodyFont: '',
             country: 'AR',
@@ -293,6 +301,10 @@ export default function ConfigPage() {
         }
         form.append('country', values.country)
         form.append('phone', values.phone)
+        form.append('province', values.province)
+        form.append('locality', values.locality)
+        form.append('postalCode', values.postalCode)
+        form.append('address', values.address)
 
         try {
             setLoading(true)
@@ -325,6 +337,10 @@ export default function ConfigPage() {
                     textColor: themeConfig.palette.textColor || '#2F4858',
                     backgroundColor: themeConfig.palette.backgroundColor || '#f5f6fa',
                     phone: themeConfig.phone,
+                    province: themeConfig.province || '',
+                    locality: themeConfig.locality || '',
+                    postalCode: themeConfig.postalCode || '',
+                    address: themeConfig.address || '',
                     logoUrl: themeConfig.metadata.logo,
                     titleFont: themeConfig.typography?.title ?? '',
                     bodyFont: themeConfig.typography?.body ?? '',
@@ -519,6 +535,78 @@ export default function ConfigPage() {
                                                 />
                                             )
                                         }}
+                                    />
+                                </div>
+                            </div>
+                            <div className={classes.colorRow}>
+                                <div className={classes.flex1}>
+                                    <Controller
+                                        name="province"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <TextInput
+                                                className={classes.input}
+                                                error={fieldState.error ? true : false}
+                                                errorMessage={fieldState.error}
+                                                icon={null}
+                                                label={'Provincia'}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                            />
+                                        )}
+                                    />
+                                </div>
+                                <div className={classes.flex1}>
+                                    <Controller
+                                        name="locality"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <TextInput
+                                                className={classes.input}
+                                                error={fieldState.error ? true : false}
+                                                errorMessage={fieldState.error}
+                                                icon={null}
+                                                label={'Localidad'}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                            />
+                                        )}
+                                    />
+                                </div>
+                                <div className={classes.flex1}>
+                                    <Controller
+                                        name="postalCode"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <TextInput
+                                                className={classes.input}
+                                                error={fieldState.error ? true : false}
+                                                errorMessage={fieldState.error}
+                                                icon={null}
+                                                label={'Código Postal'}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                            />
+                                        )}
+                                    />
+                                </div>
+                            </div>
+                            <div className={classes.colorRow}>
+                                <div className={classes.flex1}>
+                                    <Controller
+                                        name="address"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <TextInput
+                                                className={classes.input}
+                                                error={fieldState.error ? true : false}
+                                                errorMessage={fieldState.error}
+                                                icon={null}
+                                                label={'Dirección'}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                            />
+                                        )}
                                     />
                                 </div>
                             </div>

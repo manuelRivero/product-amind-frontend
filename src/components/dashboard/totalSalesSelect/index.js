@@ -42,6 +42,10 @@ export default function TotalSalesSelect({onDateChange}) {
                     maxDate={new Date()}
                     onChange={onChange}
                     value={selectedValue}
+                    variant="inline"
+                    label="Fecha"
+                    openTo="day"
+                    helperText="Seleccione el día para ver las ventas"
                 />
             </Box>
         </MuiPickersUtilsProvider>

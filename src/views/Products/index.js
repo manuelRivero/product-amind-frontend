@@ -45,6 +45,8 @@ import {
     Share,
 } from '@material-ui/icons'
 import { deleteProduct } from '../../store/products'
+import StatusChangeModal from '../../components/StatusChangeModal'
+import { useStatusChange } from '../../hooks/useStatusChange'
 
 const schema = yup.object({
     search: yup.string(),
@@ -416,22 +418,28 @@ const ActionGroup = ({ product }) => {
     const { user } = useSelector((state) => state.auth)
     const classes = useStyles()
     const [isLoading, setIsLoading] = useState(false)
-    const [confirmOpen, setConfirmOpen] = useState(false)
     const [success, setSuccess] = useState(false)
-    const deleteHandler = async () => {
+    const { modalState, openModal, closeModal } = useStatusChange()
+    const deleteHandler = async (reason = null) => {
         try {
-            setConfirmOpen(false)
             setIsLoading(true)
-            await dispatch(
-                deleteProduct({ access: user.token, id: product._id })
+            const result = await dispatch(
+                deleteProduct({ 
+                    access: user.token, 
+                    id: product._id,
+                    reason 
+                })
             ).unwrap()
             setSuccess(true)
+            return result
         } catch (error) {
-            console.log('deleteHandler error', error)
+            throw new Error(error.message || 'Error al eliminar el producto')
         } finally {
             setIsLoading(false)
         }
     }
+
+
     return (
         <>
             <Box className={classes.actionWrapper}>
@@ -463,7 +471,7 @@ const ActionGroup = ({ product }) => {
                     color="primary"
                     type="submit"
                     justIcon
-                    onClick={() => setConfirmOpen(true)}
+                    onClick={() => openModal('ELIMINAR')}
                 >
                     <DeleteForeverOutlined />
                 </Button>
@@ -484,32 +492,20 @@ const ActionGroup = ({ product }) => {
                     <Share />
                 </Button>
             </Box>
-            <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
-                <DialogTitle>Confirmar cambio de estado</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        ¿Estás seguro de que deseas eliminar este producto? Esta
-                        acción no se puede deshacer.
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button
-                        disabled={isLoading}
-                        onClick={() => setConfirmOpen(false)}
-                        color="secondary"
-                    >
-                        Cancelar
-                    </Button>
-                    <Button
-                        isLoading={isLoading}
-                        onClick={deleteHandler}
-                        color="primary"
-                        variant="contained"
-                    >
-                        Confirmar
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            <StatusChangeModal
+                open={modalState.open}
+                onClose={closeModal}
+                onConfirm={async (data) => {
+                    const { cancelReason } = data
+                    return await deleteHandler(cancelReason)
+                }}
+                nextStatus={modalState.nextStatus}
+                loading={isLoading}
+                requireCancelReason={true}
+                actionType="PRODUCT_DELETION"
+                title="Confirmar eliminación"
+                confirmButtonText="Eliminar"
+            />
             <Dialog open={success} onClose={() => setSuccess(false)}>
                 <DialogTitle>¡Exito!</DialogTitle>
                 <DialogContent>

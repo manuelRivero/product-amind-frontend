@@ -173,32 +173,59 @@ const PlanComparisonModal = ({
         return null
     }
 
+    // Debug: Log de los planes recibidos
+    console.log('📊 PlanComparisonModal - currentPlan:', currentPlan)
+    console.log('📊 PlanComparisonModal - newPlan:', newPlan)
+
     // Función para obtener el valor de límite de una feature
     const getFeatureLimit = (plan, featureKey) => {
-        const feature = plan.features?.[featureKey]
-        if (!feature || !feature.enabled) {
+        console.log('🔍 getFeatureLimit - plan:', plan?.name, 'featureKey:', featureKey)
+        console.log('🔍 plan.features:', plan?.features)
+        
+        if (!plan.features || !Array.isArray(plan.features)) {
+            console.log('❌ No features array found')
+            return { value: null, enabled: false }
+        }
+        
+        const feature = plan.features.find(f => f.feature.name === featureKey)
+        console.log('🔍 found feature:', feature)
+        
+        if (!feature || !feature.feature.enabled) {
+            console.log('❌ Feature not found or not enabled')
             return { value: null, enabled: false }
         }
 
         const config = FEATURE_CONFIG[featureKey]
+        console.log('🔍 config:', config)
+        
         if (!config || !config.limitationKey) {
+            console.log('✅ No limitation config, returning "Disponible"')
             return { value: 'Disponible', enabled: true }
         }
 
         const limits = feature.limits
+        console.log('🔍 limits:', limits)
+        
         if (!limits) {
+            console.log('✅ No limits, returning "Disponible"')
             return { value: 'Disponible', enabled: true }
         }
 
         if (limits.unlimited) {
+            console.log('✅ Unlimited, returning "Ilimitado"')
             return { value: 'Ilimitado', enabled: true }
         }
 
-        const limitValue = limits[config.limitationKey]
-        return {
+        // En el nuevo modelo, usamos limits.max directamente
+        const limitValue = limits.max
+        console.log('🔍 limitValue:', limitValue)
+        
+        const result = {
             value: limitValue !== undefined && limitValue !== null ? limitValue : 'Disponible',
             enabled: true
         }
+        console.log('✅ Returning result:', result)
+        return result
     }
 
     // Función para comparar dos valores
@@ -246,10 +273,29 @@ const PlanComparisonModal = ({
     }
 
     // Obtener todas las features únicas de ambos planes
-    const allFeatures = new Set([
-        ...Object.keys(currentPlan.features || {}),
-        ...Object.keys(newPlan.features || {})
-    ])
+    const allFeatures = new Set()
+    
+    // Agregar features del plan actual
+    if (currentPlan.features && Array.isArray(currentPlan.features)) {
+        console.log('📋 Current plan features:', currentPlan.features.map(f => f.feature?.name))
+        currentPlan.features.forEach(f => {
+            if (f.feature?.name) {
+                allFeatures.add(f.feature.name)
+            }
+        })
+    }
+    
+    // Agregar features del nuevo plan
+    if (newPlan.features && Array.isArray(newPlan.features)) {
+        console.log('📋 New plan features:', newPlan.features.map(f => f.feature?.name))
+        newPlan.features.forEach(f => {
+            if (f.feature?.name) {
+                allFeatures.add(f.feature.name)
+            }
+        })
+    }
+    
+    console.log('📋 All unique features:', Array.from(allFeatures))
 
     // Calcular resumen de cambios
     const summary = {
@@ -333,7 +379,10 @@ const PlanComparisonModal = ({
                                     console.log('currentLimit', currentLimit)
                                     const newLimit = getFeatureLimit(newPlan, featureKey)
                                     const comparison = compareValues(currentLimit.value, newLimit.value)
-                                    const feature = newPlan.features?.[featureKey] || currentPlan.features?.[featureKey]
+                                    // Buscar la feature en ambos planes
+        const newPlanFeature = newPlan.features?.find(f => f.feature.name === featureKey)
+        const currentPlanFeature = currentPlan.features?.find(f => f.feature.name === featureKey)
+        const feature = newPlanFeature || currentPlanFeature
 
                                     return (
                                         <TableRow key={featureKey}>
@@ -344,7 +393,7 @@ const PlanComparisonModal = ({
                                                     ) : (
                                                         <CancelIcon className={classes.featureIcon} style={{ color: 'red' }} />
                                                     )}
-                                                    {feature?.title || featureKey}
+                                                    {feature?.feature?.title || featureKey}
                                                 </div>
                                             </TableCell>
                                             <TableCell className={classes.currentPlanCell}>
