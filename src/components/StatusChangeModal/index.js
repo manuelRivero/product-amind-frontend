@@ -40,11 +40,12 @@ const StatusChangeModal = ({
   }, [open])
 
   // Close modal when loading changes from true to false (request completed)
+  // Only close if we're not showing cancel reasons (i.e., not a cancel action)
   useEffect(() => {
-    if (!loading && open) {
+    if (!loading && open && !isCancelAction) {
       onClose()
     }
-  }, [loading, open, onClose])
+  }, [loading, open, onClose, isCancelAction])
 
   // Reset error when modal opens
   useEffect(() => {
@@ -52,6 +53,11 @@ const StatusChangeModal = ({
       setError(null)
     }
   }, [open])
+
+  const isCancelAction = nextStatus === 'CANCELADO'
+  const showCancelReasons = isCancelAction && requireCancelReason
+  const isConfirmDisabled = showCancelReasons && !selectedReason
+  const cancelReasons = getCancelReasons(actionType)
 
   const handleConfirm = async () => {
     try {
@@ -68,11 +74,6 @@ const StatusChangeModal = ({
       setError(error.message || 'Error al cambiar el estado. Inténtalo de nuevo.')
     }
   }
-
-  const isCancelAction = nextStatus === 'CANCELADO'
-  const showCancelReasons = isCancelAction && requireCancelReason
-  const isConfirmDisabled = showCancelReasons && !selectedReason
-  const cancelReasons = getCancelReasons(actionType)
 
   return (
     <>
@@ -143,7 +144,6 @@ const StatusChangeModal = ({
       <Snackbar
         place="tc"
         color="danger"
-        icon={null}
         message={error}
         open={!!error}
         closeNotification={() => setError(null)}

@@ -33,7 +33,7 @@ import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
 import ChevronRightIcon from '@material-ui/icons/ChevronRight'
 import { Link } from 'react-router-dom'
 import { RemoveRedEye } from '@material-ui/icons'
-import { saleStatus } from '../../../const/sales'
+import { saleStatus, cancelReason } from '../../../const/sales'
 import StatusChangeModal from '../../StatusChangeModal'
 import { useStatusChange } from '../../../hooks/useStatusChange'
 
@@ -184,55 +184,64 @@ export default function PendingOrders() {
                                             'Cambiar estatus',
                                             'Acciones',
                                         ]}
-                                        tableData={pendingOrders.data.sales.map(
-                                            (e) => {
-                                                console.log('e', e)
-                                                return [
-                                                    <p key={`sale-id-${e._id}`}>
-                                                        {e._id}
-                                                    </p>,
-                                                    <p
-                                                        key={`sale-total-${e._id}`}
-                                                    >
-                                                        $
-                                                        {e.totalPrice.toFixed(
-                                                            2
-                                                        )}
-                                                    </p>,
-                                                    <p
-                                                        key={`sale-date-${e._id}`}
-                                                    >
-                                                        {moment(e.createdAt)
-                                                            .utc()
-                                                            .format(
-                                                                'DD-MM-YYYY HH:mm:ss A'
-                                                            )}
-                                                    </p>,
-                                                    <p
-                                                        key={`sale-status-${e._id}`}
-                                                    >
-                                                        {e.status}
-                                                    </p>,
-                                                    <ChangeStatusDropdown
-                                                        key={e._id}
-                                                        sale={e}
-                                                    />,
-                                                    <Link
-                                                        key={`detail-button-${e._id}`}
-                                                        to={`/admin/orders/detail/${e._id}`}
-                                                    >
-                                                        <Button
-                                                            isLoading={false}
-                                                            variant="contained"
-                                                            color="primary"
-                                                            type="button"
-                                                        >
-                                                            <RemoveRedEye />
-                                                        </Button>
-                                                    </Link>,
-                                                ]
-                                            }
-                                        )}
+                                                                                 tableData={pendingOrders.data.sales.map(
+                                             (e) => {
+                                                 // Debug: verificar datos de la orden cancelada
+                                                 if (e.status === 'CANCELADO') {
+                                                     console.log('PendingOrders - Orden cancelada:', e._id, 'Status:', e.status, 'Reason:', e.reason, 'Type of reason:', typeof e.reason)
+                                                 }
+                                                 
+                                                 // Mostrar motivo de cancelación si el estado es CANCELADO
+                                                 const statusDisplay = e.status === 'CANCELADO' && e.reason 
+                                                     ? `${e.status} - ${cancelReason[e.reason] || cancelReason[parseInt(e.reason)] || 'Motivo no especificado'}`
+                                                     : e.status
+                                                 
+                                                 return [
+                                                     <p key={`sale-id-${e._id}`}>
+                                                         {e._id}
+                                                     </p>,
+                                                     <p
+                                                         key={`sale-total-${e._id}`}
+                                                     >
+                                                         $
+                                                         {e.totalPrice.toFixed(
+                                                             2
+                                                         )}
+                                                     </p>,
+                                                     <p
+                                                         key={`sale-date-${e._id}`}
+                                                     >
+                                                         {moment(e.createdAt)
+                                                             .utc()
+                                                             .format(
+                                                                 'DD-MM-YYYY HH:mm:ss A'
+                                                             )}
+                                                     </p>,
+                                                     <p
+                                                         key={`sale-status-${e._id}`}
+                                                     >
+                                                         {statusDisplay}
+                                                     </p>,
+                                                     <ChangeStatusDropdown
+                                                         key={e._id}
+                                                         sale={e}
+                                                     />,
+                                                     <Link
+                                                         key={`detail-button-${e._id}`}
+                                                         to={`/admin/orders/detail/${e._id}`}
+                                                     >
+                                                         <Button
+                                                             isLoading={false}
+                                                             variant="contained"
+                                                             color="primary"
+                                                             type="button"
+                                                         >
+                                                             <RemoveRedEye />
+                                                         </Button>
+                                                     </Link>,
+                                                 ]
+                                             }
+                                         )}
                                     />
                                     <ReactPaginate
                                         forcePage={page}

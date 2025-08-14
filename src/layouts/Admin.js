@@ -1,8 +1,5 @@
 import React from 'react'
 import { Switch, Route } from 'react-router-dom'
-// creates a beautiful scrollbar
-import PerfectScrollbar from 'perfect-scrollbar'
-import 'perfect-scrollbar/css/perfect-scrollbar.css'
 // @material-ui/core components
 import { makeStyles } from '@material-ui/core/styles'
 // core components
@@ -21,7 +18,6 @@ import PermissionError from '../components/PermissionError'
 import { IconButton } from '@material-ui/core'
 import CloseIcon from '@material-ui/icons/Close'
 
-let ps
 
 const mainRoutes = dashboardRoutes.map((prop, key) => {
     if (prop.layout === '/admin') {
@@ -134,12 +130,7 @@ export default function Admin({ ...rest }) {
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen)
     }
-
-    const resizeFunction = () => {
-        if (window.innerWidth >= 960) {
-            setMobileOpen(false)
-        }
-    }
+    
     const filteredRoutes = React.useMemo(() => {
         return dashboardRoutes.filter((prop) => {
             // Verificar si es una ruta de admin
@@ -172,26 +163,7 @@ export default function Admin({ ...rest }) {
             return isAdminRoute && hasSubscription && hasPermission
         })
     }, [isPaymentPaused, isPaymentCancelled, isPaymentApproved, isSubscriptionActive, hasUserPermission])
-    React.useEffect(() => {
-        if(mainPanel.current === null) {
-            return
-        }
-        if (navigator.platform.indexOf('Win') > -1) {
-            ps = new PerfectScrollbar(mainPanel.current, {
-                suppressScrollX: true,
-                suppressScrollY: false,
-            })
-            document.body.style.overflow = 'hidden'
-        }
-        window.addEventListener('resize', resizeFunction)
-        // Specify how to clean up after this effect:
-        return function cleanup() {
-            if (navigator.platform.indexOf('Win') > -1) {
-                ps.destroy()
-            }
-            window.removeEventListener('resize', resizeFunction)
-        }
-    }, [mainPanel])
+
 
     React.useEffect(() => {
         const verifyTenant = async () => {
@@ -327,7 +299,7 @@ export default function Admin({ ...rest }) {
                 color={color}
                 {...rest}
             />
-            <div className={classes.mainPanel} ref={mainPanel}>
+            <div className={classes.mainPanel} ref={mainPanel} id="main-panel" >
                 <Navbar
                     routes={filteredRoutes}
                     handleDrawerToggle={handleDrawerToggle}
