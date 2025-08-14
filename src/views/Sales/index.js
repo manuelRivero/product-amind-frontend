@@ -13,7 +13,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import { getSales, changeSalesStatus } from 'store/sales'
 import StatusChangeModal from '../../components/StatusChangeModal'
 import { useStatusChange } from '../../hooks/useStatusChange'
-import { cancelReason } from '../../const/sales'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
@@ -270,11 +269,7 @@ export default function Sales() {
     // Render
     const renderTableRows = () =>
         salesData.sales.map((e) => {
-            // Debug: verificar datos de la orden
-            if (e.status === 'CANCELADO') {
-                console.log('Orden cancelada:', e._id, 'Status:', e.status, 'Reason:', e.reason, 'Type of reason:', typeof e.reason, 'cancelReason[e.reason]:', cancelReason[e.reason])
-                console.log('cancelReason object:', cancelReason)
-            }
+          
 
             // Mostrar motivo de cancelación si el estado es CANCELADO
             const statusDisplay = e.status === 'CANCELADO' && e.cancelReason

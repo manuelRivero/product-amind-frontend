@@ -33,7 +33,7 @@ import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
 import ChevronRightIcon from '@material-ui/icons/ChevronRight'
 import { Link } from 'react-router-dom'
 import { RemoveRedEye } from '@material-ui/icons'
-import { saleStatus, cancelReason } from '../../../const/sales'
+import { saleStatus } from '../../../const/sales'
 import StatusChangeModal from '../../StatusChangeModal'
 import { useStatusChange } from '../../../hooks/useStatusChange'
 
@@ -186,14 +186,11 @@ export default function PendingOrders() {
                                         ]}
                                                                                  tableData={pendingOrders.data.sales.map(
                                              (e) => {
-                                                 // Debug: verificar datos de la orden cancelada
-                                                 if (e.status === 'CANCELADO') {
-                                                     console.log('PendingOrders - Orden cancelada:', e._id, 'Status:', e.status, 'Reason:', e.reason, 'Type of reason:', typeof e.reason)
-                                                 }
+                                                
                                                  
                                                  // Mostrar motivo de cancelación si el estado es CANCELADO
-                                                 const statusDisplay = e.status === 'CANCELADO' && e.reason 
-                                                     ? `${e.status} - ${cancelReason[e.reason] || cancelReason[parseInt(e.reason)] || 'Motivo no especificado'}`
+                                                 const statusDisplay = e.status === 'CANCELADO' && e.cancelReason 
+                                                     ? `${e.status} - ${e.cancelReason || 'Motivo no especificado'}`
                                                      : e.status
                                                  
                                                  return [

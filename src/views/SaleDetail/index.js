@@ -33,7 +33,7 @@ import { RemoveRedEye } from '@material-ui/icons'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
-import { saleStatus, cancelReason } from '../../const/sales'
+import { saleStatus } from '../../const/sales'
 import PropTypes from 'prop-types'
 import { changeDetailSalesStatus } from '../../store/sales'
 import StatusChangeModal from '../../components/StatusChangeModal'
@@ -157,8 +157,8 @@ export default function SaleDetail() {
                                             <p>
                                                 Estatus:{' '}
                                                 <strong>
-                                                    {saleData.status === 'CANCELADO' && saleData.reason 
-                                                        ? `${saleData.status} - ${cancelReason[saleData.reason] || cancelReason[parseInt(saleData.reason)] || 'Motivo no especificado'}`
+                                                    {saleData.status === 'CANCELADO' && saleData.cancelReason 
+                                                        ? `${saleData.status} - ${ saleData.cancelReason || 'Motivo no especificado'}`
                                                         : saleData.status
                                                     }
                                                 </strong>
