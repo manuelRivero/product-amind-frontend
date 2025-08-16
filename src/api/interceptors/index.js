@@ -50,7 +50,7 @@ export const setUpInterceptor = (store) => {
             console.log('error on interceptor', error)
             
             // Manejar diferentes tipos de errores de autenticación
-            if (error.response?.status === 401 || error.response?.status === 403) {
+            if (error.response?.status === 401) {
                 console.log('Token inválido o expirado, cerrando sesión')
                 store.dispatch(logout())
                 history.push('/auth/login')

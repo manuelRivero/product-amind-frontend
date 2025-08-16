@@ -212,7 +212,7 @@ export default function AddProducts() {
     const [deleteImages, setDeleteImages] = useState([])
     const [openConfirmUnique, setOpenConfirmUnique] = useState(false)
     const [productDetail, setProductDetail] = useState(null)
-    const [productDetailError, setProductDetailError] = useState(false)
+    const [submitError, setSubmitError] = useState(null)
     //form
     const {
         control,
@@ -264,7 +264,7 @@ export default function AddProducts() {
     })
 
     const submit = async (values) => {
-        console.log("values", values)
+        setSubmitError(null)
         const data = new FormData()
 
         // Agregar datos básicos del producto
@@ -308,15 +308,22 @@ export default function AddProducts() {
         )
 
         // Si es edición, manejar imágenes eliminadas
-        if (params.id) {
-            if (deleteImages && deleteImages.length > 0) {
-                data.append('deletedImages', JSON.stringify(deleteImages))
+        try {
+            if (params.id) {
+                if (deleteImages && deleteImages.length > 0) {
+                    data.append('deletedImages', JSON.stringify(deleteImages))
+                }
+                // Despachar acción de edición
+                dispatch(editProduct({ access: user.token, data, id: params.id }))
+            } else {
+                // Despachar acción de creación
+                await dispatch(postProducts({ access: user.token, data })).unwrap()
             }
-            // Despachar acción de edición
-            dispatch(editProduct({ access: user.token, data, id: params.id }))
-        } else {
-            // Despachar acción de creación
-            dispatch(postProducts({ access: user.token, data }))
+        }
+        catch (error) {
+            setSubmitError({
+                error: error.error
+            })
         }
     }
 
@@ -340,8 +347,10 @@ export default function AddProducts() {
                     setProductDetail(data.product)
                 } catch (error) {
                     console.log('error en el catch', error)
-                    setProductDetailError(false)
-                } 
+                    setSubmitError({
+                        error: error.error
+                    })
+                }
             }
         }
 
@@ -368,8 +377,8 @@ export default function AddProducts() {
                     (category) => category._id === productDetail.category
                 )
                     ? categoriesData.data.find(
-                          (category) => category._id === productDetail.category
-                      )._id
+                        (category) => category._id === productDetail.category
+                    )._id
                     : '',
             })
             if (productDetail.features.length > 0) {
@@ -380,7 +389,7 @@ export default function AddProducts() {
                     .map((feature) =>
                         featuresArray.append({
                             ...feature,
-                            hasSize: feature.size,
+                            hasSize: Boolean(feature.size),
                         })
                     )
                 productDetail.features
@@ -389,7 +398,7 @@ export default function AddProducts() {
                         console.log("feature", feature)
                         setValue('stock', feature.stock)
                         setValue('unique', true)
-                        
+
                     })
             }
         } else {
@@ -995,7 +1004,7 @@ export default function AddProducts() {
                 subTitle="Tu producto se guardo exitosamente"
                 hasCancel={false}
                 hasConfirm={true}
-                cancelCb={() => {}}
+                cancelCb={() => { }}
                 confirmCb={() => {
                     dispatch(resetProductSuccess())
                     dispatch(resetEditProductSuccess())
@@ -1003,18 +1012,18 @@ export default function AddProducts() {
                 }}
             />
             <CustomModal
-                open={productDetailError}
+                open={submitError}
                 handleClose={() => {
-                    history.push('/admin/products')
+                    setSubmitError(null)
                 }}
                 icon={'error'}
                 title="¡Error!"
-                subTitle="has navegado a una pagina invalida"
+                subTitle={submitError?.error}
                 hasCancel={false}
                 hasConfirm={true}
-                cancelCb={() => {}}
+                cancelCb={() => { }}
                 confirmCb={() => {
-                    history.push('/admin/products')
+                    setSubmitError(null)
                 }}
             />
             <CustomModal

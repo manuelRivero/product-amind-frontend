@@ -65,11 +65,16 @@ export const editProduct = createAsyncThunk(
     }
 )
 
-export const postProducts = createAsyncThunk('/post/products', async (args) => {
-    const [products] = await Promise.all([
-        uploadProduct(args.access, args.data),
-    ])
-    return products
+export const postProducts = createAsyncThunk('/post/products', async (args, {rejectWithValue}) => {
+    try {
+        const [products] = await Promise.all([
+            uploadProduct(args.access, args.data),
+        ])
+        return products
+    } catch (error) {
+        console.log('error EN EL CATCH de postProducts', error)
+        return rejectWithValue(error.response.data)
+    }
 })
 
 export const postProductsExcel = createAsyncThunk(
