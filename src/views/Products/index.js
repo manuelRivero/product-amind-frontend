@@ -336,6 +336,7 @@ export default function Products() {
                                     ]}
                                     tableData={productsData.data.products.map(
                                         (e) => {
+                                            console.log('e', e)
                                             return [
                                                 e._id,
                                                 e.name,
@@ -346,11 +347,11 @@ export default function Products() {
                                                 )}`,
                                                 e.discount
                                                     ? `${e.discount}%`
-                                                    : 0,
+                                                    : '0%',
                                                 `$${formatNumber(
                                                     finalPrice(
                                                         e.price,
-                                                        e.discount
+                                                        e.discount ?? 0 + e.offerDiscount ?? 0
                                                     )
                                                 )}`,
                                                 e.status
