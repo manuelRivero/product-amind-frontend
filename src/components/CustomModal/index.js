@@ -61,6 +61,8 @@ export default function CustomModal({
     hasCancel,
     confirmCb,
     cancelCb,
+    confirmText = 'Aceptar',
+    cancelText = 'Cancelar',
 }) {
     const classes = useStyles()
     return (
@@ -91,7 +93,7 @@ export default function CustomModal({
                             type="button"
                             onClick={() => cancelCb()}
                         >
-                            Cancelar
+                            {cancelText}
                         </Button>
                     )}
                     {hasConfirm && (
@@ -102,7 +104,7 @@ export default function CustomModal({
                             type="button"
                             onClick={() => confirmCb()}
                         >
-                            Aceptar
+                            {confirmText}
                         </Button>
                     )}
                 </Box>
@@ -122,4 +124,6 @@ CustomModal.propTypes = {
     hasCancel: PropTypes.bool,
     confirmCb: PropTypes.func,
     cancelCb: PropTypes.func,
+    confirmText: PropTypes.string,
+    cancelText: PropTypes.string,
 }

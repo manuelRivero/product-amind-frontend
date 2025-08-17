@@ -1002,9 +1002,17 @@ export default function AddProducts() {
                 icon={'success'}
                 title="¡Listo!"
                 subTitle="Tu producto se guardo exitosamente"
-                hasCancel={false}
+                hasCancel={params.id ? false : true}
+                cancelText={params.id ? 'Cerrar' : 'Crear otro producto'}
+                confirmText="Ir al listado de productos"
                 hasConfirm={true}
-                cancelCb={() => { }}
+                cancelCb={() => { 
+                    if (params.id) {
+                        dispatch(resetEditProductSuccess())
+                    } else {
+                        dispatch(resetProductSuccess())
+                    }
+                }}
                 confirmCb={() => {
                     dispatch(resetProductSuccess())
                     dispatch(resetEditProductSuccess())
