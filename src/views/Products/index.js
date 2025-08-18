@@ -432,6 +432,7 @@ const ActionGroup = ({ product }) => {
                 })
             ).unwrap()
             setSuccess(true)
+            closeModal()
             return result
         } catch (error) {
             throw new Error(error.message || 'Error al eliminar el producto')
@@ -440,7 +441,7 @@ const ActionGroup = ({ product }) => {
         }
     }
 
-
+    console.log('openModal', modalState)
     return (
         <>
             <Box className={classes.actionWrapper}>
@@ -495,14 +496,14 @@ const ActionGroup = ({ product }) => {
             </Box>
             <StatusChangeModal
                 open={modalState.open}
-                onClose={closeModal}
+                onClose={()=>closeModal()}
                 onConfirm={async (data) => {
                     const { cancelReason } = data
                     return await deleteHandler(cancelReason)
                 }}
                 nextStatus={modalState.nextStatus}
                 loading={isLoading}
-                requireCancelReason={true}
+                requireCancelReason={false}
                 actionType="PRODUCT_DELETION"
                 title="Confirmar eliminación"
                 confirmButtonText="Eliminar"

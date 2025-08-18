@@ -480,11 +480,18 @@ export default function AddOffer() {
                                             e.name,
                                             e.categoryDetail[0].name,
                                             `$${formatNumber(
-                                                e.price.toFixed(1)
+                                                finalPrice(
+                                                    e.price, 0
+                                                )
                                             )}`,
-                                            e.discount ? `${e.discount}%` : 0,
+                                            `${formatNumber(
+                                                 e.discount ?? 0 + e.offerDiscount ?? 0
+                                            )}%`,
                                             `$${formatNumber(
-                                                finalPrice(e.price, e.discount)
+                                                finalPrice(
+                                                    e.price,
+                                                    e.discount ?? 0 + e.offerDiscount ?? 0
+                                                )
                                             )}`,
                                             e.status
                                                 ? e.status.available
@@ -499,7 +506,7 @@ export default function AddOffer() {
                                                     removeProduct(e._id)
                                                 }
                                             >
-                                                Quitar
+                                                Eliminar
                                             </Button>,
                                         ]
                                     })}

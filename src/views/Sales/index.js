@@ -43,6 +43,7 @@ import { DatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers'
 import MomentUtils from '@date-io/moment'
 import EmptyTablePlaceholder from '../../components/EmptyTablePlaceholder'
 import { scrollToTop } from '../../utils/globals'
+import CustomModal from '../../components/CustomModal'
 
 const styles = {
     pagination: {
@@ -256,7 +257,7 @@ export default function Sales() {
             params.dateFrom = moment(watchStartDate).format('DD-MM-YYYY')
             params.dateTo = moment(watchEndDate).format('DD-MM-YYYY')
         }
-        
+
         fetchSales({
             ...params,
         })
@@ -269,7 +270,7 @@ export default function Sales() {
     // Render
     const renderTableRows = () =>
         salesData.sales.map((e) => {
-          
+
 
             // Mostrar motivo de cancelación si el estado es CANCELADO
             const statusDisplay = e.status === 'CANCELADO' && e.cancelReason
@@ -336,13 +337,13 @@ export default function Sales() {
                             <ChevronLeftIcon />
                         </Button>
                     }
-                onPageChange={(e) => {
-                    console.log('Page changed to:', e.selected)
-                    setPage(e.selected)
-                    
-                    // Scroll al inicio con offset de 100px para dar espacio al header
-                  
-                }}
+                    onPageChange={(e) => {
+                        console.log('Page changed to:', e.selected)
+                        setPage(e.selected)
+
+                        // Scroll al inicio con offset de 100px para dar espacio al header
+
+                    }}
                     pageRangeDisplayed={5}
                     pageCount={Math.max(1, Math.ceil(
                         salesData.total / 10
@@ -608,7 +609,6 @@ const ChangeStatusDropdown = ({ sale }) => {
     const statusOptions = ['PAGADO', 'ENVIADO', 'CANCELADO']
     const dispatch = useDispatch()
     const { loadingChangeStatus } = useSelector((state) => state.sales)
-    const { user } = useSelector((state) => state.auth)
 
     const classes = useStyles()
     //form
@@ -623,7 +623,8 @@ const ChangeStatusDropdown = ({ sale }) => {
     const [anchorEl, setAnchorEl] = React.useState(null)
     const [open, setOpen] = React.useState(false)
     const { modalState, openModal, closeModal } = useStatusChange()
-
+    const [showSuccessModal, setShowSuccessModal] = React.useState(false)
+    const [showErrorModal, setShowErrorModal] = React.useState(false)
     const handleClick = (event) => {
         setOpen(!open)
         setAnchorEl(anchorEl ? null : event.currentTarget)
@@ -633,15 +634,15 @@ const ChangeStatusDropdown = ({ sale }) => {
         try {
             setOpen(false)
             setAnchorEl(null)
-            const result = await dispatch(
+            await dispatch(
                 changeSalesStatus({
-                    access: user.token,
                     id: sale._id,
                     status,
                     reason
                 })
             ).unwrap()
-            return result
+            closeModal()
+            setShowSuccessModal(true)
         } catch (error) {
             throw new Error(error.message || 'Error al cambiar el estado de la orden')
         }
@@ -741,12 +742,42 @@ const ChangeStatusDropdown = ({ sale }) => {
                 onConfirm={async (data) => {
                     const { nextStatus, cancelReason } = data
                     const statusIndex = statusOptions.findIndex(option => option === nextStatus) + 1
-                    return await onStatusChange(statusIndex, cancelReason)
+                    onStatusChange(statusIndex, cancelReason)
                 }}
                 nextStatus={modalState.nextStatus}
                 loading={loadingChangeStatus === sale._id}
                 requireCancelReason={true}
                 actionType="ORDER_CANCELLATION"
+            />
+            <CustomModal
+                open={showSuccessModal}
+                onClose={() => {
+                    setShowSuccessModal(false)
+                }}
+                icon="success"
+                title="Cambiar estatus"
+                subTitle="Estatus cambiado correctamente"
+                confirmText="Aceptar"
+                hasCancel={false}
+                hasConfirm={true}
+                confirmCb={() => {
+                    setShowSuccessModal(false)
+                }}
+                />
+            <CustomModal
+                open={showErrorModal}
+                onClose={() => {
+                    setShowErrorModal(false)
+                }}
+                icon="error"
+                title="error"
+                subTitle="Error al cambiar el estado de la orden"
+                confirmText="Aceptar"
+                hasCancel={false}
+                hasConfirm={true}
+                confirmCb={() => {
+                    setShowErrorModal(false)
+                }}
             />
         </>
     )

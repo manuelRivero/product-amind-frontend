@@ -31,21 +31,8 @@ const StatusChangeModal = ({
 }) => {
   const [selectedReason, setSelectedReason] = useState('')
   const [error, setError] = useState(null)
-  
-  // Reset selectedReason when modal opens/closes
-  useEffect(() => {
-    if (!open) {
-      setSelectedReason('')
-    }
-  }, [open])
 
-  // Close modal when loading changes from true to false (request completed)
-  // Only close if we're not showing cancel reasons (i.e., not a cancel action)
-  useEffect(() => {
-    if (!loading && open && !isCancelAction) {
-      onClose()
-    }
-  }, [loading, open, onClose, isCancelAction])
+ 
 
   // Reset error when modal opens
   useEffect(() => {
@@ -62,15 +49,16 @@ const StatusChangeModal = ({
   const handleConfirm = async () => {
     try {
       // Encontrar la key del motivo seleccionado
-      const reasonKey = requireCancelReason && selectedReason ? 
+      const reasonKey = requireCancelReason && selectedReason ?
         Object.keys(cancelReason).find(key => cancelReason[key] === selectedReason) : null
-      
+
       const data = {
         nextStatus,
         cancelReason: reasonKey ? parseInt(reasonKey) : null
       }
       await onConfirm(data)
     } catch (error) {
+      console.log('error', error)
       setError(error.message || 'Error al cambiar el estado. Inténtalo de nuevo.')
     }
   }
@@ -78,68 +66,68 @@ const StatusChangeModal = ({
   return (
     <>
       <Dialog open={open} onClose={onClose}>
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          ¿Estás seguro de que deseas cambiar el estado a{' '}
-          <strong>{nextStatus}</strong>?
-        </DialogContentText>
-        
-        {showCancelReasons && (
-          <FormControl component="fieldset" style={{ marginTop: '1rem' }}>
-            <FormLabel component="legend">Motivo de cancelación:</FormLabel>
-                         <RadioGroup
-               value={selectedReason}
-               onChange={(e) => setSelectedReason(e.target.value)}
-             >
-                                          {cancelReasons.map((reason) => (
-                                <FormControlLabel
-                                    key={reason}
-                                    value={reason}
-                                    control={<Radio />}
-                                    label={
-                                        <div>
-                                            <div>{reason}</div>
-                                                                                         {reason === cancelReason[1] && (
-                                                <small style={{ 
-                                                    color: '#666', 
-                                                    fontSize: '12px',
-                                                    display: 'block',
-                                                    marginTop: '2px'
-                                                }}>
-                                                    Alerta: Esta acción no devolverá los productos marcados como vendidos al stock. 
-                                                    Sumar productos inexistentes al inventario podría causar inconsistencias en el sistema.
-                                                </small>
-                                            )}
-                                        </div>
-                                    }
-                                />
-                            ))}
-            </RadioGroup>
-          </FormControl>
-        )}
-      </DialogContent>
-      
-      <DialogActions>
-        <Button
-          onClick={onClose}
-          color="secondary"
-          disabled={loading}
-        >
-          {cancelButtonText}
-        </Button>
-        <Button
-          onClick={handleConfirm}
-          color="primary"
-          variant="contained"
-          disabled={isConfirmDisabled || loading}
-          isLoading={loading}
-        >
-          {confirmButtonText}
-        </Button>
-      </DialogActions>
+        <DialogTitle>{title}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            ¿Estás seguro de que deseas cambiar el estado a{' '}
+            <strong>{nextStatus}</strong>?
+          </DialogContentText>
+
+          {showCancelReasons && (
+            <FormControl component="fieldset" style={{ marginTop: '1rem' }}>
+              <FormLabel component="legend">Motivo de cancelación:</FormLabel>
+              <RadioGroup
+                value={selectedReason}
+                onChange={(e) => setSelectedReason(e.target.value)}
+              >
+                {cancelReasons.map((reason) => (
+                  <FormControlLabel
+                    key={reason}
+                    value={reason}
+                    control={<Radio />}
+                    label={
+                      <div>
+                        <div>{reason}</div>
+                        {reason === cancelReason[1] && (
+                          <small style={{
+                            color: '#666',
+                            fontSize: '12px',
+                            display: 'block',
+                            marginTop: '2px'
+                          }}>
+                            Alerta: Esta acción no devolverá los productos marcados como vendidos al stock.
+                            Sumar productos inexistentes al inventario podría causar inconsistencias en el sistema.
+                          </small>
+                        )}
+                      </div>
+                    }
+                  />
+                ))}
+              </RadioGroup>
+            </FormControl>
+          )}
+        </DialogContent>
+
+        <DialogActions>
+          <Button
+            onClick={onClose}
+            color="secondary"
+            disabled={loading}
+          >
+            {cancelButtonText}
+          </Button>
+          <Button
+            onClick={handleConfirm}
+            color="primary"
+            variant="contained"
+            disabled={isConfirmDisabled || loading}
+            isLoading={loading}
+          >
+            {confirmButtonText}
+          </Button>
+        </DialogActions>
       </Dialog>
-      
+
       {/* Error Snackbar */}
       <Snackbar
         place="tc"

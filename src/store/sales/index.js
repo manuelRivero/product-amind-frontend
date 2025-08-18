@@ -49,7 +49,6 @@ export const changeSalesStatus = createAsyncThunk(
         try {
             console.log("put sales")
             const response = await changeSaleStatusRequest(
-                args.access,
                 args.id,
                 args.status,
                 args.paymentMethod,
@@ -63,10 +62,10 @@ export const changeSalesStatus = createAsyncThunk(
 )
 
 export const changeDetailSalesStatus = createAsyncThunk(
-    'put/sales',
+    'put/sales-detail',
     async (args, { rejectWithValue }) => {
         try {
-            console.log("put sales")
+            console.log("put sales detail")
             const response = await changeSaleStatusRequest(
                 args.access,
                 args.id,
@@ -131,13 +130,16 @@ export const salesSlice = createSlice({
         },
         [changeSalesStatus.fulfilled]: (state, action) => {
             state.loadingChangeStatus = null
+            console.log("action", action)
             const { id, status } = action.payload.data
             console.log("sales data", state.salesData)
             const targetIndex = state.salesData.sales.findIndex(
                 (e) => e._id === id
             )
-            console.log("target", state.salesData.sales[targetIndex] )
-            state.salesData.sales[targetIndex].status = status
+            if(targetIndex !== -1){
+                console.log("target", state.salesData.sales[targetIndex] )
+                state.salesData.sales[targetIndex].status = status
+            }
         },
         [changeSalesStatus.rejected]: (state) => {
             state.loadingChangeStatus = null
