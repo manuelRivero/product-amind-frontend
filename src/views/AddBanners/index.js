@@ -174,6 +174,7 @@ export default function AddBannersPage() {
     const [loading, setLoading] = useState(false)
     const [showFormAlert, setShowFormAlert] = useState(undefined)
     const [showModal, setShowModal] = useState(false)
+    const [showErrorModal, setShowErrorModal] = useState(false)
     const watchType = watch('type')
     console.log('watchType', watchType)
     const handleDeleteImage = (index) => {
@@ -206,6 +207,7 @@ export default function AddBannersPage() {
                     ? error.response.data.message
                     : 'Error al guardar el banner'
             )
+            setShowErrorModal({error: error.response.data.error})
         } finally {
             setLoading(false)
         }
@@ -415,6 +417,19 @@ export default function AddBannersPage() {
                 confirmCb={() => {
                     reset({ images: [] })
                     history.push('/admin/banners')
+                }}
+            />
+             <CustomModal
+                open={showErrorModal}
+                handleClose={() => setShowErrorModal(false)}
+                icon={'error'}
+                title="¡Error!"
+                subTitle={showErrorModal.error}
+                hasCancel={false}
+                hasConfirm={true}
+                cancelCb={() => {}}
+                confirmCb={() => {
+                    setShowErrorModal(false)
                 }}
             />
         </>
