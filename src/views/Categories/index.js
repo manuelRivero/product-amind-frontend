@@ -30,9 +30,10 @@ import TextInput from 'components/TextInput/Index'
 import { useForm, Controller } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
-import { getCategories } from 'store/categories'
+import { getCategories, deleteCategory } from 'store/categories'
 import { DeleteForever, Search } from '@material-ui/icons'
 import EmptyTablePlaceholder from '../../components/EmptyTablePlaceholder'
+import CustomModal from 'components/CustomModal'
 
 const schema = yup.object({
     search: yup.string(),
@@ -97,14 +98,23 @@ const useStyles = makeStyles({
 export default function Categories() {
     const dispatch = useDispatch()
     const { user } = useSelector((state) => state.auth)
-    const { categoriesData, loadingCategoriesData } = useSelector(
-        (state) => state.categories
-    )
+    const {
+        categoriesData,
+        loadingCategoriesData,
+        error
+    } = useSelector((state) => state.categories)
 
     // styles
     const classes = useStyles()
     // states
     const [page, setPage] = useState(0)
+
+    // Estados para modales de eliminación
+    const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
+    const [showSuccessModal, setShowSuccessModal] = useState(false)
+    const [showErrorModal, setShowErrorModal] = useState(false)
+    const [categoryToDelete, setCategoryToDelete] = useState(null)
+    const [loadingDeleteCategory, setLoadingDeleteCategory] = useState(false)
 
     //form
     const { control, handleSubmit, watch, reset } = useForm({
@@ -143,6 +153,38 @@ export default function Categories() {
         )
     }
 
+    const handleDeleteClick = (category) => {
+        setCategoryToDelete(category)
+        setShowDeleteConfirmModal(true)
+    }
+
+    const handleDeleteConfirm = async () => {
+        console.log('categoryToDelete', categoryToDelete)
+        try {
+            setShowDeleteConfirmModal(false)
+            setLoadingDeleteCategory(true)
+            await dispatch(deleteCategory({id:categoryToDelete._id})).unwrap()
+            setCategoryToDelete(null)
+            setShowSuccessModal(true)
+        } catch (error) {
+            console.log('error al eliminar la categoría', error)
+            setShowErrorModal(true)
+        }
+    }
+
+    const handleDeleteCancel = () => {
+        setShowDeleteConfirmModal(false)
+        setCategoryToDelete(null)
+    }
+
+    const handleSuccessModalClose = () => {
+        setShowSuccessModal(false)
+    }
+
+    const handleErrorModalClose = () => {
+        setShowErrorModal(false)
+    }
+
     const handleContent = () => {
         return categoriesData.data.length > 0 ? (
             <>
@@ -155,7 +197,9 @@ export default function Categories() {
                             e.name,
                             <ActionGroup
                                 category={e}
-                                key={`action-group-${e._d}`}
+                                onDelete={handleDeleteClick}
+                                loadingDelete={loadingDeleteCategory === e._id}
+                                key={`action-group-${e._id}`}
                             />,
                         ]
                     })}
@@ -214,116 +258,159 @@ export default function Categories() {
     }, [page])
 
     return (
-        <GridContainer>
-            <GridItem xs={12} sm={12} md={12}>
-                <Card>
-                    <CardHeader id="table-header" color="primary">
-                        <GridContainer>
-                            <GridItem xs={12} sm={12} md={6}>
-                                <h4 className={classes.cardTitleWhite}>
-                                    Categorías
-                                </h4>
-                                <p className={classes.cardCategoryWhite}>
-                                    Aquí puedes visualizar todas las categorías
-                                </p>
-                            </GridItem>
-                            <GridItem xs={12} sm={12} md={6}>
-                                <Box className={classes.addCategoryWrapper}>
-                                    <Box
-                                        className={classes.addCategoryContainer}
-                                    >
-                                        <p
-                                            className={
-                                                classes.cardCategoryWhite
-                                            }
+        <>
+            <GridContainer>
+                <GridItem xs={12} sm={12} md={12}>
+                    <Card>
+                        <CardHeader id="table-header" color="primary">
+                            <GridContainer>
+                                <GridItem xs={12} sm={12} md={6}>
+                                    <h4 className={classes.cardTitleWhite}>
+                                        Categorías
+                                    </h4>
+                                    <p className={classes.cardCategoryWhite}>
+                                        Aquí puedes visualizar todas las categorías
+                                    </p>
+                                </GridItem>
+                                <GridItem xs={12} sm={12} md={6}>
+                                    <Box className={classes.addCategoryWrapper}>
+                                        <Box
+                                            className={classes.addCategoryContainer}
                                         >
-                                            Agregar nueva categoría
-                                        </p>
-                                        <Link to="/admin/categories/add-category">
-                                            <Button
-                                                isLoading={false}
-                                                variant="contained"
-                                                color="white"
-                                                type="button"
-                                                size="sm"
-                                                justIcon
-                                            >
-                                                <AddIcon />
-                                            </Button>
-                                        </Link>
-                                    </Box>
-                                </Box>
-                            </GridItem>
-                        </GridContainer>
-                    </CardHeader>
-                    <CardBody>
-                        <form onSubmit={handleSubmit(submit)}>
-                            <Box className={classes.filterWrapper}>
-                                <Box>
-                                    <Controller
-                                        name="search"
-                                        control={control}
-                                        render={({ field, fieldState }) => (
-                                            <TextInput
-                                                error={
-                                                    fieldState.error
-                                                        ? true
-                                                        : false
+                                            <p
+                                                className={
+                                                    classes.cardCategoryWhite
                                                 }
-                                                errorMessage={fieldState.error}
-                                                icon={null}
-                                                label={'Nombre de la categoría'}
-                                                value={field.value}
-                                                onChange={({ target }) => {
-                                                    field.onChange(target.value)
-                                                }}
-                                            />
-                                        )}
-                                    />
-                                </Box>
-                                {watchSearch && (
-                                    <Box display="flex" flex={1}>
-                                        <IconButton
-                                            variant="contained"
-                                            color="primary"
-                                            type="submit"
-                                            style={{
-                                                alignSelf: 'center',
-                                                color: 'rgba(0,175,195, 1)',
-                                            }}
-                                        >
-                                            <Search />
-                                        </IconButton>
-                                        <IconButton
-                                            onClick={handleDeleteSearch}
-                                            variant="contained"
-                                            color="primary"
-                                            style={{
-                                                alignSelf: 'center',
-                                                color: 'red',
-                                            }}
-                                        >
-                                            <DeleteForever />
-                                        </IconButton>
+                                            >
+                                                Agregar nueva categoría
+                                            </p>
+                                            <Link to="/admin/categories/add-category">
+                                                <Button
+                                                    isLoading={false}
+                                                    variant="contained"
+                                                    color="white"
+                                                    type="button"
+                                                    size="sm"
+                                                    justIcon
+                                                >
+                                                    <AddIcon />
+                                                </Button>
+                                            </Link>
+                                        </Box>
                                     </Box>
-                                )}
-                            </Box>
-                        </form>
-                        {loadingCategoriesData ? (
-                            <Box display="flex" justifyContent="center">
-                                <CircularProgress />
-                            </Box>
-                        ) : (
-                            handleContent()
-                        )}
-                    </CardBody>
-                </Card>
-            </GridItem>
-        </GridContainer>
+                                </GridItem>
+                            </GridContainer>
+                        </CardHeader>
+                        <CardBody>
+                            <form onSubmit={handleSubmit(submit)}>
+                                <Box className={classes.filterWrapper}>
+                                    <Box>
+                                        <Controller
+                                            name="search"
+                                            control={control}
+                                            render={({ field, fieldState }) => (
+                                                <TextInput
+                                                    error={
+                                                        fieldState.error
+                                                            ? true
+                                                            : false
+                                                    }
+                                                    errorMessage={fieldState.error}
+                                                    icon={null}
+                                                    label={'Nombre de la categoría'}
+                                                    value={field.value}
+                                                    onChange={({ target }) => {
+                                                        field.onChange(target.value)
+                                                    }}
+                                                />
+                                            )}
+                                        />
+                                    </Box>
+                                    {watchSearch && (
+                                        <Box display="flex" flex={1}>
+                                            <IconButton
+                                                variant="contained"
+                                                color="primary"
+                                                type="submit"
+                                                style={{
+                                                    alignSelf: 'center',
+                                                    color: 'rgba(0,175,195, 1)',
+                                                }}
+                                            >
+                                                <Search />
+                                            </IconButton>
+                                            <IconButton
+                                                onClick={handleDeleteSearch}
+                                                variant="contained"
+                                                color="primary"
+                                                style={{
+                                                    alignSelf: 'center',
+                                                    color: 'red',
+                                                }}
+                                            >
+                                                <DeleteForever />
+                                            </IconButton>
+                                        </Box>
+                                    )}
+                                </Box>
+                            </form>
+                            {loadingCategoriesData ? (
+                                <Box display="flex" justifyContent="center">
+                                    <CircularProgress />
+                                </Box>
+                            ) : (
+                                handleContent()
+                            )}
+                        </CardBody>
+                    </Card>
+                </GridItem>
+            </GridContainer>
+
+            {/* Modal de confirmación de eliminación */}
+            <CustomModal
+                open={showDeleteConfirmModal}
+                handleClose={handleDeleteCancel}
+                icon="warning"
+                title="¿Eliminar categoría?"
+                subTitle={`¿Estás seguro de que deseas eliminar la categoría "${categoryToDelete?.name}"? Esta acción no se puede deshacer. No se eliminara la categoría de los productos asociados a la misma pero ya no podras agregar nuevos productos a esta categoría.`}
+                hasConfirm={true}
+                hasCancel={true}
+                confirmCb={handleDeleteConfirm}
+                cancelCb={handleDeleteCancel}
+                confirmText="Eliminar"
+                cancelText="Cancelar"
+            />
+
+            {/* Modal de éxito */}
+            <CustomModal
+                open={showSuccessModal}
+                handleClose={handleSuccessModalClose}
+                icon="success"
+                title="Categoría eliminada"
+                subTitle="La categoría ha sido eliminada exitosamente."
+                hasConfirm={true}
+                hasCancel={false}
+                confirmCb={handleSuccessModalClose}
+                confirmText="Aceptar"
+            />
+
+            {/* Modal de error */}
+            <CustomModal
+                open={showErrorModal}
+                handleClose={handleErrorModalClose}
+                icon="error"
+                title="Error al eliminar"
+                subTitle={error?.message || 'Ha ocurrido un error al eliminar la categoría. Por favor, intenta nuevamente.'}
+                hasConfirm={true}
+                hasCancel={false}
+                confirmCb={handleErrorModalClose}
+                confirmText="Aceptar"
+            />
+        </>
     )
 }
 
-const ActionGroup = ({ category }) => {
+const ActionGroup = ({ category, onDelete, loadingDelete }) => {
     const classes = useStyles()
     return (
         <Box className={classes.actionWrapper}>
@@ -340,10 +427,23 @@ const ActionGroup = ({ category }) => {
                     <EditIcon />
                 </Button>
             </Link>
+            <Button
+                isLoading={loadingDelete}
+                variant="contained"
+                color="secondary"
+                type="button"
+                justIcon
+                onClick={() => onDelete(category)}
+                disabled={loadingDelete}
+            >
+                <DeleteForever />
+            </Button>
         </Box>
     )
 }
 
 ActionGroup.propTypes = {
     category: PropTypes.object,
+    onDelete: PropTypes.func,
+    loadingDelete: PropTypes.bool,
 }

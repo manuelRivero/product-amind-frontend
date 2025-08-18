@@ -373,7 +373,7 @@ export default function AddCategories() {
                 hasCancel={true}
                 cancelText="Volver al listado de categorías"
                 confirmText="Guardar otra categoría"
-                hasConfirm={true}
+                hasConfirm={params.id ? false : true}
                 cancelCb={() => { history.push('/admin/categories') }}
                 confirmCb={() => {
                     setShowSuccessModal(false)

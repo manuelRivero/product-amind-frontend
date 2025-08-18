@@ -3,6 +3,7 @@ import {
     getCategories as getCategoriesRequest,
     addCategory,
     editCategory as editCategoryRequest,
+    deleteCategory as deleteCategoryRequest,
 } from 'api/categories'
 
 const initialState = {
@@ -54,6 +55,20 @@ export const postCategories = createAsyncThunk(
     }
 )
 
+export const deleteCategory = createAsyncThunk(
+    '/delete/categories',
+    async (args, { rejectWithValue }) => {
+        try {
+            const [categories] = await Promise.all([
+                deleteCategoryRequest(args.id),
+            ])
+            return categories
+        } catch (error) {
+            return rejectWithValue(error.response?.data)
+        }
+    }
+)
+
 export const categoriesSlice = createSlice({
     name: 'categories',
     initialState,
@@ -74,7 +89,31 @@ export const categoriesSlice = createSlice({
             state.categoriesDataError = true
             state.error = action.payload
         },
+        [deleteCategory.pending]: (state, action) => {
+            state.loadingDeleteCategory = action.meta.arg.id
+        },
+        [deleteCategory.fulfilled]: (state, action) => {
+            state.loadingDeleteCategory = null
+            state.deleteCategorySuccess = true
+            // Actualizar la lista de categorías eliminando la categoría eliminada
+            if (state.categoriesData && state.categoriesData.data) {
+                const deletedId = action.meta.arg.id
+                state.categoriesData.data = state.categoriesData.data.filter(
+                    category => category._id !== deletedId
+                )
+            }
+        },
+        [deleteCategory.rejected]: (state, action) => {
+            state.loadingDeleteCategory = null
+            state.deleteCategoryError = true
+            state.error = action.payload
+        },
     },
 })
+
+export const {
+    resetDeleteCategorySuccess,
+    resetDeleteCategoryError,
+} = categoriesSlice.actions
 
 export default categoriesSlice.reducer

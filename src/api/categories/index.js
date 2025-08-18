@@ -48,3 +48,7 @@ export const getCategoryDetail = (access, id) => {
         },
     })
 }
+
+export const deleteCategory = (id) => {
+    return client.delete(`api/categories/delete-category/${id}`)
+}
