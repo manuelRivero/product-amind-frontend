@@ -31,13 +31,15 @@ import LoadinScreen from 'components/LoadingScreen'
 import { getProductDetail } from 'store/products'
 import { resetEditProductSuccess } from 'store/products'
 import { editProduct } from 'store/products'
-import { Delete, DeleteForever } from '@material-ui/icons'
+import { Delete, DeleteForever, Crop } from '@material-ui/icons'
 import { NumericFormat } from 'react-number-format'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import { getCategories } from 'store/categories'
 import Card from 'components/Card/Card.js'
 import CardHeader from 'components/Card/CardHeader.js'
 import CardBody from 'components/Card/CardBody.js'
+import CropModal from 'components/CropModal'
+import TinyMCEEditor from 'components/TinyMCEEditor'
 
 // schema
 const featureSchema = yup.object({
@@ -82,7 +84,14 @@ const schema = yup.object({
             then: yup.string().required('Campo obligatorio'),
             otherwise: yup.string().nullable(), // No es obligatorio si hasFeatures es true
         }),
-    description: yup.string().required('Campo obligatorio'),
+    description: yup.string()
+        .required('Campo obligatorio')
+        .test('not-empty-html', 'La descripción no puede estar vacía', (value) => {
+            if (!value) return false
+            // Remover etiquetas HTML y espacios para verificar si hay contenido real
+            const textContent = value.replace(/<[^>]*>/g, '').trim()
+            return textContent.length > 0
+        }),
     status: yup
         .string()
         .oneOf(['1', '0'], 'Campo obligatorio')
@@ -188,6 +197,7 @@ const useStyles = makeStyles({
         marginTop: '0',
         marginBottom: '0',
     },
+
 })
 
 export default function AddProducts() {
@@ -213,6 +223,10 @@ export default function AddProducts() {
     const [openConfirmUnique, setOpenConfirmUnique] = useState(false)
     const [productDetail, setProductDetail] = useState(null)
     const [submitError, setSubmitError] = useState(null)
+    // Estados para crop de imágenes
+    const [cropModalOpen, setCropModalOpen] = useState(false)
+    const [currentImageForCrop, setCurrentImageForCrop] = useState(null)
+    const [currentImageIndex, setCurrentImageIndex] = useState(null)
     //form
     const {
         control,
@@ -247,14 +261,15 @@ export default function AddProducts() {
     const watchUnique = watch('unique')
     const onDrop = useCallback((acceptedFiles) => {
         // Do something with the files
-        console.log('ondrop')
+        console.log('ondrop - archivos aceptados:', acceptedFiles)
         acceptedFiles.forEach((e) => {
-            append({
-                file: e,
-                preview: URL.createObjectURL(e),
-            })
+            const imageUrl = URL.createObjectURL(e)
+            console.log('Abriendo modal de crop para nueva imagen en índice:', fields.length)
+            setCurrentImageForCrop(imageUrl)
+            setCurrentImageIndex(fields.length)
+            setCropModalOpen(true)
         })
-    }, [])
+    }, [fields.length])
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
         maxFiles: 1,
@@ -330,6 +345,57 @@ export default function AddProducts() {
     const handleDeleteImage = (index) => {
         setDeleteImages([...deleteImages, index])
         remove(index)
+    }
+
+    // Funciones para manejar el crop
+    const handleCropComplete = (croppedImageUrl, croppedBlob) => {
+        console.log('Crop completado:', { croppedImageUrl, currentImageIndex })
+        
+        // Crear un nuevo archivo desde el blob
+        const croppedFile = new File([croppedBlob], `cropped-image-${Date.now()}.jpg`, {
+            type: 'image/jpeg',
+        })
+        
+        if (currentImageIndex !== null) {
+            console.log('Reemplazando imagen existente en índice:', currentImageIndex)
+            // Reemplazar imagen existente
+            remove(currentImageIndex)
+            // Usar setTimeout para asegurar que el remove se complete antes del append
+            setTimeout(() => {
+                append({
+                    file: croppedFile,
+                    preview: croppedImageUrl,
+                }, currentImageIndex)
+                console.log('Imagen reemplazada exitosamente')
+            }, 0)
+        } else {
+            console.log('Agregando nueva imagen')
+            // Agregar nueva imagen
+            append({
+                file: croppedFile,
+                preview: croppedImageUrl,
+            })
+            console.log('Nueva imagen agregada exitosamente')
+        }
+        
+        // Limpiar estados
+        setCropModalOpen(false)
+        setCurrentImageForCrop(null)
+        setCurrentImageIndex(null)
+    }
+
+    const handleCropCancel = () => {
+        setCropModalOpen(false)
+        setCurrentImageForCrop(null)
+        setCurrentImageIndex(null)
+    }
+
+    const handleCropExistingImage = (index) => {
+        console.log('Abriendo modal de crop para imagen existente en índice:', index)
+        const image = fields[index]
+        setCurrentImageForCrop(image.preview)
+        setCurrentImageIndex(index)
+        setCropModalOpen(true)
     }
     useEffect(() => {
         const getData = async () => {
@@ -467,6 +533,17 @@ export default function AddProducts() {
                                             onClick={() => handleDeleteImage(index)}
                                         >
                                             <DeleteForever />
+                                        </IconButton>
+                                        <IconButton
+                                            style={{
+                                                position: 'absolute',
+                                                top: '5px',
+                                                left: '5px',
+                                                background: 'rgba(255,255,255,0.9)',
+                                            }}
+                                            onClick={() => handleCropExistingImage(index)}
+                                        >
+                                            <Crop />
                                         </IconButton>
                                         <img
                                             className={classes.productImage}
@@ -953,15 +1030,15 @@ export default function AddProducts() {
                                 name="description"
                                 control={control}
                                 render={({ field, fieldState }) => (
-                                    <TextInput
-                                        rows={5}
-                                        multiline={true}
-                                        errorMessage={fieldState.error}
-                                        error={fieldState.error ? true : false}
-                                        icon={null}
-                                        label={'Descripción'}
-                                        value={field.value}
+                                    <TinyMCEEditor
+                                        apiKey={process.env.REACT_APP_TINYMCE_API_KEY}
+                                        value={field.value || ''}
                                         onChange={field.onChange}
+                                        label="Descripción del producto"
+                                        error={!!fieldState.error}
+                                        errorMessage={fieldState.error?.message}
+                                        placeholder="Describe las características, beneficios y detalles de tu producto..."
+                                        height={300}
                                     />
                                 )}
                             />
@@ -1052,6 +1129,14 @@ export default function AddProducts() {
                     setOpenConfirmUnique(false)
                     setValue('unique', true)
                 }}
+            />
+            
+            {/* Modal de crop de imágenes */}
+            <CropModal
+                open={cropModalOpen}
+                onClose={handleCropCancel}
+                imageUrl={currentImageForCrop}
+                onCropComplete={handleCropComplete}
             />
         </section>
     )
