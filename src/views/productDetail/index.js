@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 
 import { makeStyles } from '@material-ui/core/styles'
-import { Box, Divider, IconButton } from '@material-ui/core'
+import { Box, IconButton, Divider } from '@material-ui/core'
 
 import { useParams, useHistory } from 'react-router-dom'
 
@@ -36,6 +36,7 @@ const useStyles = makeStyles({
         display: 'flex',
         gap: '1.5rem',
         flexWrap: 'wrap',
+        marginBottom: '2rem',
     },
     inputRow: {
         margin: '1rem 0',
@@ -55,12 +56,11 @@ const useStyles = makeStyles({
             width: '100%',
         },
     },
-
     buttonsRow: {
         display: 'flex',
         justifyContent: 'center',
         gap: '1rem',
-        marginTop: '1rem',
+        marginTop: '2rem',
     },
     checked: {
         color: primaryColor[0] + '!important',
@@ -75,12 +75,19 @@ const useStyles = makeStyles({
         height: '220px',
         width: '100%',
         background: '#fff',
+        borderRadius: '16px',
+        overflow: 'hidden',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+        transition: 'transform 0.2s ease-in-out',
+        '&:hover': {
+            transform: 'scale(1.02)',
+        },
     },
     productImage: {
         borderRadius: '16px',
         width: '100%',
         height: '100%',
-        objectFit: 'contain',
+        objectFit: 'cover',
     },
     trashICon: {
         position: 'absolute',
@@ -113,6 +120,144 @@ const useStyles = makeStyles({
         fontSize: '14px',
         marginTop: '0',
         marginBottom: '0',
+    },
+    // Nuevos estilos para mejor UX/UI
+    sectionTitle: {
+        fontSize: '1.5rem',
+        fontWeight: '600',
+        color: '#3C4858',
+        marginBottom: '1.5rem',
+        paddingBottom: '0.5rem',
+    },
+    infoCard: {
+        background: '#fff',
+        borderRadius: '16px',
+        padding: '2rem',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+        marginBottom: '2rem',
+    },
+    infoGrid: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+        gap: '2rem',
+        marginBottom: '3rem',
+    },
+    infoItem: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.5rem',
+    },
+    infoLabel: {
+        fontSize: '0.875rem',
+        color: '#666',
+        fontWeight: '500',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+    },
+    infoValue: {
+        fontSize: '1.125rem',
+        fontWeight: '600',
+        color: '#3C4858',
+    },
+    priceValue: {
+        fontSize: '1.5rem',
+        fontWeight: '700',
+        color: '#00ACC1',
+    },
+    statusBadge: {
+        width: 'fit-content',
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '0.5rem 1rem',
+        borderRadius: '20px',
+        fontSize: '0.875rem',
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+    },
+    statusAvailable: {
+        background: '#E8F5E8',
+        color: '#2E7D32',
+    },
+    statusUnavailable: {
+        background: '#FFEBEE',
+        color: '#C62828',
+    },
+
+    descriptionText: {
+        fontSize: '1rem',
+        lineHeight: '1.6',
+        color: '#555',
+        margin: '1rem 0',
+    },
+    variantsSection: {
+        background: '#fff',
+        borderRadius: '16px',
+        padding: '2rem',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+    },
+    variantCard: {
+        background: '#f8f9fa',
+        borderRadius: '12px',
+        padding: '1.5rem',
+        marginBottom: '1rem',
+        border: '1px solid #e9ecef',
+        transition: 'all 0.2s ease-in-out',
+        '&:hover': {
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            transform: 'translateY(-2px)',
+        },
+    },
+    variantHeader: {
+        display: 'flex',
+        alignItems: 'center',
+        marginBottom: '1rem',
+    },
+    variantNumber: {
+        background: '#00ACC1',
+        color: 'white',
+        borderRadius: '50%',
+        width: '32px',
+        height: '32px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '0.875rem',
+        fontWeight: '600',
+        marginRight: '1rem',
+    },
+    variantTitle: {
+        fontSize: '1.125rem',
+        fontWeight: '600',
+        color: '#3C4858',
+        margin: 0,
+    },
+    variantGrid: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+        gap: '1rem',
+    },
+    variantItem: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.25rem',
+    },
+    variantLabel: {
+        fontSize: '0.75rem',
+        color: '#666',
+        fontWeight: '500',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+    },
+    variantValue: {
+        fontSize: '1rem',
+        fontWeight: '600',
+        color: '#3C4858',
+    },
+    stockValue: {
+        fontSize: '1.25rem',
+        fontWeight: '700',
+        color: '#00ACC1',
     },
 })
 
@@ -180,9 +325,8 @@ export default function ProductDetail() {
                     </p>
                 </CardHeader>
                 <CardBody>
-                    <Box>
-                        <h3>Imágenes de tu producto</h3>
-                    </Box>
+                    {/* Sección de imágenes */}
+                    <h3 className={classes.sectionTitle}>Imágenes del producto</h3>
                     <div className={classes.imagesRow}>
                         {productDetail.images.map((image, index) => {
                             return (
@@ -193,156 +337,103 @@ export default function ProductDetail() {
                                     <img
                                         className={classes.productImage}
                                         src={image.url}
-                                        alt="product-image"
+                                        alt={`product-image-${index + 1}`}
                                     />
                                 </div>
                             )
                         })}
                     </div>
-                    <Box
-                        padding={2}
-                        mt={4}
-                        style={{ background: '#fff', borderRadius: '16px' }}
-                    >
-                        <Box>
-                            <h3>Información de tu producto</h3>
-                        </Box>
-                        <Box className={classes.inputRow}>
-                            <div>
-                                <p>Nombre:</p>
-                                <p>
-                                    <strong>{productDetail.name}</strong>
-                                </p>
+                    <Divider style={{ margin: '2rem 0' }} />
+
+                    {/* Sección de información principal */}
+                    <h3 className={classes.sectionTitle}>Información del producto</h3>
+                    <div className={classes.infoGrid}>
+                        <div className={classes.infoItem}>
+                            <span className={classes.infoLabel}>Nombre</span>
+                            <span className={classes.infoValue}>{productDetail.name}</span>
+                        </div>
+                        <div className={classes.infoItem}>
+                            <span className={classes.infoLabel}>Precio</span>
+                            <span className={classes.priceValue}>${formatNumber(productDetail.price)}</span>
+                        </div>
+                        <div className={classes.infoItem}>
+                            <span className={classes.infoLabel}>Categoría</span>
+                            <span className={classes.infoValue}>{productDetail.categoryDetail[0]?.name}</span>
+                        </div>
+                        <div className={classes.infoItem}>
+                            <span className={classes.infoLabel}>Descuento</span>
+                            <span className={classes.infoValue}>{formatNumber(productDetail.discount ?? 0)}%</span>
+                        </div>
+                        {productDetail.offerDiscount && <div className={classes.infoItem}>
+                            <span className={classes.infoLabel}>Descuento de oferta asociado</span>
+                            <span className={classes.infoValue}>{`${productDetail.offerDiscount ?? 0}%`}</span>
+                        </div>}
+                        <div className={classes.infoItem}>
+                            <span className={classes.infoLabel}>Estado</span>
+                            <span className={`${classes.statusBadge} ${
+                                productDetail.status.available 
+                                    ? classes.statusAvailable 
+                                    : classes.statusUnavailable
+                            }`}>
+                                {productDetail.status.available ? 'Disponible' : 'No disponible'}
+                            </span>
+                        </div>
+                        {productDetail.features.filter((feature) => !feature.color && !feature.size).length > 0 && (
+                            <div className={classes.infoItem}>
+                                <span className={classes.infoLabel}>Stock general</span>
+                                <span className={classes.stockValue}>{productDetail.features[0].stock} unidades</span>
                             </div>
-                            <div>
-                                <p>Precio</p>
-                                <p>
-                                    <strong>
-                                        ${formatNumber(productDetail.price)}
-                                    </strong>
-                                </p>
-                            </div>
-                            <div>
-                                <p>Categoría</p>
-                                <p>
-                                    <strong>
-                                        {productDetail.categoryDetail[0]?.name}
-                                    </strong>
-                                </p>
-                            </div>
-                            <div>
-                                <p>Descuento</p>
-                                <p>
-                                    <strong>
-                                        {formatNumber(productDetail.discount)}%
-                                    </strong>
-                                </p>
-                            </div>
-                            <div>
-                                <p>Estatus</p>
-                                <p>
-                                    <strong>
-                                        {productDetail.status.available
-                                            ? 'Disponible'
-                                            : 'No disponible'}
-                                    </strong>
-                                </p>
-                            </div>
-                            {productDetail.features.filter((feature) => !feature.color && !feature.size).length > 0 && (
-                                <Box marginBottom={2}>
-                                    <p>Stock</p>
-                                    <p>
-                                        <strong>
-                                            {productDetail.features[0].stock}
-                                        </strong>
-                                    </p>
-                                </Box>
-                            )}  
-                        </Box>
-                        <Box marginBottom={4}>
-                            <p>Descripción</p>
-                            <p>
-                                <strong>{productDetail.description}</strong>
-                            </p>
-                        </Box>
-                    </Box>
+                        )}
+                    </div>
+
+                    {/* Descripción */}
+                    <span className={classes.infoLabel}>Descripción</span>
+                    <p className={classes.descriptionText}>{productDetail.description}</p>
+                    
                     {productDetail.features.filter((feature) => feature.color || feature.size).length > 0 && (
-                        <Box
-                            padding={2}
-                            mt={4}
-                            style={{ background: '#fff', borderRadius: '16px' }}
-                        >
-                            <Box>
-                                <h3>Variantes de tu producto</h3>
-                            </Box>
-                            <>
-                                {productDetail.features
-                                    .filter((feature) => feature.color || feature.size)
-                                    .map((feature, index) => {
-                                        return (
-                                            <>
-                                                <div key={feature._id}>
-                                                    <p>
-                                                        <strong>
-                                                            Variante #{index + 1}
-                                                        </strong>
-                                                    </p>
-                                                    {feature.color && (
-                                                        <Box
-                                                            marginBottom={2}
-                                                            className={classes.inputRow}
-                                                        >
-                                                            <p style={{ margin: 0 }}>
-                                                                Color:
-                                                            </p>
-                                                            <p style={{ margin: 0 }}>
-                                                                <strong>
-                                                                    {feature.color}
-                                                                </strong>
-                                                            </p>
-                                                        </Box>
-                                                    )}
-                                                    {feature.size && (
-                                                        <Box
-                                                            marginBottom={2}
-                                                            className={classes.inputRow}
-                                                        >
-                                                            <p style={{ margin: 0 }}>
-                                                                Talla:
-                                                            </p>
-                                                            <p style={{ margin: 0 }}>
-                                                                <strong>
-                                                                    {feature.size}
-                                                                </strong>
-                                                            </p>
-                                                        </Box>
-                                                    )}
-                                                    {feature.stock && (
-                                                        <Box
-                                                            marginBottom={2}
-                                                            className={classes.inputRow}
-                                                        >
-                                                            <p style={{ margin: 0 }}>
-                                                                Stock
-                                                            </p>
-                                                            <p style={{ margin: 0 }}>
-                                                                <strong>
-                                                                    {feature.stock}
-                                                                </strong>
-                                                            </p>
-                                                        </Box>
-                                                    )}
+                        <>
+                            <Divider style={{ margin: '2rem 0' }} />
+                            <h3 className={classes.sectionTitle}>Variantes del producto</h3>
+                            {productDetail.features
+                                .filter((feature) => feature.color || feature.size)
+                                .map((feature, index) => {
+                                    return (
+                                        <div key={feature._id} className={classes.variantCard}>
+                                            <div className={classes.variantHeader}>
+                                                <div className={classes.variantNumber}>
+                                                    {index + 1}
                                                 </div>
-                                                <Divider />
-                                            </>
-                                        )
-                                    })}
-                            </>
-                        </Box>
+                                                <h4 className={classes.variantTitle}>
+                                                    Variante #{index + 1}
+                                                </h4>
+                                            </div>
+                                            <div className={classes.variantGrid}>
+                                                {feature.color && (
+                                                    <div className={classes.variantItem}>
+                                                        <span className={classes.variantLabel}>Color</span>
+                                                        <span className={classes.variantValue}>{feature.color}</span>
+                                                    </div>
+                                                )}
+                                                {feature.size && (
+                                                    <div className={classes.variantItem}>
+                                                        <span className={classes.variantLabel}>Talla</span>
+                                                        <span className={classes.variantValue}>{feature.size}</span>
+                                                    </div>
+                                                )}
+                                                {feature.stock && (
+                                                    <div className={classes.variantItem}>
+                                                        <span className={classes.variantLabel}>Stock</span>
+                                                        <span className={classes.stockValue}>{feature.stock} unidades</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                        </>
                     )}
                     <Box className={classes.buttonsRow}>
                         <Button
-                            variant="contained"
                             color="primary"
                             onClick={() => history.push(`/admin/products/edit-product/${params.id}`)}
                         >

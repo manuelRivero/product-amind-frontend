@@ -16,8 +16,8 @@ import {
     Box,
     CircularProgress,
     ClickAwayListener,
+    Divider,
     Fade,
-    Grid,
     IconButton,
     MenuItem,
     MenuList,
@@ -73,6 +73,86 @@ const styles = {
         alignItems: 'center',
         cursor: 'pointer',
     },
+    // Nuevos estilos para mejor UX/UI
+    sectionTitle: {
+        fontSize: '1.5rem',
+        fontWeight: '600',
+        color: '#3C4858',
+        marginBottom: '1.5rem',
+        paddingBottom: '0.5rem',
+    },
+    infoGrid: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+        gap: '2rem',
+        marginBottom: '3rem',
+    },
+    infoItem: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.5rem',
+    },
+    infoLabel: {
+        fontSize: '0.875rem',
+        color: '#666',
+        fontWeight: '500',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+    },
+    infoValue: {
+        fontSize: '1.125rem',
+        fontWeight: '600',
+        color: '#3C4858',
+    },
+    priceValue: {
+        fontSize: '1.5rem',
+        fontWeight: '700',
+        color: '#00ACC1',
+    },
+    statusBadge: {
+        width: 'fit-content',
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '0.5rem 1rem',
+        borderRadius: '20px',
+        fontSize: '0.875rem',
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+    },
+    statusPaid: {
+        background: '#E8F5E8',
+        color: '#2E7D32',
+    },
+    statusSent: {
+        background: '#E3F2FD',
+        color: '#1565C0',
+    },
+    statusCancelled: {
+        background: '#FFEBEE',
+        color: '#C62828',
+    },
+    statusPending: {
+        background: '#FFF3E0',
+        color: '#EF6C00',
+    },
+    customerInfoSection: {
+        background: '#f8f9fa',
+        padding: '1.5rem',
+        borderRadius: '12px',
+        borderLeft: '4px solid #00ACC1',
+        marginBottom: '2rem',
+    },
+    orderInfoSection: {
+        background: '#f8f9fa',
+        padding: '1.5rem',
+        borderRadius: '12px',
+        borderLeft: '4px solid #4CAF50',
+        marginBottom: '2rem',
+    },
+    tableSection: {
+        marginTop: '2rem',
+    },
 }
 
 const useStyles = makeStyles(styles)
@@ -116,91 +196,93 @@ export default function SaleDetail() {
                                 </Box>
                             ) : (
                                 <Box>
-                                    <Grid container spacing={4}>
-                                        <Grid item>
-                                            <p>
-                                                Nombre:{' '}
-                                                <strong>{saleData.name}</strong>
-                                            </p>
-                                            <p>
-                                                Apellido:{' '}
-                                                <strong>
-                                                    {saleData.lastName}
-                                                </strong>
-                                            </p>
-                                            <p>
-                                                DNI:{' '}
-                                                <strong>{saleData.dni}</strong>
-                                            </p>
-                                            <p>
-                                                Télefono:{' '}
-                                                <strong>
-                                                    {saleData.phone}
-                                                </strong>
-                                            </p>
-                                            <p>
-                                                Email:{' '}
-                                                <strong>{saleData.user}</strong>
-                                            </p>
-                                            <p>
-                                                Dirección:{' '}
-                                                <strong>
-                                                    {saleData.address}
-                                                </strong>
-                                            </p>
-                                            <p>
-                                                Código postal:{' '}
-                                                <strong>
-                                                    {saleData.postalCode}
-                                                </strong>
-                                            </p>
-                                            <p>
-                                                Estatus:{' '}
-                                                <strong>
+                                    {/* Información del cliente */}
+                                    <h3 className={classes.sectionTitle}>Información del cliente</h3>
+                                    <div className={classes.customerInfoSection}>
+                                        <div className={classes.infoGrid}>
+                                            <div className={classes.infoItem}>
+                                                <span className={classes.infoLabel}>Nombre</span>
+                                                <span className={classes.infoValue}>{saleData.name}</span>
+                                            </div>
+                                            <div className={classes.infoItem}>
+                                                <span className={classes.infoLabel}>Apellido</span>
+                                                <span className={classes.infoValue}>{saleData.lastName}</span>
+                                            </div>
+                                            <div className={classes.infoItem}>
+                                                <span className={classes.infoLabel}>DNI</span>
+                                                <span className={classes.infoValue}>{saleData.dni}</span>
+                                            </div>
+                                            <div className={classes.infoItem}>
+                                                <span className={classes.infoLabel}>Teléfono</span>
+                                                <span className={classes.infoValue}>{saleData.phone}</span>
+                                            </div>
+                                            <div className={classes.infoItem}>
+                                                <span className={classes.infoLabel}>Email</span>
+                                                <span className={classes.infoValue}>{saleData.user}</span>
+                                            </div>
+                                            <div className={classes.infoItem}>
+                                                <span className={classes.infoLabel}>Dirección</span>
+                                                <span className={classes.infoValue}>{saleData.address}</span>
+                                            </div>
+                                            <div className={classes.infoItem}>
+                                                <span className={classes.infoLabel}>Código postal</span>
+                                                <span className={classes.infoValue}>{saleData.postalCode}</span>
+                                            </div>
+                                            <div className={classes.infoItem}>
+                                                <span className={classes.infoLabel}>Estado</span>
+                                                <span className={`${classes.statusBadge} ${
+                                                    saleData.status === 'PAGADO' ? classes.statusPaid :
+                                                    saleData.status === 'ENVIADO' ? classes.statusSent :
+                                                    saleData.status === 'CANCELADO' ? classes.statusCancelled :
+                                                    classes.statusPending
+                                                }`}>
                                                     {saleData.status === 'CANCELADO' && saleData.cancelReason 
-                                                        ? `${saleData.status} - ${ saleData.cancelReason || 'Motivo no especificado'}`
+                                                        ? `${saleData.status} - ${saleData.cancelReason || 'Motivo no especificado'}`
                                                         : saleData.status
                                                     }
-                                                </strong>
-                                            </p>
-                                            <ChangeStatusDropdown
-                                                sale={saleData}
-                                            />
-                                        </Grid>
-                                        <Grid item>
-                                            <p>
-                                                Fecha:{' '}
-                                                <strong>
-                                                    {' '}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <ChangeStatusDropdown sale={saleData} />
+                                    </div>
+
+                                    <Divider style={{ margin: '2rem 0' }} />
+
+                                    {/* Información de la orden */}
+                                    <h3 className={classes.sectionTitle}>Información de la orden</h3>
+                                    <div className={classes.orderInfoSection}>
+                                        <div className={classes.infoGrid}>
+                                            <div className={classes.infoItem}>
+                                                <span className={classes.infoLabel}>Fecha de creación</span>
+                                                <span className={classes.infoValue}>
                                                     {moment(saleData.createdAt)
                                                         .utc()
-                                                        .format(
-                                                            'DD-MM-YYYY HH:mm:ss A'
-                                                        )}{' '}
-                                                </strong>
-                                            </p>
-                                            <p>
-                                                Total de la orden:{' '}
-                                                <strong>
-                                                    ${' '}
-                                                    {saleData.products
+                                                        .format('DD-MM-YYYY HH:mm:ss A')}
+                                                </span>
+                                            </div>
+                                            <div className={classes.infoItem}>
+                                                <span className={classes.infoLabel}>Total de la orden</span>
+                                                <span className={classes.priceValue}>
+                                                    ${saleData.products
                                                         .reduce(
                                                             (acc, item) =>
                                                                 acc +
                                                                 finalPrice(
-                                                                    item.data
-                                                                        .price,
-                                                                    item.data
-                                                                        .discount
-                                                                ) *
-                                                                    item.quantity,
+                                                                    item.data.price,
+                                                                    item.data.discount
+                                                                ) * item.quantity,
                                                             0
                                                         )
                                                         .toFixed(1)}
-                                                </strong>
-                                            </p>
-                                        </Grid>
-                                    </Grid>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <Divider style={{ margin: '2rem 0' }} />
+                                    
+                                    {/* Productos de la orden */}
+                                    <h3 className={classes.sectionTitle}>Productos de la orden</h3>
                                     <Table
                                         tableHeaderColor="primary"
                                         tableHead={[
@@ -255,9 +337,7 @@ export default function SaleDetail() {
                                                     >
                                                         <Button
                                                             isLoading={false}
-                                                            variant="contained"
                                                             color="primary"
-                                                            type="button"
                                                         >
                                                             <RemoveRedEye />
                                                         </Button>
@@ -327,9 +407,7 @@ const ChangeStatusDropdown = ({ sale }) => {
                 {(sale.status !== 'CANCELADO' && sale.status !== 'ENVIADO' || loadingSaleDetailStatus) && (
                     <Button
                         isLoading={loadingSaleDetailStatus}
-                        variant="contained"
                         color="primary"
-                        type="button"
                         onClick={handleClick}
                     >
                         Cambiar estatus
