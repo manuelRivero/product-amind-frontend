@@ -18,7 +18,8 @@ const icons = {
 const useStyles = makeStyles({
     paper: {
         position: 'absolute',
-        width: 400,
+        width: 'fit-content',
+        minWidth: '400px',
         backgroundColor: '#fff',
         borderRadius: '8px',
         padding: '1rem',
@@ -45,6 +46,7 @@ const useStyles = makeStyles({
     },
     buttonsWrapper: {
         display: 'flex',
+        flexWrap: 'wrap',
         justifyContent: 'center',
         gap: '1rem',
         marginTop: '1rem',
