@@ -9,56 +9,55 @@ const initialState = {
     categoriesData: null,
     loadingCategoriesData: true,
     categoriesDataError: false,
-    loadingCategory: false,
-    categorySuccess: false,
-    categoryError: false,
-    loadingEditCategory: false,
-    editCategoryError: false,
-    editCategorySuccess: false,
 }
 
 export const getCategories = createAsyncThunk(
     '/get/categories',
-    async (args) => {
-        console.log("thunk")
-        const [categories] = await Promise.all([
-            getCategoriesRequest(args.access, args.filters, args.limit, args.ids),
-        ])
-        return categories
+    async (args, { rejectWithValue }) => {
+        try {
+            console.log("thunk")
+            const [categories] = await Promise.all([
+                getCategoriesRequest(args.access, args.filters, args.limit, args.ids),
+            ])
+            return categories
+        } catch (error) {
+            return rejectWithValue(error.response?.data || { message: 'Error al obtener las categorías' })
+        }
     }
 )
 
 export const editCategory = createAsyncThunk(
     '/put/categories',
-    async (args) => {
-        const [categories] = await Promise.all([
-            editCategoryRequest(args.access, args.data, args.id),
-        ])
-        return categories
+    async (args, { rejectWithValue }) => {
+        try {
+            const [categories] = await Promise.all([
+                editCategoryRequest(args.access, args.data, args.id),
+            ])
+            return categories
+        } catch (error) {
+            return rejectWithValue(error.response?.data)
+        }
     }
 )
 
 export const postCategories = createAsyncThunk(
     '/post/categories',
-    async (args) => {
-        const [categories] = await Promise.all([
-            addCategory(args.access, args.data),
-        ])
-        return categories
+    async (args, { rejectWithValue }) => {
+        try {
+            const [categories] = await Promise.all([
+                addCategory(args.access, args.data),
+            ])
+            return categories
+        } catch (error) {
+            return rejectWithValue(error.response?.data)
+        }
     }
 )
 
 export const categoriesSlice = createSlice({
     name: 'categories',
     initialState,
-    reducers: {
-        resetCategorySuccess: (state) => {
-            state.categorySuccess = false
-        },
-        resetEditCategorySuccess: (state) => {
-            state.editCategorySuccess = false
-        },
-    },
+    reducers: {},
     extraReducers: {
         [getCategories.pending]: (state) => {
             state.loadingCategoriesData = true
@@ -73,35 +72,9 @@ export const categoriesSlice = createSlice({
             console.log("action", action)
             state.loadingCategoriesData = false
             state.categoriesDataError = true
-        },
-        [postCategories.pending]: (state) => {
-            state.loadingCategory = true
-        },
-        [postCategories.fulfilled]: (state) => {
-            state.loadingCategory = false
-            state.categorySuccess = true
-        },
-        [postCategories.rejected]: (state) => {
-            state.loadingCategory = false
-            state.categoryError = true
-        },
-        [editCategory.pending]: (state) => {
-            state.loadingEditCategory = true
-        },
-        [editCategory.fulfilled]: (state) => {
-            state.loadingEditCategory = false
-            state.editCategorySuccess = true
-            state.editCategoryError = false
-        },
-        [editCategory.rejected]: (state) => {
-            state.loadingEditCategory = false
-            state.editCategoryError = true
+            state.error = action.payload
         },
     },
 })
-export const {
-    resetCategorySuccess,
-    resetEditCategorySuccess,
-} = categoriesSlice.actions
 
 export default categoriesSlice.reducer

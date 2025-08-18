@@ -16,8 +16,6 @@ import CustomModal from 'components/CustomModal'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import { editCategory } from 'store/categories'
 import { postCategories } from 'store/categories'
-import { resetEditCategorySuccess } from 'store/categories'
-import { resetCategorySuccess } from 'store/categories'
 import { useDropzone } from 'react-dropzone/.'
 import { DeleteForever } from '@material-ui/icons'
 import uploadImage from 'assets/img/upload-cloud.png'
@@ -142,17 +140,15 @@ export default function AddCategories() {
     const history = useHistory()
     const params = useParams()
     const { user } = useSelector((state) => state.auth)
-    const {
-        loadingCategory,
-        categorySuccess,
-        categoryError,
-        loadingEditCategory,
-        editCategoryError,
-        editCategorySuccess,
-    } = useSelector((state) => state.categories)
     const dispatch = useDispatch()
     const classes = useStyles()
     const [loading, setLoading] = useState(false)
+    const [loadingSubmit, setLoadingSubmit] = useState(false)
+    const [showSuccessModal, setShowSuccessModal] = useState(false)
+    // Estados para manejo de errores
+    const [showErrorModal, setShowErrorModal] = useState(false)
+    const [showFormAlert, setShowFormAlert] = useState(undefined)
+
     //form
     const {
         control,
@@ -196,18 +192,34 @@ export default function AddCategories() {
         if (values.images[0].file) {
             data.append('image', values.images[0].file)
         }
-        if (params.id) {
-            // Despachar acción de edición
-            dispatch(editCategory({ access: user.token, data, id: params.id }))
-        } else {
-            // Despachar acción de creación
-            dispatch(postCategories({ access: user.token, data }))
+
+        try {
+            if (params.id) {
+                // Despachar acción de edición
+                setLoadingSubmit(true)
+                await dispatch(editCategory({ access: user.token, data, id: params.id })).unwrap()
+                setShowSuccessModal(true)
+            } else {
+                // Despachar acción de creación
+                setLoadingSubmit(true)
+                await dispatch(postCategories({ access: user.token, data })).unwrap()
+                setShowSuccessModal(true)
+            }
+        } catch (error) {
+            console.log('error al guardar la categoría', error)
+            setShowFormAlert(
+                error.error)
+            setShowErrorModal({ error: error.error || 'Error al guardar la categoría' })
+        } finally {
+            setLoadingSubmit(false)
         }
     }
 
     const handleDeleteImage = (index) => {
         remove(index)
     }
+
+
 
     useEffect(() => {
         const getData = async () => {
@@ -237,6 +249,8 @@ export default function AddCategories() {
         }
         getData()
     }, [params.id])
+
+
 
     if (loading) {
         return <LoadinScreen />
@@ -329,13 +343,17 @@ export default function AddCategories() {
                             />
                         </Box>
 
-                        {categoryError ||
-                            (editCategoryError && (
-                                <p>Hubo un error al guardar la categoría</p>
-                            ))}
+                        <Box>
+                            {showFormAlert && (
+                                <TextDanger>
+                                    <p className={classes.errorText}>{showFormAlert}</p>
+                                </TextDanger>
+                            )}
+                        </Box>
+
                         <Box className={classes.buttonsRow}>
                             <Button
-                                isLoading={loadingCategory | loadingEditCategory}
+                                isLoading={loadingSubmit}
                                 variant="contained"
                                 color="primary"
                                 type="submit"
@@ -347,25 +365,19 @@ export default function AddCategories() {
                 </CardBody>
             </Card>
             <CustomModal
-                open={params.id ? editCategorySuccess : categorySuccess}
-                handleClose={() => {
-                    if (params.id) {
-                        dispatch(resetEditCategorySuccess())
-                    } else {
-                        reset()
-                        dispatch(resetCategorySuccess())
-                    }
-                }}
+                open={showSuccessModal}
+                handleClose={() => setShowSuccessModal(false)}
                 icon={'success'}
                 title="¡Listo!"
                 subTitle="Tu categoría se guardo exitosamente"
-                hasCancel={false}
+                hasCancel={true}
+                cancelText="Volver al listado de categorías"
+                confirmText="Guardar otra categoría"
                 hasConfirm={true}
-                cancelCb={() => {}}
+                cancelCb={() => { history.push('/admin/categories') }}
                 confirmCb={() => {
-                    dispatch(resetCategorySuccess())
-                    dispatch(resetEditCategorySuccess())
-                    history.push('/admin/categories')
+                    setShowSuccessModal(false)
+
                 }}
             />
             <CustomModal
@@ -381,8 +393,25 @@ export default function AddCategories() {
                 subTitle="has navegado a una pagina invalida"
                 hasCancel={false}
                 hasConfirm={true}
-                cancelCb={() => {}}
+                cancelCb={() => { }}
                 confirmCb={() => {
+                    history.push('/admin/categories')
+                }}
+            />
+
+            {/* Modal de error */}
+            <CustomModal
+                open={showErrorModal}
+                handleClose={() => setShowErrorModal(false)}
+                icon={'error'}
+                title="¡Error!"
+                subTitle={showErrorModal.error}
+                hasCancel={false}
+                hasConfirm={true}
+                confirmText="Volver al listado de categorías"
+                cancelCb={() => { }}
+                confirmCb={() => {
+                    setShowErrorModal(false)
                     history.push('/admin/categories')
                 }}
             />
