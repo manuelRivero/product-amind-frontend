@@ -15,6 +15,7 @@ import { changeBannerSection, changeBannerStatus, deleteBanner, getBanners } fro
 import { DeleteForever } from '@material-ui/icons'
 import { useSelector } from 'react-redux'
 import { useHistory } from 'react-router-dom'
+import CustomModal from 'components/CustomModal'
 
 const useStyles = makeStyles((theme) => ({
     card: {
@@ -72,6 +73,13 @@ export default function AdminBanners() {
     const [loading, setLoading] = useState(true)
     const [loadingBannerStatusChange, setLoadingBannerStatusChange] = useState(undefined)
     const [loadingDeleteBanner, setLoadingDeleteBanner] = useState(undefined)
+    
+    // Estados para modales
+    const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
+    const [showSuccessModal, setShowSuccessModal] = useState(false)
+    const [showErrorModal, setShowErrorModal] = useState(false)
+    const [bannerToDelete, setBannerToDelete] = useState(null)
+    const [errorMessage, setErrorMessage] = useState('')
 
     const handleStatusChange = async (id) => {
         try {
@@ -109,23 +117,48 @@ export default function AdminBanners() {
         }
     }
 
-    const handleDelete = async (id) => {
-        try {
-            setLoadingDeleteBanner(id)
+    const handleDeleteClick = (banner) => {
+        setBannerToDelete(banner)
+        setShowDeleteConfirmModal(true)
+    }
 
-            // Llamada al backend para cambiar el estado del banner
-            const response = await deleteBanner(id, user.token)
+    const handleDeleteConfirm = async () => {
+        try {
+            setShowDeleteConfirmModal(false)
+            setLoadingDeleteBanner(bannerToDelete._id)
+
+            // Llamada al backend para eliminar el banner
+            const response = await deleteBanner(bannerToDelete._id, user.token)
             console.log('response', response)
 
             // Actualizar el estado local de banners
             setBanners((prevBanners) =>
-                prevBanners.filter((banner) => banner._id !== id)
+                prevBanners.filter((banner) => banner._id !== bannerToDelete._id)
             )
+            
+            setBannerToDelete(null)
+            setShowSuccessModal(true)
         } catch (error) {
-            console.log('banner status error', error)
+            console.log('banner delete error', error)
+            setErrorMessage(error.response?.data?.message || 'Error al eliminar el banner')
+            setShowErrorModal(true)
         } finally {
             setLoadingDeleteBanner(undefined)
         }
+    }
+
+    const handleDeleteCancel = () => {
+        setShowDeleteConfirmModal(false)
+        setBannerToDelete(null)
+    }
+
+    const handleSuccessModalClose = () => {
+        setShowSuccessModal(false)
+    }
+
+    const handleErrorModalClose = () => {
+        setShowErrorModal(false)
+        setErrorMessage('')
     }
 
     useEffect(() => {
@@ -191,7 +224,7 @@ export default function AdminBanners() {
                                                 ) : (
                                                     <IconButton
                                                         className={classes.trashIcon}
-                                                        onClick={() => handleDelete(banner._id)}
+                                                        onClick={() => handleDeleteClick(banner)}
                                                     >
                                                         <DeleteForever />
                                                     </IconButton>
@@ -288,6 +321,47 @@ export default function AdminBanners() {
                     )}
                 </CardBody>
             </Card>
+            
+            {/* Modal de confirmación de eliminación */}
+            <CustomModal
+                open={showDeleteConfirmModal}
+                handleClose={handleDeleteCancel}
+                icon="warning"
+                title="¿Eliminar banner?"
+                subTitle={`¿Estás seguro de que deseas eliminar este banner? Esta acción no se puede deshacer.`}
+                hasConfirm={true}
+                hasCancel={true}
+                confirmCb={handleDeleteConfirm}
+                cancelCb={handleDeleteCancel}
+                confirmText="Eliminar"
+                cancelText="Cancelar"
+            />
+
+            {/* Modal de éxito */}
+            <CustomModal
+                open={showSuccessModal}
+                handleClose={handleSuccessModalClose}
+                icon="success"
+                title="Banner eliminado"
+                subTitle="El banner ha sido eliminado exitosamente."
+                hasConfirm={true}
+                hasCancel={false}
+                confirmCb={handleSuccessModalClose}
+                confirmText="Aceptar"
+            />
+
+            {/* Modal de error */}
+            <CustomModal
+                open={showErrorModal}
+                handleClose={handleErrorModalClose}
+                icon="error"
+                title="Error al eliminar"
+                subTitle={errorMessage}
+                hasConfirm={true}
+                hasCancel={false}
+                confirmCb={handleErrorModalClose}
+                confirmText="Aceptar"
+            />
         </Box>
     )
 }
