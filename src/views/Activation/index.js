@@ -298,6 +298,8 @@ const Activation = () => {
     const mpSubscriptionId = configDetail?.mpSubscriptionId
     const paymentStatus = configDetail?.paymentStatus
     const preapprovalStatus = configDetail?.preapprovalStatus
+    const plan = configDetail?.plan
+    
     // Tomar el último status de userActionHistory (ordenado por fecha ascendente)
     const lastStatusObj = Array.isArray(configDetail?.userActionHistory) && configDetail.userActionHistory.length > 0
         ? configDetail.userActionHistory[configDetail.userActionHistory.length - 1]
@@ -306,15 +308,19 @@ const Activation = () => {
     const lastPauseDate = lastStatusObj && lastStatusObj.status === 'paused' ? lastStatusObj.date : null;
     const lastCancelDate = lastStatusObj && lastStatusObj.status === 'cancelled' ? lastStatusObj.date : null;
 
-    // Flags de estado
-    const isPaymentApproved = (preapprovalStatus === 'authorized' && paymentStatus === 'approved');
-    const isPaymentPending = (preapprovalStatus === 'authorized' && paymentStatus === 'pending');
-    const isPaymentPaused = (preapprovalStatus === 'paused' || paymentStatus === 'paused' || lastStatus === 'paused');
-    const isPaymentCancelled = (preapprovalStatus === 'cancelled' || paymentStatus === 'cancelled' || lastStatus === 'cancelled');
-    const isSubscriptionActive = (isPaymentApproved || isPaymentPaused || isPaymentPending) && !isPaymentCancelled;
+    // Flags de estado - actualizados para manejar tiendas sin plan
+    const hasPlan = plan !== null && plan !== undefined;
+    const isPaymentApproved = hasPlan && (preapprovalStatus === 'authorized' && paymentStatus === 'approved');
+    const isPaymentPending = hasPlan && (preapprovalStatus === 'authorized' && paymentStatus === 'pending');
+    const isPaymentPaused = hasPlan && (preapprovalStatus === 'paused' || paymentStatus === 'paused' || lastStatus === 'paused');
+    const isPaymentCancelled = hasPlan && (preapprovalStatus === 'cancelled' || paymentStatus === 'cancelled' || lastStatus === 'cancelled');
+    const isSubscriptionActive = hasPlan && (isPaymentApproved || isPaymentPaused || isPaymentPending) && !isPaymentCancelled;
 
     // Función para determinar el modo de vista
     const getViewMode = () => {
+        // Si no hay plan configurado, mostrar selección de plan
+        if (!hasPlan) return 'plan-selection';
+        
         if (isPaymentCancelled) return 'payment-cancelled';
         if (isPaymentPaused) return 'payment-paused';
         if (isPaymentPending) return 'payment-pending';
@@ -328,7 +334,7 @@ const Activation = () => {
     // Actualizar viewMode cuando cambian los flags
     React.useEffect(() => {
         setViewMode(getViewMode());
-    }, [isPaymentApproved, isPaymentPending, isPaymentPaused, isPaymentCancelled, isSubscriptionActive]);
+    }, [hasPlan, isPaymentApproved, isPaymentPending, isPaymentPaused, isPaymentCancelled, isSubscriptionActive]);
 
     const [mp, setMp] = React.useState(null)
     const [cardNumber, setCardNumber] = React.useState('')
@@ -451,7 +457,7 @@ const Activation = () => {
             const newProductLimit = selectedPlan?.features?.createProducts?.limits?.maxProducts || Infinity;
 
             console.log('Límites de productos:');
-            console.log('- Plan actual:', currentPlan?.name, 'Límite:', currentProductLimit);
+            console.log('- Plan actual:', currentPlan?.name || 'Sin plan', 'Límite:', currentProductLimit);
             console.log('- Plan nuevo:', selectedPlan?.name, 'Límite:', newProductLimit);
             console.log('- Estructura del plan nuevo:', selectedPlan);
             console.log('- Features del plan nuevo:', selectedPlan?.features);
@@ -629,6 +635,8 @@ const Activation = () => {
             setError(null)
         }
     }, [selectedPlan])
+
+
 
     if (loadingPlans) {
         return <LoadinScreen />
@@ -817,21 +825,21 @@ const Activation = () => {
                                     <div className={classes.subscriptionDetailBullet}></div>
                                     <span className={classes.subscriptionDetailLabel}>Plan:</span>
                                     <span className={classes.subscriptionDetailValue}>
-                                        {configDetail?.plan?.name}
+                                        {configDetail?.plan?.name || 'No configurado'}
                                     </span>
                                 </li>
                                 <li className={classes.subscriptionDetailItem}>
                                     <div className={classes.subscriptionDetailBullet}></div>
                                     <span className={classes.subscriptionDetailLabel}>Fecha de activación:</span>
                                     <span className={classes.subscriptionDetailValue}>
-                                        {moment(configDetail?.startDate).format('DD/MM/YYYY')}
+                                        {configDetail?.startDate ? moment(configDetail.startDate).format('DD/MM/YYYY') : 'No configurado'}
                                     </span>
                                 </li>
                                 <li className={classes.subscriptionDetailItem}>
                                     <div className={classes.subscriptionDetailBullet}></div>
                                     <span className={classes.subscriptionDetailLabel}>Fecha del próximo cobro:</span>
                                     <span className={classes.subscriptionDetailValue}>
-                                        {moment(configDetail?.nextPaymentDate).format('DD/MM/YYYY')}
+                                        {configDetail?.nextPaymentDate ? moment(configDetail.nextPaymentDate).format('DD/MM/YYYY') : 'No configurado'}
                                     </span>
                                 </li>
                             </ul>
@@ -1010,12 +1018,14 @@ const Activation = () => {
                 // Este caso se mantiene como está, sin envolver en Card personalizado
                 return (
                     <>
-                        <IconButton
-                            className={classes.backButton}
-                            onClick={() => setViewMode('subscription-details')}
-                        >
-                            <ArrowBackIcon />
-                        </IconButton>
+                        {hasPlan && (
+                            <IconButton
+                                className={classes.backButton}
+                                onClick={() => setViewMode('subscription-details')}
+                            >
+                                <ArrowBackIcon />
+                            </IconButton>
+                        )}
                         {featureParam && featureInfo && (
                             <FeatureAlert severity="info" className={classes.featureAlert}>
                                 {featureInfo === UNAVAILABLE_FEATURE_FALLBACK ? (
@@ -1049,9 +1059,8 @@ const Activation = () => {
                                     {console.log('plans', isSubscriptionActive, isPaymentApproved)}
                                     {plans
                                         .filter((plan) =>
-                                            (isSubscriptionActive)
-                                                ? plan._id !==
-                                                configDetail?.plan?._id
+                                            (isSubscriptionActive && hasPlan)
+                                                ? plan._id !== configDetail?.plan?._id
                                                 : true
                                         )
                                         .map((plan) => (
@@ -1087,9 +1096,12 @@ const Activation = () => {
                                                             onClick={() => {
                                                                 // Determinar el tipo de cambio de plan
                                                                 const currentPlan = configDetail?.plan;
-                                                                let changeType = 'SAME_PLAN';
+                                                                let changeType = 'NEW_PLAN'; // Por defecto es nuevo plan
+                                                                
                                                                 if (currentPlan) {
-                                                                    if (plan.price > currentPlan.price) {
+                                                                    if (plan._id === currentPlan._id) {
+                                                                        changeType = 'SAME_PLAN';
+                                                                    } else if (plan.price > currentPlan.price) {
                                                                         changeType = 'UPGRADE';
                                                                     } else if (plan.price < currentPlan.price) {
                                                                         changeType = 'DOWNGRADE';
@@ -1104,8 +1116,8 @@ const Activation = () => {
                                                                     return;
                                                                 }
 
-                                                                // Si es un plan diferente, mostrar modal de comparación
-                                                                console.log('Plan diferente, mostrando modal de comparación');
+                                                                // Si es un plan diferente o nuevo, mostrar modal de comparación
+                                                                console.log('Plan diferente o nuevo, mostrando modal de comparación');
                                                                 setSelectedPlan(plan);
                                                                 setShowComparisonModal(true);
                                                             }}
@@ -1117,19 +1129,21 @@ const Activation = () => {
                                             </GridItem>
                                         ))}
                                 </GridContainer>
-                                <div className={classes.continueButtonContainer}>
-                                    <Button
-                                        type="button"
-                                        variant="contained"
-                                        color="primary"
-                                        disabled={!mp || loading}
-                                        loading={loading}
-                                        className={classes.button}
-                                        onClick={() => setViewMode('subscription-details')}
-                                    >
-                                        {PLAN_DISPLAY_TEXTS.CONTINUE_BUTTON}
-                                    </Button>
-                                </div>
+                                {hasPlan && (
+                                    <div className={classes.continueButtonContainer}>
+                                        <Button
+                                            type="button"
+                                            variant="contained"
+                                            color="primary"
+                                            disabled={!mp || loading}
+                                            loading={loading}
+                                            className={classes.button}
+                                            onClick={() => setViewMode('subscription-details')}
+                                        >
+                                            {PLAN_DISPLAY_TEXTS.CONTINUE_BUTTON}
+                                        </Button>
+                                    </div>
+                                )}
                             </CardBody>
                         </Card>
                     </>
@@ -1164,22 +1178,22 @@ const Activation = () => {
                             ? SUBSCRIPTION_MESSAGES.PAUSE.title
                             : confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL
                                 ? PLAN_CHANGE_MESSAGES.INITIAL.title
-                                : confirmAction === ACTION_TYPES.CHANGE_PLAN
-                                    ? (() => {
-                                        const currentPlan = configDetail?.plan;
-                                        const selectedPlanData = selectedPlan;
+                                                                    : confirmAction === ACTION_TYPES.CHANGE_PLAN
+                                        ? (() => {
+                                            const currentPlan = configDetail?.plan;
+                                            const selectedPlanData = selectedPlan;
 
-                                        if (currentPlan && selectedPlanData) {
-                                            if (selectedPlanData.price > currentPlan.price) {
-                                                return PLAN_CHANGE_MESSAGES.UPGRADE.title;
-                                            } else if (selectedPlanData.price < currentPlan.price) {
-                                                return PLAN_CHANGE_MESSAGES.DOWNGRADE.title;
-                                            } else {
-                                                return PLAN_CHANGE_MESSAGES.SAME_PLAN.title;
+                                            if (currentPlan && selectedPlanData) {
+                                                if (selectedPlanData.price > currentPlan.price) {
+                                                    return PLAN_CHANGE_MESSAGES.UPGRADE.title;
+                                                } else if (selectedPlanData.price < currentPlan.price) {
+                                                    return PLAN_CHANGE_MESSAGES.DOWNGRADE.title;
+                                                } else {
+                                                    return PLAN_CHANGE_MESSAGES.SAME_PLAN.title;
+                                                }
                                             }
-                                        }
-                                        return 'Cambiar plan';
-                                    })()
+                                            return 'Seleccionar plan';
+                                        })()
                                     : confirmAction === ACTION_TYPES.RESUME
                                         ? SUBSCRIPTION_MESSAGES.RESUME.title
                                         : 'Confirmar acción'

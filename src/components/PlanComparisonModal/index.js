@@ -169,7 +169,7 @@ const PlanComparisonModal = ({
 }) => {
     const classes = useStyles()
 
-    if (!currentPlan || !newPlan) {
+    if (!newPlan) {
         return null
     }
 
@@ -182,8 +182,8 @@ const PlanComparisonModal = ({
         console.log('🔍 getFeatureLimit - plan:', plan?.name, 'featureKey:', featureKey)
         console.log('🔍 plan.features:', plan?.features)
         
-        if (!plan.features || !Array.isArray(plan.features)) {
-            console.log('❌ No features array found')
+        if (!plan || !plan.features || !Array.isArray(plan.features)) {
+            console.log('❌ No plan or features array found')
             return { value: null, enabled: false }
         }
         
@@ -276,7 +276,7 @@ const PlanComparisonModal = ({
     const allFeatures = new Set()
     
     // Agregar features del plan actual
-    if (currentPlan.features && Array.isArray(currentPlan.features)) {
+    if (currentPlan?.features && Array.isArray(currentPlan.features)) {
         console.log('📋 Current plan features:', currentPlan.features.map(f => f.feature?.name))
         currentPlan.features.forEach(f => {
             if (f.feature?.name) {
@@ -302,7 +302,7 @@ const PlanComparisonModal = ({
         upgrade: 0,
         downgrade: 0,
         same: 0,
-        priceDifference: newPlan.price - currentPlan.price
+        priceDifference: newPlan.price - (currentPlan?.price || 0)
     }
 
     allFeatures.forEach(featureKey => {
@@ -330,13 +330,13 @@ const PlanComparisonModal = ({
                 <Box className={classes.planHeader}>
                     <Box className={classes.planInfo}>
                         <Typography className={classes.planName}>
-                            Plan Actual
+                            {currentPlan ? 'Plan Actual' : 'Sin Plan'}
                         </Typography>
                         <Typography className={classes.planPrice}>
-                            ${formatNumber(currentPlan.price.toFixed(1))}
+                            {currentPlan ? `$${formatNumber(currentPlan.price.toFixed(1))}` : '$0'}
                         </Typography>
                         <Typography className={classes.planBillingCycle}>
-                            {formatBillingCycle(currentPlan.billingCycle)}
+                            {currentPlan ? formatBillingCycle(currentPlan.billingCycle) : 'Gratuito'}
                         </Typography>
                     </Box>
 
@@ -381,7 +381,7 @@ const PlanComparisonModal = ({
                                     const comparison = compareValues(currentLimit.value, newLimit.value)
                                     // Buscar la feature en ambos planes
         const newPlanFeature = newPlan.features?.find(f => f.feature.name === featureKey)
-        const currentPlanFeature = currentPlan.features?.find(f => f.feature.name === featureKey)
+        const currentPlanFeature = currentPlan?.features?.find(f => f.feature.name === featureKey)
         const feature = newPlanFeature || currentPlanFeature
 
                                     return (
