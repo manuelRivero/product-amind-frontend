@@ -5,16 +5,50 @@
 export const getTenantFromHostname = () => {
     const hostname = window.location.hostname
     
-    // Obtener el subdominio (primer elemento antes del primer punto)
-    const parts = hostname.split('.')
-    let tenant = parts[0]
-    
-    // Eliminar el sufijo "-admin" si existe
-    if (tenant.endsWith('-admin')) {
-        tenant = tenant.replace('-admin', '')
+    // Casos especiales para desarrollo local
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return ''
     }
     
-    return tenant
+    // Nueva estructura: subdominio.admin.tiendapro.com.ar
+    const parts = hostname.split('.')
+    
+    // Verificar si tenemos al menos 4 partes (subdominio.admin.tiendapro.com.ar)
+    if (parts.length >= 4) {
+        // El tenant es el primer elemento (subdominio)
+        let tenant = parts[0]
+        
+        // Verificar que el tenant no esté vacío
+        if (!tenant || tenant.trim() === '') {
+            return ''
+        }
+        
+        // Eliminar el sufijo "-admin" si existe
+        if (tenant.endsWith('-admin')) {
+            tenant = tenant.replace('-admin', '')
+        }
+        
+        return tenant
+    }
+    
+    // Fallback para la estructura anterior si es necesario
+    if (parts.length >= 1) {
+        let tenant = parts[0]
+        
+        // Verificar que el tenant no esté vacío
+        if (!tenant || tenant.trim() === '') {
+            return ''
+        }
+        
+        // Eliminar el sufijo "-admin" si existe
+        if (tenant.endsWith('-admin')) {
+            tenant = tenant.replace('-admin', '')
+        }
+        
+        return tenant
+    }
+    
+    return ''
 }
 
 /**
@@ -38,4 +72,13 @@ export const getCurrentTenant = (user = null) => {
  */
 export const getTenantForLogin = () => {
     return getTenantFromHostname()
+}
+
+/**
+ * Verifica si hay un tenant válido en la URL
+ * @returns {boolean} True si hay un tenant válido
+ */
+export const hasValidTenant = () => {
+    const tenant = getTenantFromHostname()
+    return tenant && tenant.trim() !== ''
 } 
