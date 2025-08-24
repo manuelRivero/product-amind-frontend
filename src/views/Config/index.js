@@ -241,7 +241,7 @@ export default function ConfigPage() {
     } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
-            title: [],
+            title: '',
             description: '',
             primaryColor: '',
             contrastTextColor: '',
@@ -326,6 +326,7 @@ export default function ConfigPage() {
 
     useEffect(() => {
         if (themeConfig) {
+            console.log('themeConfig', themeConfig)
             setPreview(themeConfig.metadata.logo)
             setTimeout(() => {
                 reset({
@@ -341,7 +342,7 @@ export default function ConfigPage() {
                     locality: themeConfig.locality || '',
                     postalCode: themeConfig.postalCode || '',
                     address: themeConfig.address || '',
-                    logoUrl: themeConfig.metadata.logo,
+                    logoUrl: themeConfig.metadata.logo ?? '',
                     titleFont: themeConfig.typography?.title ?? '',
                     bodyFont: themeConfig.typography?.body ?? '',
                     country: themeConfig.metadata.country || 'AR',
