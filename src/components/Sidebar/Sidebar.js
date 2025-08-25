@@ -2,7 +2,7 @@
 import React, { useState } from 'react'
 import classNames from 'classnames'
 import PropTypes from 'prop-types'
-import { NavLink, useLocation } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 // @material-ui/core components
 import { makeStyles } from '@material-ui/core/styles'
 import Drawer from '@material-ui/core/Drawer'
@@ -14,6 +14,7 @@ import Icon from '@material-ui/core/Icon'
 
 import styles from 'assets/jss/material-dashboard-react/components/sidebarStyle.js'
 import { Box } from '@material-ui/core'
+import logo from '../../assets/img/logo-white.svg'
 
 const useStyles = makeStyles(styles)
 
@@ -133,7 +134,7 @@ export default function Sidebar(props) {
                                                     style={{
                                                         color:
                                                             location.pathname ===
-                                                            prop.layout +
+                                                                prop.layout +
                                                                 prop.path +
                                                                 e.path
                                                                 ? '#fff'
@@ -171,7 +172,14 @@ export default function Sidebar(props) {
                         keepMounted: true, // Better open performance on mobile.
                     }}
                 >
-                    <div className={classes.sidebarWrapper}>{links}</div>
+                    <div className={classes.sidebarWrapper}>
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '20px' }}>
+                            <Link to="/admin">
+                                <img src={logo} alt="logo" style={{ width: '80px', height: '80px' }} />
+                            </Link>
+                        </div>
+                        {links}
+                    </div>
                 </Drawer>
             </Hidden>
             <Hidden smDown implementation="css">
@@ -185,7 +193,13 @@ export default function Sidebar(props) {
                         }),
                     }}
                 >
-                    <div className={classes.sidebarWrapper}>{links}</div>
+                    <div className={classes.sidebarWrapper}>
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '20px' }}>
+                            <Link to="/admin">
+                                <img src={logo} alt="logo" style={{ width: '80px', height: '80px' }} />
+                            </Link>
+                        </div>
+                        {links}</div>
                 </Drawer>
             </Hidden>
         </div>
