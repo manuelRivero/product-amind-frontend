@@ -84,11 +84,16 @@ const Activation = () => {
     // Flags de estado - actualizados para manejar tiendas sin plan
     const hasPlan = plan !== null && plan !== undefined;
     const hasSubscription = mpSubscriptionId !== null && mpSubscriptionId !== undefined;
-    const isPaymentApproved = hasPlan && hasSubscription && (preapprovalStatus === 'authorized' && paymentStatus === 'approved');
+    
+    // Estados de pago corregidos
+    const isPaymentApproved = hasPlan && hasSubscription && (preapprovalStatus === 'approved' && paymentStatus === 'approved');
+    const isPaymentAuthorized = hasPlan && hasSubscription && (preapprovalStatus === 'authorized' && paymentStatus === 'authorized');
     const isPaymentPending = hasPlan && hasSubscription && (preapprovalStatus === 'authorized' && paymentStatus === 'pending');
     const isPaymentPaused = hasPlan && hasSubscription && (preapprovalStatus === 'paused' || paymentStatus === 'paused' || lastStatus === 'paused');
     const isPaymentCancelled = hasPlan && hasSubscription && (preapprovalStatus === 'cancelled' || paymentStatus === 'cancelled' || lastStatus === 'cancelled');
-    const isSubscriptionActive = hasPlan && hasSubscription && (isPaymentApproved || isPaymentPaused || isPaymentPending) && !isPaymentCancelled;
+    
+    // Suscripción activa solo cuando está aprobada
+    const isSubscriptionActive = hasPlan && hasSubscription && isPaymentApproved && !isPaymentCancelled;
 
     // Función para determinar el modo de vista
     const getViewMode = () => {
@@ -101,8 +106,8 @@ const Activation = () => {
         if (isPaymentCancelled) return 'payment-cancelled';
         if (isPaymentPaused) return 'payment-paused';
         if (isPaymentPending) return 'payment-pending';
-        if (isPaymentApproved && !isSubscriptionActive) return 'payment-authorized';
-        if (isSubscriptionActive) return 'subscription-details';
+        if (isPaymentAuthorized) return 'payment-authorized';
+        if (isPaymentApproved) return 'subscription-details';
         return 'plan-selection';
     };
 
@@ -111,7 +116,7 @@ const Activation = () => {
     // Actualizar viewMode cuando cambian los flags
     React.useEffect(() => {
         setViewMode(getViewMode());
-    }, [hasPlan, hasSubscription, isPaymentApproved, isPaymentPending, isPaymentPaused, isPaymentCancelled, isSubscriptionActive]);
+    }, [hasPlan, hasSubscription, isPaymentApproved, isPaymentAuthorized, isPaymentPending, isPaymentPaused, isPaymentCancelled, isSubscriptionActive]);
 
     const [loadingPlans, setLoadingPlans] = React.useState(false)
     const [plans, setPlans] = React.useState([])

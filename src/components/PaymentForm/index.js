@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
-import { useDispatch } from 'react-redux';
+
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import TextInput from '../TextInput/Index';
 import client from '../../api/client';
-import { getConfigRequest } from '../../store/config';
+
 import Card from '../Card/Card.js';
 import CardHeader from '../Card/CardHeader.js';
 import CardBody from '../Card/CardBody.js';
@@ -52,11 +52,11 @@ const PaymentForm = ({
     selectedProductForPlanChange,
     selectedCategoryForPlanChange,
     onSuccess,
-    onViewModeChange,
+
     resetPlan
 }) => {
     const classes = useStyles();
-    const dispatch = useDispatch();
+
     // Estados internos del formulario
     const [cardNumber, setCardNumber] = useState('');
     const [cardExp, setCardExp] = useState('');
@@ -105,7 +105,6 @@ const PaymentForm = ({
             if (resetPlan) {
                 resetPlan();
             }
-            dispatch(getConfigRequest())
             
             // Llamar callback de éxito si existe
             if (onSuccess) {
@@ -237,10 +236,6 @@ const PaymentForm = ({
 
     const handleSuccessModalClose = () => {
         setShowSuccessModal(false);
-        // Cambiar view mode a subscription-details
-        if (onViewModeChange) {
-            onViewModeChange('subscription-details');
-        }
     };
 
     const handleErrorModalClose = () => {
@@ -378,7 +373,7 @@ PaymentForm.propTypes = {
     selectedProductForPlanChange: PropTypes.object,
     selectedCategoryForPlanChange: PropTypes.object,
     onSuccess: PropTypes.func,
-    onViewModeChange: PropTypes.func,
+
     resetPlan: PropTypes.func
 };
 
@@ -388,7 +383,7 @@ PaymentForm.defaultProps = {
     selectedProductForPlanChange: null,
     selectedCategoryForPlanChange: null,
     onSuccess: null,
-    onViewModeChange: null,
+
     resetPlan: null
 };
 
