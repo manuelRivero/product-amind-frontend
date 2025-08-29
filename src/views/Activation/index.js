@@ -83,16 +83,20 @@ const Activation = () => {
 
     // Flags de estado - actualizados para manejar tiendas sin plan
     const hasPlan = plan !== null && plan !== undefined;
-    const isPaymentApproved = hasPlan && (preapprovalStatus === 'authorized' && paymentStatus === 'approved');
-    const isPaymentPending = hasPlan && (preapprovalStatus === 'authorized' && paymentStatus === 'pending');
-    const isPaymentPaused = hasPlan && (preapprovalStatus === 'paused' || paymentStatus === 'paused' || lastStatus === 'paused');
-    const isPaymentCancelled = hasPlan && (preapprovalStatus === 'cancelled' || paymentStatus === 'cancelled' || lastStatus === 'cancelled');
-    const isSubscriptionActive = hasPlan && (isPaymentApproved || isPaymentPaused || isPaymentPending) && !isPaymentCancelled;
+    const hasSubscription = mpSubscriptionId !== null && mpSubscriptionId !== undefined;
+    const isPaymentApproved = hasPlan && hasSubscription && (preapprovalStatus === 'authorized' && paymentStatus === 'approved');
+    const isPaymentPending = hasPlan && hasSubscription && (preapprovalStatus === 'authorized' && paymentStatus === 'pending');
+    const isPaymentPaused = hasPlan && hasSubscription && (preapprovalStatus === 'paused' || paymentStatus === 'paused' || lastStatus === 'paused');
+    const isPaymentCancelled = hasPlan && hasSubscription && (preapprovalStatus === 'cancelled' || paymentStatus === 'cancelled' || lastStatus === 'cancelled');
+    const isSubscriptionActive = hasPlan && hasSubscription && (isPaymentApproved || isPaymentPaused || isPaymentPending) && !isPaymentCancelled;
 
     // Función para determinar el modo de vista
     const getViewMode = () => {
         // Si no hay plan configurado, mostrar selección de plan
         if (!hasPlan) return 'plan-selection';
+        
+        // Si hay plan pero no hay suscripción, mostrar selección de plan
+        if (!hasSubscription) return 'plan-selection';
         
         if (isPaymentCancelled) return 'payment-cancelled';
         if (isPaymentPaused) return 'payment-paused';
@@ -107,7 +111,7 @@ const Activation = () => {
     // Actualizar viewMode cuando cambian los flags
     React.useEffect(() => {
         setViewMode(getViewMode());
-    }, [hasPlan, isPaymentApproved, isPaymentPending, isPaymentPaused, isPaymentCancelled, isSubscriptionActive]);
+    }, [hasPlan, hasSubscription, isPaymentApproved, isPaymentPending, isPaymentPaused, isPaymentCancelled, isSubscriptionActive]);
 
     const [loadingPlans, setLoadingPlans] = React.useState(false)
     const [plans, setPlans] = React.useState([])
@@ -139,6 +143,10 @@ const Activation = () => {
 
 
     const handleCancelSubscription = async () => {
+        if (!mpSubscriptionId) {
+            console.error('No hay suscripción para cancelar')
+            return
+        }
         try {
             await dispatch(cancelSubscriptionRequest(mpSubscriptionId))
             setShowConfirmModal(false)
@@ -149,6 +157,10 @@ const Activation = () => {
     }
 
     const handlePauseSubscription = async () => {
+        if (!mpSubscriptionId) {
+            console.error('No hay suscripción para pausar')
+            return
+        }
         try {
             await dispatch(pauseSubscriptionRequest(mpSubscriptionId))
             setShowConfirmModal(false)
@@ -160,6 +172,10 @@ const Activation = () => {
     }
 
     const handleResumeSubscription = async () => {
+        if (!mpSubscriptionId) {
+            console.error('No hay suscripción para reactivar')
+            return
+        }
         try {
             await dispatch(resumeSubscriptionRequest(mpSubscriptionId))
             setShowConfirmModal(false)
@@ -288,7 +304,7 @@ const Activation = () => {
         const getData = async () => {
             try {
                 setLoadingPlans(true)
-                const response = await getPlans()
+                const response = await getPlans({searchAvailable: true })
                 console.log('Plans fetched:', response)
                 setPlans(response.data.plans)
             } catch (error) {
@@ -319,6 +335,11 @@ const Activation = () => {
 
 
 const getNextPaymentDate = () => {
+    // Validar que configDetail y rawData existan
+    if (!configDetail?.rawData?.auto_recurring) {
+        return null
+    }
+
     const frequencyType = configDetail.rawData.auto_recurring.frequency_type
     const frequencyInterval = configDetail.rawData.auto_recurring.frequency
     const startDate = configDetail.rawData.auto_recurring.start_date
@@ -330,8 +351,10 @@ const getNextPaymentDate = () => {
     } else if (frequencyType === 'months') {
         return moment(startDate).add(frequencyInterval, 'months').format('DD/MM/YYYY')
     }
+    
+    return null
 }
-console.log('configDetail.rawData.next_payment_date', configDetail.rawData.auto_recurring.frequency_type)
+console.log('configDetail.rawData.next_payment_date', configDetail?.rawData?.auto_recurring?.frequency_type)
 
     if (loadingPlans) {
         return <LoadinScreen />
@@ -349,6 +372,7 @@ console.log('configDetail.rawData.next_payment_date', configDetail.rawData.auto_
                         loadingCancelSubscription={loadingCancelSubscription}
                         handleConfirmAction={handleConfirmAction}
                         ACTION_TYPES={ACTION_TYPES}
+                        hasSubscription={hasSubscription}
                     />
                 );
 
@@ -357,6 +381,7 @@ console.log('configDetail.rawData.next_payment_date', configDetail.rawData.auto_
                     <PaymentCancelled
                         configDetail={configDetail}
                         lastCancelDate={lastCancelDate}
+                        hasSubscription={hasSubscription}
                     />
                 );
 
@@ -369,6 +394,7 @@ console.log('configDetail.rawData.next_payment_date', configDetail.rawData.auto_
                         handleConfirmAction={handleConfirmAction}
                         ACTION_TYPES={ACTION_TYPES}
                         getNextPaymentDate={getNextPaymentDate}
+                        hasSubscription={hasSubscription}
                     />
                 );
 
@@ -376,6 +402,7 @@ console.log('configDetail.rawData.next_payment_date', configDetail.rawData.auto_
                 return (
                     <PaymentAuthorized
                         configDetail={configDetail}
+                        hasSubscription={hasSubscription}
                     />
                 );
 

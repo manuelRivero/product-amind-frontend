@@ -287,7 +287,7 @@ export default function AddProducts() {
         data.append('category', values.category || '')
         data.append(
             'price',
-            values.price.replace('$', '').replace(',', '') || 0
+            values.price.replace(/[$,]/g, '') || 0
         )
         data.append('description', values.description || '')
 

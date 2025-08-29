@@ -68,6 +68,7 @@ const PaymentForm = ({
     const [mp, setMp] = useState(null);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     // Inicializar MercadoPago
     useEffect(() => {
@@ -111,8 +112,25 @@ const PaymentForm = ({
                 onSuccess();
             }
         } catch (error) {
+            console.error('Error en handleConnect:', error);
+            
+            // Extraer mensaje de error específico del servidor
+            let errorMsg = 'Error al procesar el pago';
+            
+            if (error.response) {
+                // Error de respuesta del servidor
+                const serverError = error.response.data;
+                errorMsg = serverError?.message || serverError?.error || `Error ${error.response.status}: ${error.response.statusText}`;
+            } else if (error.request) {
+                // Error de red
+                errorMsg = 'Error de conexión. Por favor, verifica tu conexión a internet e intenta nuevamente.';
+            } else if (error.message) {
+                // Error personalizado
+                errorMsg = error.message;
+            }
+            
+            setErrorMessage(errorMsg);
             setShowErrorModal(true);
-            throw new Error('Error al enviar el token de la tarjeta');
         }
     };
 
@@ -139,7 +157,20 @@ const PaymentForm = ({
             console.log('Subscription activated:', cardTokenResponse);
             await handleConnect(cardTokenResponse.id);
         } catch (err) {
-            setError(err.message || 'Error al procesar el pago');
+            console.error('Error en handleSubmit:', err);
+            
+            // Extraer mensaje de error específico
+            let errorMsg = 'Error al procesar el pago';
+            
+            if (err.message) {
+                errorMsg = err.message;
+            } else if (err.response) {
+                const serverError = err.response.data;
+                errorMsg = serverError?.message || serverError?.error || `Error ${err.response.status}: ${err.response.statusText}`;
+            }
+            
+            setError(errorMsg);
+            setErrorMessage(errorMsg);
             setShowErrorModal(true);
         } finally {
             setLoading(false);
@@ -156,9 +187,12 @@ const PaymentForm = ({
             case 'cardNumber':
                 setCardNumber(value);
                 break;
-            case 'cardExp':
-                setCardExp(value);
+            case 'cardExp': {
+                // Formatear fecha de expiración con regex MM/YY
+                const formattedExp = formatExpirationDate(value);
+                setCardExp(formattedExp);
                 break;
+            }
             case 'cardCvv':
                 setCardCvv(value);
                 break;
@@ -173,6 +207,34 @@ const PaymentForm = ({
         }
     };
 
+    // Función para formatear la fecha de expiración
+    const formatExpirationDate = (value) => {
+        // Remover todos los caracteres no numéricos
+        const numbers = value.replace(/\D/g, '');
+        
+        // Limitar a 4 dígitos máximo
+        const limitedNumbers = numbers.slice(0, 4);
+        
+        // Aplicar formato MM/YY
+        if (limitedNumbers.length >= 2) {
+            const month = limitedNumbers.slice(0, 2);
+            const year = limitedNumbers.slice(2);
+            
+            // Validar que el mes esté entre 01 y 12
+            const monthNum = parseInt(month, 10);
+            if (monthNum === 0) {
+                return '01/' + (year || '');
+            } else if (monthNum > 12) {
+                return '12/' + (year || '');
+            }
+            
+            // Siempre agregar "/" después del mes si hay al menos 2 dígitos
+            return month + '/' + (year || '');
+        }
+        
+        return limitedNumbers;
+    };
+
     const handleSuccessModalClose = () => {
         setShowSuccessModal(false);
         // Cambiar view mode a subscription-details
@@ -184,6 +246,7 @@ const PaymentForm = ({
     const handleErrorModalClose = () => {
         setShowErrorModal(false);
         setError('');
+        setErrorMessage('');
     };
 
     return (
@@ -293,7 +356,12 @@ const PaymentForm = ({
 
             {/* Modal de error */}
             <Dialog open={showErrorModal} onClose={handleErrorModalClose}>
-                <DialogTitle>Error</DialogTitle>
+                <DialogTitle>Error al procesar el pago</DialogTitle>
+                <div style={{ padding: '0 24px 24px 24px' }}>
+                    <p style={{ marginBottom: '20px', color: '#666' }}>
+                        {errorMessage || 'Ha ocurrido un error al procesar tu pago. Por favor, intenta nuevamente.'}
+                    </p>
+                </div>
                 <DialogActions>
                     <Button onClick={handleErrorModalClose} color="primary">
                         Aceptar

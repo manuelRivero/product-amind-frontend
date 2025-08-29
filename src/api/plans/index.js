@@ -1,5 +1,9 @@
 import client from '../client'
 
-export const getPlans = () => {
-    return client.get(`api/plans/get-plans`)
+export const getPlans = ({searchAvailable = true}) => {
+    return client.get(`api/plans/get-plans`, {
+        params: {
+            searchAvailable
+        }
+    })
 }
