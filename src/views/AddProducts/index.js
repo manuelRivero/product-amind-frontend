@@ -6,6 +6,7 @@ import uploadImage from 'assets/img/upload-cloud.png'
 import {
     Box,
     Checkbox,
+    Chip,
     Divider,
     IconButton,
     MenuItem,
@@ -31,7 +32,7 @@ import LoadinScreen from 'components/LoadingScreen'
 import { getProductDetail } from 'store/products'
 import { resetEditProductSuccess } from 'store/products'
 import { editProduct } from 'store/products'
-import { Delete, DeleteForever, Crop } from '@material-ui/icons'
+import { Delete, DeleteForever, Crop, Add } from '@material-ui/icons'
 import { NumericFormat } from 'react-number-format'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import { getCategories } from 'store/categories'
@@ -92,6 +93,7 @@ const schema = yup.object({
             const textContent = value.replace(/<[^>]*>/g, '').trim()
             return textContent.length > 0
         }),
+    keywords: yup.array().min(1, 'Debe agregar al menos una palabra clave').required('Campo obligatorio'),
     status: yup
         .string()
         .oneOf(['1', '0'], 'Campo obligatorio')
@@ -197,6 +199,29 @@ const useStyles = makeStyles({
         marginTop: '0',
         marginBottom: '0',
     },
+    keywordsContainer: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem',
+    },
+    keywordsInputRow: {
+        display: 'flex',
+        gap: '1rem',
+        alignItems: 'flex-end',
+    },
+    keywordsChipsContainer: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '0.5rem',
+        marginTop: '0.5rem',
+    },
+    keywordChip: {
+        backgroundColor: primaryColor[0],
+        color: '#fff',
+        '& .MuiChip-deleteIcon': {
+            color: '#fff',
+        },
+    },
 
 })
 
@@ -227,6 +252,9 @@ export default function AddProducts() {
     const [cropModalOpen, setCropModalOpen] = useState(false)
     const [currentImageForCrop, setCurrentImageForCrop] = useState(null)
     const [currentImageIndex, setCurrentImageIndex] = useState(null)
+    const [isSquareAspectRatio, setIsSquareAspectRatio] = useState(true) // true = cuadrado, false = rectangular vertical
+    const [keywordInput, setKeywordInput] = useState('') // Estado para el input de keywords
+    const [showAspectRatioModal, setShowAspectRatioModal] = useState(false) // Estado para el modal de confirmación
     //form
     const {
         control,
@@ -245,6 +273,7 @@ export default function AddProducts() {
             price: '',
             stock: '',
             description: '',
+            keywords: [],
             status: '',
             featuresArray: [],
             unique: true,
@@ -253,6 +282,10 @@ export default function AddProducts() {
     const featuresArray = useFieldArray({
         control,
         name: 'featuresArray', // Nombre del campo repetible
+    })
+    const keywordsArray = useFieldArray({
+        control,
+        name: 'keywords', // Nombre del campo repetible
     })
     const { fields, append, remove } = useFieldArray({
         control,
@@ -316,6 +349,11 @@ export default function AddProducts() {
                 ])
             )
         }
+
+        // Agregar keywords
+        if (values.keywords?.length > 0) {
+            data.append('keywords', JSON.stringify(values.keywords.map(kw => kw.keyword)))
+        }
         // Agregar estado del producto
         data.append(
             'status',
@@ -350,12 +388,12 @@ export default function AddProducts() {
     // Funciones para manejar el crop
     const handleCropComplete = (croppedImageUrl, croppedBlob) => {
         console.log('Crop completado:', { croppedImageUrl, currentImageIndex })
-        
+
         // Crear un nuevo archivo desde el blob
         const croppedFile = new File([croppedBlob], `cropped-image-${Date.now()}.jpg`, {
             type: 'image/jpeg',
         })
-        
+
         if (currentImageIndex !== null) {
             console.log('Reemplazando imagen existente en índice:', currentImageIndex)
             // Reemplazar imagen existente
@@ -377,7 +415,7 @@ export default function AddProducts() {
             })
             console.log('Nueva imagen agregada exitosamente')
         }
-        
+
         // Limpiar estados
         setCropModalOpen(false)
         setCurrentImageForCrop(null)
@@ -396,6 +434,52 @@ export default function AddProducts() {
         setCurrentImageForCrop(image.preview)
         setCurrentImageIndex(index)
         setCropModalOpen(true)
+    }
+
+    // Funciones para manejar keywords
+    const handleAddKeyword = () => {
+        const trimmedKeyword = keywordInput.trim()
+        if (trimmedKeyword && !keywordsArray.fields.some(kw => kw.keyword === trimmedKeyword)) {
+            keywordsArray.append({ keyword: trimmedKeyword })
+            setKeywordInput('')
+        }
+    }
+
+    const handleRemoveKeyword = (index) => {
+        keywordsArray.remove(index)
+    }
+
+    const handleKeywordInputKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault()
+            handleAddKeyword()
+        }
+    }
+
+    // Funciones para manejar el cambio de formato de recorte
+    const handleAspectRatioChange = () => {
+        // Si hay imágenes, mostrar modal de confirmación
+        if (fields.length > 0) {
+            setShowAspectRatioModal(true)
+        } else {
+            // Si no hay imágenes, cambiar directamente
+            setIsSquareAspectRatio(!isSquareAspectRatio)
+        }
+    }
+
+    const handleConfirmAspectRatioChange = () => {
+        // Eliminar todas las imágenes
+        fields.forEach((_, index) => {
+            remove(index)
+        })
+        // Cambiar el formato
+        setIsSquareAspectRatio(!isSquareAspectRatio)
+        // Cerrar el modal
+        setShowAspectRatioModal(false)
+    }
+
+    const handleCancelAspectRatioChange = () => {
+        setShowAspectRatioModal(false)
     }
     useEffect(() => {
         const getData = async () => {
@@ -447,6 +531,14 @@ export default function AddProducts() {
                     )._id
                     : '',
             })
+            if (productDetail.keywords) {
+                productDetail.keywords.map(keyword =>
+                    {
+                        console.log('keyword', keyword)
+                        keywordsArray.append({ keyword })
+                    }
+                )
+            }
             if (productDetail.features.length > 0) {
                 setValue('unique', false)
 
@@ -475,6 +567,7 @@ export default function AddProducts() {
                 price: '',
                 stock: '',
                 description: '',
+                keywords: [],
                 status: '',
                 featuresArray: [],
                 category: '',
@@ -518,6 +611,25 @@ export default function AddProducts() {
                     <form onSubmit={handleSubmit(submit)}>
                         <Box>
                             <h3>Imágenes de tu producto</h3>
+                            <Box style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                                <Typography variant="body2" style={{ color: '#666' }}>
+                                    Formato de recorte:
+                                </Typography>
+                                <Box style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Typography variant="body2" style={{ fontSize: '14px' }}>
+                                        Cuadrado
+                                    </Typography>
+                                    <Switch
+                                        checked={!isSquareAspectRatio}
+                                        onChange={handleAspectRatioChange}
+                                        color="primary"
+                                        size="small"
+                                    />
+                                    <Typography variant="body2" style={{ fontSize: '14px' }}>
+                                        Rectangular vertical
+                                    </Typography>
+                                </Box>
+                            </Box>
                         </Box>
                         <div className={classes.imagesRow}>
                             {console.log('fields', fields)}
@@ -599,6 +711,54 @@ export default function AddProducts() {
                                         />
                                     )}
                                 />
+                            </Box>
+                        </Box>
+                        <Box className={classes.inputRow}>
+                            <Box flex="0 1 812px">
+                                <Box className={classes.keywordsContainer}>
+                                    <Typography variant="body2" style={{ color: '#666', marginBottom: '0.5rem' }}>
+                                        Palabras clave del producto
+                                    </Typography>
+                                    <Box className={classes.keywordsInputRow}>
+                                        <TextField
+                                            fullWidth
+                                            variant="outlined"
+                                            placeholder="Escribe una palabra clave..."
+                                            value={keywordInput}
+                                            onChange={(e) => setKeywordInput(e.target.value)}
+                                            onKeyPress={handleKeywordInputKeyPress}
+                                            style={{ backgroundColor: '#FFF' }}
+                                        />
+                                        <Button
+                                            onClick={handleAddKeyword}
+                                            disabled={!keywordInput.trim()}
+                                            variant="contained"
+                                            color="primary"
+                                            startIcon={<Add />}
+                                            style={{ minWidth: '120px' }}
+                                        >
+                                            Agregar
+                                        </Button>
+                                    </Box>
+                                    <Box className={classes.keywordsChipsContainer}>
+                                        {keywordsArray.fields.map((keyword, index) => (
+                                            <Chip
+                                                key={keyword.id}
+                                                label={keyword.keyword}
+                                                onDelete={() => handleRemoveKeyword(index)}
+                                                className={classes.keywordChip}
+                                                deleteIcon={<Delete />}
+                                            />
+                                        ))}
+                                    </Box>
+                                    {errors.keywords && (
+                                        <TextDanger>
+                                            <p className={classes.errorText}>
+                                                {errors.keywords.message}
+                                            </p>
+                                        </TextDanger>
+                                    )}
+                                </Box>
                             </Box>
                         </Box>
                         <Box className={classes.inputRow}>
@@ -1083,7 +1243,7 @@ export default function AddProducts() {
                 cancelText={params.id ? 'Cerrar' : 'Crear otro producto'}
                 confirmText="Ir al listado de productos"
                 hasConfirm={true}
-                cancelCb={() => { 
+                cancelCb={() => {
                     if (params.id) {
                         dispatch(resetEditProductSuccess())
                     } else {
@@ -1130,13 +1290,27 @@ export default function AddProducts() {
                     setValue('unique', true)
                 }}
             />
-            
+            <CustomModal
+                open={showAspectRatioModal}
+                handleClose={handleCancelAspectRatioChange}
+                icon={'warning'}
+                title="¡Cambio de formato de recorte!"
+                subTitle="Al cambiar el formato de recorte, se eliminarán todas las imágenes actuales ya que son de un formato distinto. Deberás agregar nuevas imágenes con el formato seleccionado."
+                hasCancel={true}
+                hasConfirm={true}
+                cancelCb={handleCancelAspectRatioChange}
+                confirmCb={handleConfirmAspectRatioChange}
+                cancelText="Cancelar"
+                confirmText="Cambiar formato"
+            />
+
             {/* Modal de crop de imágenes */}
             <CropModal
                 open={cropModalOpen}
                 onClose={handleCropCancel}
                 imageUrl={currentImageForCrop}
                 onCropComplete={handleCropComplete}
+                isSquareAspectRatio={isSquareAspectRatio}
             />
         </section>
     )

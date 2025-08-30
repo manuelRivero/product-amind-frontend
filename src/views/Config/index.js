@@ -21,7 +21,6 @@ import Card from 'components/Card/Card'
 import CardHeader from 'components/Card/CardHeader'
 import CardBody from 'components/Card/CardBody'
 import { StorePreview } from 'components/StorePreview'
-import UpgradePrompt from '../../components/UpgradePrompt'
 import TextField from '@material-ui/core/TextField'
 import MenuItem from '@material-ui/core/MenuItem'
 
@@ -633,9 +632,7 @@ export default function ConfigPage() {
                         </div>
                         <div>
                             <h4 className={classes.sectionSubtitle}>Personalización del tema</h4>
-                            <UpgradePrompt
-                                featureKey="themeCustomization"
-                            >
+                          
                                 <div className={classes.colorPreviewRow}>
                                     <div style={{ flex: 1 }}>
                                         <div className={classes.colorSection}>
@@ -872,7 +869,6 @@ export default function ConfigPage() {
                                         />
                                     </div>
                                 </div>
-                            </UpgradePrompt>
                         </div>
                         {Object.keys(errors).length > 0 && (
                             <p>
