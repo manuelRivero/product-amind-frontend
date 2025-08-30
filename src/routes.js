@@ -23,6 +23,7 @@ import CategoryIcon from '@material-ui/icons/Category'
 import ListAltIcon from '@material-ui/icons/ListAlt'
 import ImageIcon from '@material-ui/icons/Image'
 import SettingsIcon from '@material-ui/icons/Settings'
+import DescriptionIcon from '@material-ui/icons/Description'
 // core components/views for Admin layout
 import DashboardPage from 'views/Dashboard/Dashboard.js'
 
@@ -44,6 +45,8 @@ import Offers from './views/Offers'
 import AddOffer from './views/AddOffer'
 import Activation from './views/Activation'
 import Home from './views/Home'
+import Blogs from './views/Blogs'
+import AddBlog from './views/AddBlog'
 
 const dashboardRoutes = [
     {
@@ -194,6 +197,34 @@ const dashboardRoutes = [
             //     name: 'Carga masiva de imágenes',
             //     component: UploadImagesFromZip,
             // },
+        ],
+    },
+    {
+        path: '/blogs',
+        name: 'Blogs',
+        icon: DescriptionIcon,
+        component: Blogs,
+        layout: '/admin',
+        needConfig: true,
+        permission: { resource: 'blogs', action: 'read' },
+        childrens: [
+            {
+                path: '/add-blog',
+                name: 'Crear Blog',
+                component: AddBlog,
+            },
+            {
+                noshow: true,
+                path: '/edit-blog/:id',
+                name: 'Editar Blog',
+                component: AddBlog,
+            },
+            {
+                noshow: true,
+                path: '/view-blog/:id',
+                name: 'Ver Blog',
+                component: AddBlog, // Por ahora usamos el mismo componente, se puede crear uno específico para ver
+            },
         ],
     },
     {
