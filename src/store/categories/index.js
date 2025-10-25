@@ -81,6 +81,7 @@ export const categoriesSlice = createSlice({
             state.loadingCategoriesData = false
             state.categoriesData = {
                 data: action.payload.data.categories,
+                pagination: action.payload.data.pagination,
             }
         },
         [getCategories.rejected]: (state, action) => {

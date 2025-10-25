@@ -47,6 +47,8 @@ import Activation from './views/Activation'
 import Home from './views/Home'
 import Blogs from './views/Blogs'
 import AddBlog from './views/AddBlog'
+import Coupons from './views/Coupons'
+import AddCoupon from './views/AddCoupon'
 
 const dashboardRoutes = [
     {
@@ -109,6 +111,30 @@ const dashboardRoutes = [
                 noshow: true,
 
                 component: AddOffer,
+            },
+        ],
+    },
+    {
+        path: '/coupons',
+        name: 'Cupones',
+        icon: ListAltIcon,
+        component: Coupons,
+        layout: '/admin',
+        needConfig: true,
+        permission: { resource: 'coupons', action: 'read' },
+
+        childrens: [
+            {
+                path: '/add-coupon/:id',
+                name: 'Agregar cupón',
+                noshow: true,
+                component: AddCoupon,
+            },
+            {
+                path: '/add-coupon',
+                name: 'Agregar cupón',
+                noshow: true,
+                component: AddCoupon,
             },
         ],
     },

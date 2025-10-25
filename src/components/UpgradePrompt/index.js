@@ -189,11 +189,26 @@ export const UpgradePrompt = ({
     showUpgradePrompt = true,
     showPreview = true // Nueva prop para mostrar preview
 }) => {
+    console.log('featureKey', featureKey)
     const classes = useStyles()
     const history = useHistory()
-    const { hasFeature, getFeature } = usePlanPermissions()
-    const feature = getFeature(featureKey)
+    const { hasFeature, getFeature, isPlanLoaded } = usePlanPermissions()
     const [modalOpen, setModalOpen] = useState(false)
+    
+    // Si el plan no está cargado, mostrar contenido normal temporalmente
+    if (!isPlanLoaded) {
+        return children
+    }
+    
+    let feature = null
+    try {
+        feature = getFeature(featureKey)
+        console.log('hasFeature', feature)
+        console.log('hasFeature log')
+    } catch (error) {
+        console.error('Error getting feature info:', error)
+        feature = null
+    }
     
     const handleUpgrade = () => {
         history.push(`/admin/mercado-pago?feature=${featureKey}`)
@@ -201,8 +216,18 @@ export const UpgradePrompt = ({
     const handleOpenModal = () => setModalOpen(true)
     const handleCloseModal = () => setModalOpen(false)
     
+    // Verificar si tiene la feature con validación de errores
+    let hasAccess = false
+    try {
+        hasAccess = hasFeature(featureKey)
+    } catch (error) {
+        console.error('Error checking feature access:', error)
+        // En caso de error, mostrar contenido normal por defecto
+        return children
+    }
+    
     // Si tiene la feature, mostrar el contenido normal
-    if (hasFeature(featureKey)) {
+    if (hasAccess) {
         return children
     }
     

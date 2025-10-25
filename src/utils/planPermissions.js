@@ -5,10 +5,26 @@
  * @returns {boolean} - true si la feature está habilitada, false en caso contrario
  */
 export const checkFeatureAccess = (planDetails, featureKey) => {
-    if (!planDetails?.features || !Array.isArray(planDetails.features)) return false
-    
-    const feature = planDetails.features.find(f => f.feature.name === featureKey)
-    return feature?.feature?.enabled || false
+    try {
+        if (!planDetails?.features || !Array.isArray(planDetails.features)) return false
+        
+        const feature = planDetails.features.find(f => f.feature?.name === featureKey)
+        if (!feature?.feature?.enabled) return false
+        
+        const limits = feature.limits
+        if (!limits) return true // Si no hay límites, tiene acceso
+        
+        // Si es ilimitado, tiene acceso completo
+        if (limits.unlimited === true) return true
+        
+        // Si max es 0 (sin límites permitidos), no tiene acceso
+        if (limits.max === 0) return false
+        
+        return true
+    } catch (error) {
+        console.error('Error in checkFeatureAccess:', error)
+        return false
+    }
 }
 
 /**
@@ -18,10 +34,17 @@ export const checkFeatureAccess = (planDetails, featureKey) => {
  * @returns {Object|null} - Información de la feature o null si no existe
  */
 export const getFeatureInfo = (planDetails, featureKey) => {
-    if (!planDetails?.features || !Array.isArray(planDetails.features)) return null
-    
-    const feature = planDetails.features.find(f => f.feature.name === featureKey)
-    return feature?.feature || null
+    try {
+        if (!planDetails?.features || !Array.isArray(planDetails.features)) return null
+        
+        console.log('feature', featureKey, planDetails.features)
+        console.log('target feature', planDetails.features.find(f => f.feature?.name === featureKey))
+        const feature = planDetails.features.find(f => f.feature?.name === featureKey)
+        return feature?.feature || null
+    } catch (error) {
+        console.error('Error in getFeatureInfo:', error)
+        return null
+    }
 }
 
 /**
