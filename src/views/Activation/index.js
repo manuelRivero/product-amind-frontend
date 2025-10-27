@@ -20,7 +20,8 @@ import {
     SubscriptionDetails,
     PaymentAuthorized,
     PaymentFormWrapper,
-    PlanSelection
+    PlanSelection,
+    MarketplaceConnection
 } from './ActivationComponents'
 import { getPlans } from '../../api/plans'
 import moment from 'moment'
@@ -67,6 +68,10 @@ const Activation = () => {
     const { configDetail, loadingCancelSubscription, loadingPauseSubscription } = useSelector((state) => state.config)
     const dispatch = useDispatch()
 
+    // validación de conexión con mercado pago
+    const mercadoPagoMarketplaceAccessToken = configDetail?.mercadoPagoMarketplaceAccessToken
+    const mercadoPagoMarketplaceTokenExpiresAt = moment(configDetail?.mercadoPagoMarketplaceTokenExpiresAt).isAfter(moment())
+
     // Nueva lógica de validación de estados de suscripción
     const mpSubscriptionId = configDetail?.mpSubscriptionId
     const paymentStatus = configDetail?.paymentStatus
@@ -97,6 +102,7 @@ const Activation = () => {
 
     // Función para determinar el modo de vista
     const getViewMode = () => {
+        if (mercadoPagoMarketplaceAccessToken && mercadoPagoMarketplaceTokenExpiresAt) return 'marketplace-connection';
         // Si no hay plan configurado, mostrar selección de plan
         if (!hasPlan) return 'plan-selection';
         
@@ -108,7 +114,7 @@ const Activation = () => {
         if (isPaymentPending) return 'payment-pending';
         if (isPaymentAuthorized) return 'payment-authorized';
         if (isPaymentApproved) return 'subscription-details';
-        return 'plan-selection';
+        return 'subscription-details';
     };
 
     const [viewMode, setViewMode] = React.useState(getViewMode());
@@ -439,6 +445,11 @@ console.log('configDetail.rawData.next_payment_date', configDetail?.rawData?.aut
                         setShowComparisonModal={setShowComparisonModal}
                         PLAN_DISPLAY_TEXTS={PLAN_DISPLAY_TEXTS}
                     />
+                );
+
+            case 'marketplace-connection':
+                return (
+                    <MarketplaceConnection />
                 );
 
             default:

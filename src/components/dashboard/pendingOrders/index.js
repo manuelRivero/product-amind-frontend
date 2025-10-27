@@ -179,6 +179,8 @@ export default function PendingOrders() {
                                         tableHead={[
                                             'Id',
                                             'Total',
+                                            'Comisión',
+                                            'Total Recibido',
                                             'Fecha',
                                             'Estatus',
                                             'Cambiar estatus',
@@ -193,6 +195,13 @@ export default function PendingOrders() {
                                                      ? `${e.status} - ${e.cancelReason || 'Motivo no especificado'}`
                                                      : e.status
                                                  
+                                                 // Calcular comisión y total recibido
+                                                 const marketplaceFee = e.marketplaceFee || 0;
+                                                 // Si marketplaceFee es menor que 1, asumimos que viene como decimal (0.03 = 3%)
+                                                 const feePercentage = marketplaceFee < 1 ? marketplaceFee * 100 : marketplaceFee;
+                                                 const commissionAmount = (e.totalPrice * feePercentage / 100);
+                                                 const totalReceived = e.totalPrice - commissionAmount;
+
                                                  return [
                                                      <p key={`sale-id-${e._id}`}>
                                                          {e._id}
@@ -204,6 +213,23 @@ export default function PendingOrders() {
                                                          {e.totalPrice.toFixed(
                                                              2
                                                          )}
+                                                     </p>,
+                                                     <p
+                                                         key={`sale-commission-${e._id}`}
+                                                     >
+                                                         {feePercentage > 0 ? (
+                                                             <>
+                                                                 {feePercentage.toFixed(1)}% (${commissionAmount.toFixed(2)})
+                                                             </>
+                                                         ) : (
+                                                             'Sin comisión'
+                                                         )}
+                                                     </p>,
+                                                     <p
+                                                         key={`sale-total-received-${e._id}`}
+                                                     >
+                                                         $
+                                                         {totalReceived.toFixed(2)}
                                                      </p>,
                                                      <p
                                                          key={`sale-date-${e._id}`}

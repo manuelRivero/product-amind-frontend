@@ -270,16 +270,33 @@ export default function Sales() {
     // Render
     const renderTableRows = () =>
         salesData.sales.map((e) => {
-
-
             // Mostrar motivo de cancelación si el estado es CANCELADO
             const statusDisplay = e.status === 'CANCELADO' && e.cancelReason
                 ? `${e.status} - ${e.cancelReason || 'Motivo no especificado'}`
                 : e.status
 
+            // Calcular comisión y total recibido
+            const marketplaceFee = e.marketplaceFee || 0;
+            // Si marketplaceFee es menor que 1, asumimos que viene como decimal (0.03 = 3%)
+            const feePercentage = marketplaceFee < 1 ? marketplaceFee * 100 : marketplaceFee;
+            const commissionAmount = (e.total * feePercentage / 100);
+            const totalReceived = e.total - commissionAmount;
+
             return [
                 <p key={`sale-id-${e._id}`}>{e._id}</p>,
                 <p key={`sale-total-${e._id}`}>${formatNumber(e.total)}</p>,
+                <p key={`sale-commission-${e._id}`}>
+                    {feePercentage > 0 ? (
+                        <>
+                            {feePercentage.toFixed(1)}% (${commissionAmount.toFixed(2)})
+                        </>
+                    ) : (
+                        'Sin comisión'
+                    )}
+                </p>,
+                <p key={`sale-total-received-${e._id}`}>
+                    ${formatNumber(totalReceived.toFixed(2))}
+                </p>,
                 <p key={`sale-date-${e._id}`}>
                     {moment(e.createdAt).utc().format('DD-MM-YYYY HH:mm:ss A')}
                 </p>,
@@ -306,6 +323,8 @@ export default function Sales() {
                     tableHead={[
                         'Id',
                         'Total',
+                        'Comisión',
+                        'Total Recibido',
                         'Fecha',
                         'Estatus',
                         'Cambiar estatus',

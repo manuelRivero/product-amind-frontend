@@ -276,6 +276,45 @@ export default function SaleDetail() {
                                                         .toFixed(1)}
                                                 </span>
                                             </div>
+                                            <div className={classes.infoItem}>
+                                                <span className={classes.infoLabel}>Comisión de Marketplace</span>
+                                                <span className={classes.infoValue}>
+                                                    {(() => {
+                                                        const marketplaceFee = saleData.marketplaceFee || 0;
+                                                        const feePercentage = marketplaceFee < 1 ? marketplaceFee * 100 : marketplaceFee;
+                                                        const totalOrder = saleData.products.reduce(
+                                                            (acc, item) =>
+                                                                acc + finalPrice(item.data.price, item.data.discount) * item.quantity,
+                                                            0
+                                                        );
+                                                        const commissionAmount = (totalOrder * feePercentage / 100);
+                                                        
+                                                        return feePercentage > 0 ? (
+                                                            `${feePercentage.toFixed(1)}% ($${commissionAmount.toFixed(2)})`
+                                                        ) : (
+                                                            'Sin comisión'
+                                                        );
+                                                    })()}
+                                                </span>
+                                            </div>
+                                            <div className={classes.infoItem}>
+                                                <span className={classes.infoLabel}>Total Recibido</span>
+                                                <span className={classes.priceValue}>
+                                                    {(() => {
+                                                        const marketplaceFee = saleData.marketplaceFee || 0;
+                                                        const feePercentage = marketplaceFee < 1 ? marketplaceFee * 100 : marketplaceFee;
+                                                        const totalOrder = saleData.products.reduce(
+                                                            (acc, item) =>
+                                                                acc + finalPrice(item.data.price, item.data.discount) * item.quantity,
+                                                            0
+                                                        );
+                                                        const commissionAmount = (totalOrder * feePercentage / 100);
+                                                        const totalReceived = totalOrder - commissionAmount;
+                                                        
+                                                        return `$${totalReceived.toFixed(2)}`;
+                                                    })()}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
 

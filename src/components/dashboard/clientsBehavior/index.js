@@ -209,6 +209,7 @@ export default function ClientsBehavior() {
         const clientPurchases = {}
         const clientFirstPurchase = {}
         const clientTotalSpent = {}
+        const clientTotalReceived = {}
 
         sales.forEach(sale => {
             console.log('sale', sale)
@@ -217,22 +218,32 @@ export default function ClientsBehavior() {
             const purchaseDate = moment(sale.createdAt)
             const amount = sale.total || 0
 
+            // Calcular comisión y monto recibido
+            const marketplaceFee = sale.marketplaceFee || 0;
+            const feePercentage = marketplaceFee < 1 ? marketplaceFee * 100 : marketplaceFee;
+            const commissionAmount = (amount * feePercentage / 100);
+            const receivedAmount = amount - commissionAmount;
+
             if (!clientPurchases[clientId]) {
                 clientPurchases[clientId] = []
                 clientFirstPurchase[clientId] = purchaseDate
                 clientTotalSpent[clientId] = 0
+                clientTotalReceived[clientId] = 0
             }
 
             clientPurchases[clientId].push({
                 id: sale._id,
                 date: purchaseDate,
                 amount: amount,
+                receivedAmount: receivedAmount,
+                commissionAmount: commissionAmount,
                 name: sale.name,
                 lastName: sale.lastName,
                 user: sale.user
             })
 
             clientTotalSpent[clientId] += amount
+            clientTotalReceived[clientId] += receivedAmount
 
             // Actualizar primera compra si es más temprana
             if (purchaseDate.isBefore(clientFirstPurchase[clientId])) {
@@ -244,6 +255,7 @@ export default function ClientsBehavior() {
         const behaviorAnalysis = Object.keys(clientPurchases).map(clientId => {
             const purchases = clientPurchases[clientId]
             const totalSpent = clientTotalSpent[clientId]
+            const totalReceived = clientTotalReceived[clientId]
             const purchaseCount = purchases.length
             
             // Determinar si es cliente nuevo o recurrente
@@ -270,10 +282,12 @@ export default function ClientsBehavior() {
                 customerType,
                 purchaseCount,
                 totalSpent,
+                totalReceived,
                 avgPurchaseFrequency,
                 lastPurchase: moment.max(...purchases.map(p => p.date)).format('DD/MM/YYYY'),
                 firstPurchase: clientFirstPurchase[clientId].format('DD/MM/YYYY'),
-                avgOrderValue: Math.round(totalSpent / purchaseCount)
+                avgOrderValue: Math.round(totalSpent / purchaseCount),
+                avgReceivedValue: Math.round(totalReceived / purchaseCount)
             }
         })
 
@@ -287,7 +301,8 @@ export default function ClientsBehavior() {
             totalCustomers: behaviorAnalysis.length,
             newCustomers: behaviorAnalysis.filter(c => c.customerType === 'Nuevo').length,
             returningCustomers: behaviorAnalysis.filter(c => c.customerType === 'Recurrente').length,
-            totalRevenue: behaviorAnalysis.reduce((sum, c) => sum + c.totalSpent, 0)
+            totalRevenue: behaviorAnalysis.reduce((sum, c) => sum + c.totalSpent, 0),
+            totalReceived: behaviorAnalysis.reduce((sum, c) => sum + c.totalReceived, 0)
         }
     }
     
@@ -387,6 +402,12 @@ export default function ClientsBehavior() {
                                 </div>
                                 <div style={{ fontSize: '0.875rem', color: '#666' }}>Ingresos Totales</div>
                             </div>
+                            <div style={{ textAlign: 'center' }}>
+                                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#4CAF50' }}>
+                                    ${formatNumber(clientsBehaviorData.summary.totalReceived)}
+                                </div>
+                                <div style={{ fontSize: '0.875rem', color: '#666' }}>Total Recibido</div>
+                            </div>
                         </div>
                     </Box>
 
@@ -424,6 +445,7 @@ export default function ClientsBehavior() {
                                     'Tipo', 
                                     'Compras', 
                                     'Total Gastado', 
+                                    'Total Recibido',
                                     'Valor Promedio',
                                     'Frecuencia (días)',
                                     'Última Compra',
@@ -440,6 +462,7 @@ export default function ClientsBehavior() {
                                     </span>,
                                     client.purchaseCount,
                                     '$' + formatNumber(client.totalSpent),
+                                    '$' + formatNumber(client.totalReceived),
                                     '$' + formatNumber(client.avgOrderValue),
                                     client.avgPurchaseFrequency === 'N/A' ? 'N/A' : client.avgPurchaseFrequency + ' días',
                                     client.lastPurchase,
