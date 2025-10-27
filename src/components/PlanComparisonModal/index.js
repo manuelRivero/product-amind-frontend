@@ -26,9 +26,7 @@ import {
 import {
     FEATURE_CONFIG,
     formatBillingCycle,
-    getFeatureTypeFromConfig,
-    isBinaryFeatureType,
-    isCountableFeatureType
+    isBinaryFeatureType
 } from '../../views/helpers/planFeatures'
 import { formatNumber } from '../../helpers/product'
 import Card from 'components/Card/Card.js'

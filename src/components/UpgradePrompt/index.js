@@ -5,7 +5,6 @@ import { Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, Button as M
 import { Lock as LockIcon, CheckCircle, ErrorOutline } from '@material-ui/icons'
 import Button from 'components/CustomButtons/Button'
 import { usePlanPermissions } from '../../hooks/usePlanPermissions'
-import { isBinaryFeatureType } from '../../views/helpers/planFeatures'
 import { useHistory } from 'react-router-dom'
 
 const useStyles = makeStyles((theme) => ({
@@ -200,7 +199,7 @@ export const UpgradePrompt = ({
     console.log('featureKey', featureKey)
     const classes = useStyles()
     const history = useHistory()
-    const { hasFeature, getFeature, isPlanLoaded, getType, isBinary, isCountable } = usePlanPermissions()
+    const { hasFeature, getFeature, isPlanLoaded, getType, isBinary } = usePlanPermissions()
     const [modalOpen, setModalOpen] = useState(false)
     
     // Si el plan no está cargado, mostrar contenido normal temporalmente

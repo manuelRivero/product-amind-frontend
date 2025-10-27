@@ -2,7 +2,7 @@ import React from 'react'
 import MainStats from 'components/dashboard/mainStats'
 import MainCharts from 'components/dashboard/mainCharts'
 import PendingOrders from '../../components/dashboard/pendingOrders'
-import PendingOrdersPieChart from '../../components/dashboard/pendingOrdersPieChart'
+import PendingOrdersSummary from '../../components/dashboard/pendingOrdersSummary'
 import BestSellers from 'components/dashboard/bestSellers'
 import StockAlerts from 'components/dashboard/stock'
 import ClientsBehavior from 'components/dashboard/clientsBehavior'
@@ -15,7 +15,7 @@ export default function Dashboard() {
         <div>
             <GridContainer>
                 <GridItem xs={12} md={6}>
-                    <PendingOrdersPieChart />
+                    <PendingOrdersSummary />
                 </GridItem>
                 <GridItem xs={12} md={6}>
                     <MainStats />

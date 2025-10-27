@@ -50,7 +50,7 @@ const additionalStyles = {
     },
 }
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(() => ({
     ...styles,
     ...additionalStyles
 }))
@@ -128,6 +128,16 @@ export default function MainCharts() {
                             const commissionAmount = (sale.total * feePercentage / 100);
                             const receivedAmount = sale.total - commissionAmount;
                             
+                            // Debug logs
+                            console.log('Sale debug:', {
+                                id: sale._id,
+                                total: sale.total,
+                                marketplaceFee: marketplaceFee,
+                                feePercentage: feePercentage,
+                                commissionAmount: commissionAmount,
+                                receivedAmount: receivedAmount
+                            });
+                            
                             monthlyRevenue += sale.total
                             monthlyReceived += receivedAmount
                         }
@@ -136,6 +146,11 @@ export default function MainCharts() {
                     return saleValue
                 })
                 console.log('series', series)
+                console.log('Monthly totals:', {
+                    monthlyRevenue: monthlyRevenue,
+                    monthlyReceived: monthlyReceived,
+                    commissions: monthlyRevenue - monthlyReceived
+                });
                 setChartData(series)
                 setTotalRevenue(monthlyRevenue)
                 setTotalReceived(monthlyReceived)
