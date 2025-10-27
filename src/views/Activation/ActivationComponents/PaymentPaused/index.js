@@ -7,6 +7,7 @@ import CardBody from 'components/Card/CardBody.js';
 import Button from 'components/CustomButtons/Button';
 import PauseCircleFilledIcon from '@material-ui/icons/PauseCircleFilled';
 import moment from 'moment';
+import { isFreePlan } from '../../../../utils/planPermissions';
 
 const useStyles = makeStyles((theme) => ({
     card: {
@@ -96,6 +97,9 @@ const PaymentPaused = ({
     ACTION_TYPES 
 }) => {
     const classes = useStyles();
+    
+    // Verificar si el plan actual es gratuito
+    const isCurrentPlanFree = isFreePlan(configDetail?.plan);
 
     return (
         <Card className={classes.card}>
@@ -153,17 +157,19 @@ const PaymentPaused = ({
                     >
                         Cambiar de plan
                     </Button>
-                    <Button
-                        type="button"
-                        variant="contained"
-                        color="danger"
-                        disabled={loadingCancelSubscription}
-                        loading={loadingCancelSubscription}
-                        className={classes.button}
-                        onClick={() => handleConfirmAction(ACTION_TYPES.CANCEL)}
-                    >
-                        Cancelar suscripción
-                    </Button>
+                    {!isCurrentPlanFree && (
+                        <Button
+                            type="button"
+                            variant="contained"
+                            color="danger"
+                            disabled={loadingCancelSubscription}
+                            loading={loadingCancelSubscription}
+                            className={classes.button}
+                            onClick={() => handleConfirmAction(ACTION_TYPES.CANCEL)}
+                        >
+                            Cancelar suscripción
+                        </Button>
+                    )}
                     <Button
                         type="button"
                         variant="contained"

@@ -8,6 +8,7 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import TextInput from '../TextInput/Index';
 import client from '../../api/client';
+import { isFreePlan } from '../../utils/planPermissions';
 
 import Card from '../Card/Card.js';
 import CardHeader from '../Card/CardHeader.js';
@@ -87,6 +88,25 @@ const PaymentForm = ({
 
     const handleConnect = async (card_token) => {
         try {
+            // Si es plan gratuito, activar directamente sin pago
+            if (isFreePlan(selectedPlan)) {
+                console.log('Activando plan gratuito:', selectedPlan.name);
+                
+                // Aquí deberías llamar a un endpoint específico para activar plan gratuito
+                // Por ahora simulamos la activación exitosa
+                setShowSuccessModal(true);
+                if (resetPlan) {
+                    resetPlan();
+                }
+                
+                // Llamar callback de éxito si existe
+                if (onSuccess) {
+                    onSuccess();
+                }
+                return;
+            }
+
+            // Lógica normal para planes de pago
             const response = await client.post(
                 `api/mercado-pago/subscribe-user`,
                 {

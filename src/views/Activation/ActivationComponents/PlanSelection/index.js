@@ -15,6 +15,7 @@ import {
     PlanFeaturesList,
     formatBillingCycle
 } from '../../../helpers';
+import { isFreePlan } from '../../../../utils/planPermissions';
 
 const useStyles = makeStyles((theme) => ({
     card: {
@@ -208,10 +209,24 @@ const PlanSelection = ({
                                                     if (currentPlan) {
                                                         if (plan._id === currentPlan._id) {
                                                             changeType = 'SAME_PLAN';
-                                                        } else if (plan.price > currentPlan.price) {
-                                                            changeType = 'UPGRADE';
-                                                        } else if (plan.price < currentPlan.price) {
-                                                            changeType = 'DOWNGRADE';
+                                                        } else {
+                                                            // Mejorar lógica de clasificación considerando planes gratuitos
+                                                            const currentIsFree = isFreePlan(currentPlan);
+                                                            const newIsFree = isFreePlan(plan);
+                                                            
+                                                            if (currentIsFree && !newIsFree) {
+                                                                changeType = 'UPGRADE'; // De gratuito a pago
+                                                            } else if (!currentIsFree && newIsFree) {
+                                                                changeType = 'DOWNGRADE'; // De pago a gratuito
+                                                            } else if (!currentIsFree && !newIsFree) {
+                                                                // Ambos son de pago, comparar precios
+                                                                if (plan.price > currentPlan.price) {
+                                                                    changeType = 'UPGRADE';
+                                                                } else if (plan.price < currentPlan.price) {
+                                                                    changeType = 'DOWNGRADE';
+                                                                }
+                                                            }
+                                                            // Si ambos son gratuitos, mantener como NEW_PLAN
                                                         }
                                                     }
 

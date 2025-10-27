@@ -28,6 +28,7 @@ import {
     formatBillingCycle,
     isBinaryFeatureType
 } from '../../views/helpers/planFeatures'
+import { isFreePlan } from '../../utils/planPermissions'
 import { formatNumber } from '../../helpers/product'
 import Card from 'components/Card/Card.js'
 import CardHeader from 'components/Card/CardHeader.js'
@@ -168,6 +169,12 @@ const PlanComparisonModal = ({
     newPlan,
     onConfirm
 }) => {
+    // Función helper para formatear precios
+    const formatPrice = (plan) => {
+        if (!plan) return '$0'
+        if (isFreePlan(plan)) return 'Gratuito'
+        return `$${formatNumber(plan.price.toFixed(1))}`
+    }
     const classes = useStyles()
 
     if (!newPlan) {
@@ -359,7 +366,7 @@ const PlanComparisonModal = ({
                             {currentPlan ? 'Plan Actual' : 'Sin Plan'}
                         </Typography>
                         <Typography className={classes.planPrice}>
-                            {currentPlan ? `$${formatNumber(currentPlan.price.toFixed(1))}` : '$0'}
+                            {formatPrice(currentPlan)}
                         </Typography>
                         <Typography className={classes.planBillingCycle}>
                             {currentPlan ? formatBillingCycle(currentPlan.billingCycle) : 'Gratuito'}
@@ -373,7 +380,7 @@ const PlanComparisonModal = ({
                             Nuevo Plan
                         </Typography>
                         <Typography className={classes.planPrice}>
-                            ${formatNumber(newPlan.price.toFixed(1))}
+                            {formatPrice(newPlan)}
                         </Typography>
                         <Typography className={classes.planBillingCycle}>
                             {formatBillingCycle(newPlan.billingCycle)}
@@ -489,8 +496,11 @@ const PlanComparisonModal = ({
 
                     <Box className={classes.summaryItem}>
                         <Typography variant="h6">
-                            Diferencia de precio: ${formatNumber(Math.abs(summary.priceDifference).toFixed(1))}
-                            {summary.priceDifference >= 0 ? ' más' : ' menos'}
+                            Diferencia de precio: {
+                                summary.priceDifference === 0 ? 'Sin cambio' :
+                                summary.priceDifference > 0 ? `+$${formatNumber(summary.priceDifference.toFixed(1))} más` :
+                                `-$${formatNumber(Math.abs(summary.priceDifference).toFixed(1))} menos`
+                            }
                         </Typography>
                     </Box>
                     </CardBody>

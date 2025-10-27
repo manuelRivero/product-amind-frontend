@@ -17,6 +17,7 @@ import { usePermissions } from '../hooks/usePermissions'
 import PermissionError from '../components/PermissionError'
 import { IconButton } from '@material-ui/core'
 import CloseIcon from '@material-ui/icons/Close'
+import moment from 'moment'
 
 
 const mainRoutes = dashboardRoutes.map((prop, key) => {
@@ -63,6 +64,8 @@ export default function Admin({ ...rest }) {
     // Nueva lógica de validación de estados de suscripción (igual que en Activation)
     const paymentStatus = configDetail?.paymentStatus
     const preapprovalStatus = configDetail?.preapprovalStatus
+    const mercadoPagoMarketplaceAccessToken = configDetail?.mercadoPagoMarketplaceAccessToken
+    const mercadoPagoMarketplaceTokenExpiresAt = moment(configDetail?.mercadoPagoMarketplaceTokenExpiresAt).isAfter(moment())
     // Tomar el último status de userActionHistory (ordenado por fecha ascendente)
     const lastStatusObj = Array.isArray(configDetail?.userActionHistory) && configDetail.userActionHistory.length > 0
         ? configDetail.userActionHistory[configDetail.userActionHistory.length - 1]
@@ -137,7 +140,7 @@ export default function Admin({ ...rest }) {
             const isAdminRoute = prop.layout === '/admin'
             
             // Si la suscripción está pausada o cancelada, solo mostrar la ruta de activación
-            if (isPaymentPaused || isPaymentCancelled) {
+            if (isPaymentPaused || isPaymentCancelled || !mercadoPagoMarketplaceAccessToken || !mercadoPagoMarketplaceTokenExpiresAt) {
                 return isAdminRoute && prop.path === '/mercado-pago'
             }
 
@@ -194,6 +197,7 @@ export default function Admin({ ...rest }) {
             }
         }
         const subdomain = window.location.hostname.split('.')[0]
+        console.log('subdomain', subdomain)
         if (subdomain) {
             verifyTenant(subdomain)
         } else {

@@ -31,6 +31,7 @@ import PlanComparisonModal from '../../components/PlanComparisonModal'
 import ProductSelectionModal from '../../components/ProductSelectionModal'
 import CategorySelectionModal from '../../components/CategorySelectionModal'
 import { PLAN_DISPLAY_TEXTS } from '../helpers'
+import { isFreePlan } from '../../utils/planPermissions'
 
 const useStyles = makeStyles((theme) => ({
     // Modal
@@ -97,14 +98,18 @@ const Activation = () => {
     const isPaymentPaused = hasPlan && hasSubscription && (preapprovalStatus === 'paused' || paymentStatus === 'paused' || lastStatus === 'paused');
     const isPaymentCancelled = hasPlan && hasSubscription && (preapprovalStatus === 'cancelled' || paymentStatus === 'cancelled' || lastStatus === 'cancelled');
     
-    // Suscripción activa solo cuando está aprobada
-    const isSubscriptionActive = hasPlan && hasSubscription && isPaymentApproved && !isPaymentCancelled;
+    // Suscripción activa cuando está aprobada o es plan gratuito
+    const isSubscriptionActive = hasPlan && (isFreePlan(plan) || (hasSubscription && isPaymentApproved && !isPaymentCancelled));
 
     // Función para determinar el modo de vista
     const getViewMode = () => {
-        if (mercadoPagoMarketplaceAccessToken && mercadoPagoMarketplaceTokenExpiresAt) return 'marketplace-connection';
+        if (!mercadoPagoMarketplaceAccessToken && !mercadoPagoMarketplaceTokenExpiresAt) return 'marketplace-connection';
+        
         // Si no hay plan configurado, mostrar selección de plan
         if (!hasPlan) return 'plan-selection';
+        
+        // Si es plan gratuito, mostrar detalles de suscripción directamente
+        if (isFreePlan(plan)) return 'subscription-details';
         
         // Si hay plan pero no hay suscripción, mostrar selección de plan
         if (!hasSubscription) return 'plan-selection';

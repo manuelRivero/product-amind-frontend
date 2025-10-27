@@ -9,7 +9,9 @@ import {
     getFeatureMaxLimit,
     getFeatureType,
     isBinaryFeature,
-    isCountableFeature
+    isCountableFeature,
+    isFreePlan,
+    requiresPayment
 } from '../utils/planPermissions'
 
 /**
@@ -87,6 +89,18 @@ export const usePlanPermissions = () => {
      */
     const isCountable = (featureKey) => isCountableFeature(planDetails, featureKey)
     
+    /**
+     * Verifica si el plan actual es gratuito
+     * @returns {boolean} - true si el plan es gratuito
+     */
+    const isCurrentPlanFree = () => isFreePlan(planDetails)
+    
+    /**
+     * Verifica si el plan actual requiere pago
+     * @returns {boolean} - true si el plan requiere pago
+     */
+    const currentPlanRequiresPayment = () => requiresPayment(planDetails)
+    
     return {
         hasFeature,
         getFeature,
@@ -98,6 +112,8 @@ export const usePlanPermissions = () => {
         getType,
         isBinary,
         isCountable,
+        isCurrentPlanFree,
+        currentPlanRequiresPayment,
         planDetails,
         isPlanLoaded: !!planDetails
     }

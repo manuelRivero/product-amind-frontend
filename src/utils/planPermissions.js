@@ -1,4 +1,23 @@
 /**
+ * Verifica si un plan es gratuito
+ * @param {Object} plan - Plan a verificar
+ * @returns {boolean} - true si el plan es gratuito, false en caso contrario
+ */
+export const isFreePlan = (plan) => {
+    if (!plan) return false
+    return plan.freePlan === true || plan.price === 0
+}
+
+/**
+ * Verifica si un plan requiere pago
+ * @param {Object} plan - Plan a verificar
+ * @returns {boolean} - true si el plan requiere pago, false en caso contrario
+ */
+export const requiresPayment = (plan) => {
+    return !isFreePlan(plan)
+}
+
+/**
  * Verifica si el usuario tiene acceso a una feature específica del plan
  * @param {Object} planDetails - Detalles del plan de suscripción
  * @param {string} featureKey - Nombre de la feature a verificar
