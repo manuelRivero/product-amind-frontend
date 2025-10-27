@@ -52,6 +52,29 @@ const styles = {
         marginTop: '.5rem',
         marginBottom: '.5rem',
     },
+    financialSummary: {
+        display: 'flex',
+        justifyContent: 'space-around',
+        flexWrap: 'wrap',
+        gap: '1rem',
+        marginTop: '1rem',
+        padding: '1rem',
+        backgroundColor: '#f5f5f5',
+        borderRadius: '8px',
+    },
+    financialItem: {
+        textAlign: 'center',
+        minWidth: '120px',
+    },
+    financialValue: {
+        fontSize: '1.25rem',
+        fontWeight: 'bold',
+        marginBottom: '0.25rem',
+    },
+    financialLabel: {
+        fontSize: '0.875rem',
+        color: '#666',
+    },
     legendItem: {
         display: 'flex',
         alignItems: 'center',
@@ -128,7 +151,9 @@ export default function PendingOrdersPieChart() {
         pending: 0,
         shipped: 0,
         cancelled: 0,
-        total: 0
+        total: 0,
+        totalRevenue: 0,
+        totalReceived: 0
     })
 
     // Función para cargar datos completos de todas las páginas
@@ -202,7 +227,9 @@ export default function PendingOrdersPieChart() {
                 pending: 0,
                 shipped: 0,
                 cancelled: 0,
-                total: 0
+                total: 0,
+                totalRevenue: 0,
+                totalReceived: 0
             })
         }
     }
@@ -212,11 +239,24 @@ export default function PendingOrdersPieChart() {
         let pending = 0
         let shipped = 0
         let cancelled = 0
+        let totalRevenue = 0
+        let totalReceived = 0
 
         console.log('Procesando ventas:', sales.length)
 
         sales.forEach(sale => {
             const status = sale.status
+            const amount = sale.total || 0
+            
+            // Calcular comisión y monto recibido
+            const marketplaceFee = sale.marketplaceFee || 0;
+            const feePercentage = marketplaceFee < 1 ? marketplaceFee * 100 : marketplaceFee;
+            const commissionAmount = (amount * feePercentage / 100);
+            const receivedAmount = amount - commissionAmount;
+            
+            totalRevenue += amount
+            totalReceived += receivedAmount
+
             console.log('Estado de venta:', status, 'ID:', sale._id, 'Tipo:', typeof status)
 
             // Manejar tanto strings como números
@@ -261,7 +301,9 @@ export default function PendingOrdersPieChart() {
             pending,
             shipped,
             cancelled,
-            total
+            total,
+            totalRevenue,
+            totalReceived
         }
 
         console.log('Datos del gráfico:', chartData)
@@ -376,6 +418,28 @@ export default function PendingOrdersPieChart() {
                                     type="Pie"
                                     options={pieChartOptions}
                                 />
+
+                                {/* Resumen financiero */}
+                                <Box className={classes.financialSummary}>
+                                    <div className={classes.financialItem}>
+                                        <div className={classes.financialValue} style={{ color: '#1976d2' }}>
+                                            ${summaryData.totalRevenue.toFixed(2)}
+                                        </div>
+                                        <div className={classes.financialLabel}>Ingresos Totales</div>
+                                    </div>
+                                    <div className={classes.financialItem}>
+                                        <div className={classes.financialValue} style={{ color: '#4CAF50' }}>
+                                            ${summaryData.totalReceived.toFixed(2)}
+                                        </div>
+                                        <div className={classes.financialLabel}>Total Recibido</div>
+                                    </div>
+                                    <div className={classes.financialItem}>
+                                        <div className={classes.financialValue} style={{ color: '#ff9800' }}>
+                                            ${(summaryData.totalRevenue - summaryData.totalReceived).toFixed(2)}
+                                        </div>
+                                        <div className={classes.financialLabel}>Comisiones</div>
+                                    </div>
+                                </Box>
                             </>
                         ) : (
                             <Box display="flex" justifyContent="center" p={3}>

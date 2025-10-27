@@ -23,7 +23,37 @@ import { useHistory } from 'react-router-dom/cjs/react-router-dom.min'
 
 moment.locale('es')
 // console.log('dailySalesChart', dailySalesChart)
-const useStyles = makeStyles(styles)
+
+const additionalStyles = {
+    financialSummary: {
+        display: 'flex',
+        justifyContent: 'space-around',
+        flexWrap: 'wrap',
+        gap: '1rem',
+        marginTop: '1rem',
+        padding: '1rem',
+        backgroundColor: '#f5f5f5',
+        borderRadius: '8px',
+    },
+    financialItem: {
+        textAlign: 'center',
+        minWidth: '120px',
+    },
+    financialValue: {
+        fontSize: '1.25rem',
+        fontWeight: 'bold',
+        marginBottom: '0.25rem',
+    },
+    financialLabel: {
+        fontSize: '0.875rem',
+        color: '#666',
+    },
+}
+
+const useStyles = makeStyles((theme) => ({
+    ...styles,
+    ...additionalStyles
+}))
 
 export default function MainCharts() {
     const classes = useStyles()
@@ -36,6 +66,8 @@ export default function MainCharts() {
     const [chartData, setChartData] = useState(null)
     const [chartLabels, setChartLabels] = useState(null)
     const [sales, setSales] = useState([])
+    const [totalRevenue, setTotalRevenue] = useState(0)
+    const [totalReceived, setTotalReceived] = useState(0)
     const [selectedDate, setSelectedDate] = useState(
         moment(new Date()).format('DD-MM-YYYY')
     )
@@ -74,6 +106,9 @@ export default function MainCharts() {
                     .fill(0)
                     .map((day, i) => i + 1)
 
+                let monthlyRevenue = 0
+                let monthlyReceived = 0
+
                 const series = labels.map((e) => {
                     let saleValue = 0
                     sales.forEach((sale) => {
@@ -86,6 +121,15 @@ export default function MainCharts() {
                             ]).format('DD-MM-YYYY')
                         ) {
                             saleValue = saleValue + sale.total
+                            
+                            // Calcular comisión y monto recibido
+                            const marketplaceFee = sale.marketplaceFee || 0;
+                            const feePercentage = marketplaceFee < 1 ? marketplaceFee * 100 : marketplaceFee;
+                            const commissionAmount = (sale.total * feePercentage / 100);
+                            const receivedAmount = sale.total - commissionAmount;
+                            
+                            monthlyRevenue += sale.total
+                            monthlyReceived += receivedAmount
                         }
                     })
                     console.log('saleValue', saleValue)
@@ -93,6 +137,8 @@ export default function MainCharts() {
                 })
                 console.log('series', series)
                 setChartData(series)
+                setTotalRevenue(monthlyRevenue)
+                setTotalReceived(monthlyReceived)
 
                 setChartLabels(labels)
             }
@@ -202,6 +248,28 @@ export default function MainCharts() {
                                         helperText="Seleccione el mes y el año"
                                         autoOk={true}
                                     />
+
+                                    {/* Resumen financiero mensual */}
+                                    <Box className={classes.financialSummary}>
+                                        <div className={classes.financialItem}>
+                                            <div className={classes.financialValue} style={{ color: '#1976d2' }}>
+                                                ${totalRevenue.toFixed(2)}
+                                            </div>
+                                            <div className={classes.financialLabel}>Ingresos Totales</div>
+                                        </div>
+                                        <div className={classes.financialItem}>
+                                            <div className={classes.financialValue} style={{ color: '#4CAF50' }}>
+                                                ${totalReceived.toFixed(2)}
+                                            </div>
+                                            <div className={classes.financialLabel}>Total Recibido</div>
+                                        </div>
+                                        <div className={classes.financialItem}>
+                                            <div className={classes.financialValue} style={{ color: '#ff9800' }}>
+                                                ${(totalRevenue - totalReceived).toFixed(2)}
+                                            </div>
+                                            <div className={classes.financialLabel}>Comisiones</div>
+                                        </div>
+                                    </Box>
                                 </CardBody>
                             </Card>
                         )}
