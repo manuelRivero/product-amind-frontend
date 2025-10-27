@@ -5,39 +5,92 @@ export const FEATURE_LIMITATION_TYPES = {
   ANALYTICS: 'retentionDays',
   OFFERS: 'maxActiveOffers',
   BANNERS: 'maxBanners',
+  COUPONS: 'maxCoupons',
+  REPORTS_LITE: 'maxReportsLite',
+  REPORTS_PLUS: 'maxReportsPlus',
 }
 
 // Feature configuration mapping
 export const FEATURE_CONFIG = {
   createProducts: {
+    featureType: 'countable',
     limitationKey: FEATURE_LIMITATION_TYPES.PRODUCTS,
     limitationText: (limit) => `Gestiona hasta ${limit} ${limit === 1 ? 'producto' : 'productos'}`,
     unlimitedText: 'Productos ilimitados',
   },
   createCategories: {
+    featureType: 'countable',
     limitationKey: FEATURE_LIMITATION_TYPES.CATEGORIES,
     limitationText: (limit) => `Organiza hasta ${limit} ${limit === 1 ? 'categoría' : 'categorías'}`,
     unlimitedText: 'Categorías ilimitadas',
   },
   analytics: {
+    featureType: 'countable',
     limitationKey: FEATURE_LIMITATION_TYPES.ANALYTICS,
     limitationText: (limit) => `Datos por ${limit} ${limit === 1 ? 'día' : 'días'}`,
     unlimitedText: 'Datos ilimitados',
   },
   themeCustomization: {
+    featureType: 'binary',
     limitationKey: null,
     limitationText: null,
     unlimitedText: null,
   },
   offers: {
+    featureType: 'countable',
     limitationKey: FEATURE_LIMITATION_TYPES.OFFERS,
     limitationText: (limit) => `Mantén hasta ${limit} ${limit === 1 ? 'promoción activa' : 'promociones activas'}`,
     unlimitedText: 'Promociones ilimitadas',
   },
   banners: {
+    featureType: 'countable',
     limitationKey: FEATURE_LIMITATION_TYPES.BANNERS,
     limitationText: (limit) => `Gestiona hasta ${limit} ${limit === 1 ? 'banner' : 'banners'}`,
     unlimitedText: 'Banners ilimitados',
+  },
+  // Nuevas features agregadas
+  reporteLite: {
+    featureType: 'binary',
+    limitationKey: null,
+    limitationText: null,
+    unlimitedText: null,
+  },
+  reportePlus: {
+    featureType: 'binary',
+    limitationKey: null,
+    limitationText: null,
+    unlimitedText: null,
+  },
+  sistemaCupones: {
+    featureType: 'countable',
+    limitationKey: FEATURE_LIMITATION_TYPES.COUPONS,
+    limitationText: (limit) => `Crea hasta ${limit} ${limit === 1 ? 'cupón' : 'cupones'}`,
+    unlimitedText: 'Cupones ilimitados',
+  },
+  // Mapeos alternativos para nombres que pueden venir del backend
+  'Reporte Lite': {
+    featureType: 'binary',
+    limitationKey: null,
+    limitationText: null,
+    unlimitedText: null,
+  },
+  'Reporte Plus': {
+    featureType: 'binary',
+    limitationKey: null,
+    limitationText: null,
+    unlimitedText: null,
+  },
+  'Sistema de Cupones de Descuento': {
+    featureType: 'countable',
+    limitationKey: FEATURE_LIMITATION_TYPES.COUPONS,
+    limitationText: (limit) => `Crea hasta ${limit} ${limit === 1 ? 'cupón' : 'cupones'}`,
+    unlimitedText: 'Cupones ilimitados',
+  },
+  'Sistema de Promociones': {
+    featureType: 'countable',
+    limitationKey: FEATURE_LIMITATION_TYPES.OFFERS,
+    limitationText: (limit) => `Mantén hasta ${limit} ${limit === 1 ? 'promoción activa' : 'promociones activas'}`,
+    unlimitedText: 'Promociones ilimitadas',
   },
 }
 
@@ -45,7 +98,31 @@ export const FEATURE_CONFIG = {
 export const getFeatureLimitationText = (featureKey, feature) => {
   const config = FEATURE_CONFIG[featureKey]
   
-  if (!config || !config.limitationKey) {
+  if (!config) {
+    // Si no hay configuración específica, intentar determinar el tipo basado en la feature
+    if (feature?.featureType === 'binary') {
+      return feature?.enabled ? 'Disponible' : 'No disponible'
+    }
+    
+    if (feature?.featureType === 'countable' && feature?.limits) {
+      if (feature.limits.unlimited) {
+        return 'Ilimitado'
+      }
+      if (feature.limits.max !== undefined && feature.limits.max !== null) {
+        return `Hasta ${feature.limits.max}`
+      }
+    }
+    
+    return null
+  }
+
+  // Para features binary, siempre mostrar "Disponible" si está habilitada
+  if (config.featureType === 'binary') {
+    return feature?.enabled ? 'Disponible' : 'No disponible'
+  }
+
+  // Para features countable, manejar límites
+  if (!config.limitationKey) {
     return null
   }
 
@@ -71,7 +148,29 @@ export const getFeatureLimitationText = (featureKey, feature) => {
 // Utility function to check if a feature has limitations
 export const hasFeatureLimitations = (featureKey, feature) => {
   const config = FEATURE_CONFIG[featureKey]
+  
+  // Features binary no tienen límites
+  if (config?.featureType === 'binary') {
+    return false
+  }
+  
   return config && config.limitationKey && feature.limits
+}
+
+// Utility function to get feature type from config
+export const getFeatureTypeFromConfig = (featureKey) => {
+  const config = FEATURE_CONFIG[featureKey]
+  return config?.featureType || null
+}
+
+// Utility function to check if a feature is binary type
+export const isBinaryFeatureType = (featureKey) => {
+  return getFeatureTypeFromConfig(featureKey) === 'binary'
+}
+
+// Utility function to check if a feature is countable type
+export const isCountableFeatureType = (featureKey) => {
+  return getFeatureTypeFromConfig(featureKey) === 'countable'
 }
 
 // Utility function to get enabled features from a plan

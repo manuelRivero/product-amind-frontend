@@ -6,7 +6,10 @@ import {
     hasAnyFeature,
     getFeatureLimits,
     isFeatureUnlimited,
-    getFeatureMaxLimit
+    getFeatureMaxLimit,
+    getFeatureType,
+    isBinaryFeature,
+    isCountableFeature
 } from '../utils/planPermissions'
 
 /**
@@ -63,6 +66,27 @@ export const usePlanPermissions = () => {
      */
     const getMaxLimit = (featureKey) => getFeatureMaxLimit(planDetails, featureKey)
     
+    /**
+     * Obtiene el tipo de feature
+     * @param {string} featureKey - Nombre de la feature
+     * @returns {string|null} - Tipo de feature
+     */
+    const getType = (featureKey) => getFeatureType(planDetails, featureKey)
+    
+    /**
+     * Verifica si una feature es binary
+     * @param {string} featureKey - Nombre de la feature
+     * @returns {boolean} - true si es binary
+     */
+    const isBinary = (featureKey) => isBinaryFeature(planDetails, featureKey)
+    
+    /**
+     * Verifica si una feature es countable
+     * @param {string} featureKey - Nombre de la feature
+     * @returns {boolean} - true si es countable
+     */
+    const isCountable = (featureKey) => isCountableFeature(planDetails, featureKey)
+    
     return {
         hasFeature,
         getFeature,
@@ -71,6 +95,9 @@ export const usePlanPermissions = () => {
         getLimits,
         isUnlimited,
         getMaxLimit,
+        getType,
+        isBinary,
+        isCountable,
         planDetails,
         isPlanLoaded: !!planDetails
     }

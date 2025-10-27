@@ -11,6 +11,12 @@ export const checkFeatureAccess = (planDetails, featureKey) => {
         const feature = planDetails.features.find(f => f.feature?.name === featureKey)
         if (!feature?.feature?.enabled) return false
         
+        // Para features binary, si está habilitada, tiene acceso completo
+        if (feature.feature.featureType === 'binary') {
+            return true
+        }
+        
+        // Para features countable, verificar límites
         const limits = feature.limits
         if (!limits) return true // Si no hay límites, tiene acceso
         
@@ -107,4 +113,37 @@ export const isFeatureUnlimited = (planDetails, featureKey) => {
 export const getFeatureMaxLimit = (planDetails, featureKey) => {
     const limits = getFeatureLimits(planDetails, featureKey)
     return limits?.max || null
+}
+
+/**
+ * Obtiene el tipo de feature (binary o countable)
+ * @param {Object} planDetails - Detalles del plan de suscripción
+ * @param {string} featureKey - Nombre de la feature
+ * @returns {string|null} - Tipo de feature o null si no existe
+ */
+export const getFeatureType = (planDetails, featureKey) => {
+    if (!planDetails?.features || !Array.isArray(planDetails.features)) return null
+    
+    const feature = planDetails.features.find(f => f.feature?.name === featureKey)
+    return feature?.feature?.featureType || null
+}
+
+/**
+ * Verifica si una feature es de tipo binary
+ * @param {Object} planDetails - Detalles del plan de suscripción
+ * @param {string} featureKey - Nombre de la feature
+ * @returns {boolean} - true si es binary, false en caso contrario
+ */
+export const isBinaryFeature = (planDetails, featureKey) => {
+    return getFeatureType(planDetails, featureKey) === 'binary'
+}
+
+/**
+ * Verifica si una feature es de tipo countable
+ * @param {Object} planDetails - Detalles del plan de suscripción
+ * @param {string} featureKey - Nombre de la feature
+ * @returns {boolean} - true si es countable, false en caso contrario
+ */
+export const isCountableFeature = (planDetails, featureKey) => {
+    return getFeatureType(planDetails, featureKey) === 'countable'
 } 

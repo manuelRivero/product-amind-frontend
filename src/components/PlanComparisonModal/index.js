@@ -25,7 +25,10 @@ import {
 } from '@material-ui/icons'
 import {
     FEATURE_CONFIG,
-    formatBillingCycle
+    formatBillingCycle,
+    getFeatureTypeFromConfig,
+    isBinaryFeatureType,
+    isCountableFeatureType
 } from '../../views/helpers/planFeatures'
 import { formatNumber } from '../../helpers/product'
 import Card from 'components/Card/Card.js'
@@ -195,6 +198,12 @@ const PlanComparisonModal = ({
             return { value: null, enabled: false }
         }
 
+        // Verificar si es una feature binary
+        if (isBinaryFeatureType(featureKey)) {
+            console.log('✅ Binary feature, returning "Disponible"')
+            return { value: 'Disponible', enabled: true }
+        }
+
         const config = FEATURE_CONFIG[featureKey]
         console.log('🔍 config:', config)
         
@@ -233,14 +242,33 @@ const PlanComparisonModal = ({
         console.log('currentValue', currentValue)
         console.log('newValue', newValue)
         console.log('if comparison', Boolean(!currentValue && newValue))
+        
+        // Si ambos son null o no disponibles
         if (!currentValue && !newValue) return 'same'
+        
+        // Si uno es null y el otro no
         if (currentValue === null && newValue) return 'upgrade'
+        if (currentValue && newValue === null) return 'downgrade'
+        
+        // Si ambos son "Disponible" (features binary)
+        if (currentValue === 'Disponible' && newValue === 'Disponible') return 'same'
+        
+        // Si uno es "Disponible" y el otro no
+        if (currentValue === 'Disponible' && newValue !== 'Disponible') return 'downgrade'
+        if (currentValue !== 'Disponible' && newValue === 'Disponible') return 'upgrade'
+        
+        // Si ambos son iguales
         if (currentValue === newValue) return 'same'
+        
+        // Comparaciones específicas para features countable
         if (currentValue === 'Ilimitado' && newValue !== 'Ilimitado') return 'downgrade'
         if (newValue === 'Ilimitado' && currentValue !== 'Ilimitado') return 'upgrade'
+        
+        // Comparaciones numéricas
         if (typeof currentValue === 'number' && typeof newValue === 'number') {
             return newValue > currentValue ? 'upgrade' : 'downgrade'
         }
+        
         return 'same'
     }
 

@@ -164,7 +164,6 @@ const PlanSelection = ({
                 </CardHeader>
                 <CardBody>
                     <GridContainer>
-                        {console.log('plans', isSubscriptionActive)}
                         {plans
                             .filter((plan) =>
                                 (isSubscriptionActive && hasPlan)

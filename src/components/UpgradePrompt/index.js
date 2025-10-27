@@ -5,6 +5,7 @@ import { Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, Button as M
 import { Lock as LockIcon, CheckCircle, ErrorOutline } from '@material-ui/icons'
 import Button from 'components/CustomButtons/Button'
 import { usePlanPermissions } from '../../hooks/usePlanPermissions'
+import { isBinaryFeatureType } from '../../views/helpers/planFeatures'
 import { useHistory } from 'react-router-dom'
 
 const useStyles = makeStyles((theme) => ({
@@ -96,6 +97,13 @@ const useStyles = makeStyles((theme) => ({
         marginBottom: theme.spacing(2),
         lineHeight: 1.4,
         margin: '0 0 12px 0',
+    },
+    featureType: {
+        fontSize: '0.8rem',
+        color: '#888',
+        marginBottom: theme.spacing(1),
+        textAlign: 'center',
+        fontStyle: 'italic',
     },
     ctaLink: {
         textDecoration: 'underline',
@@ -192,7 +200,7 @@ export const UpgradePrompt = ({
     console.log('featureKey', featureKey)
     const classes = useStyles()
     const history = useHistory()
-    const { hasFeature, getFeature, isPlanLoaded } = usePlanPermissions()
+    const { hasFeature, getFeature, isPlanLoaded, getType, isBinary, isCountable } = usePlanPermissions()
     const [modalOpen, setModalOpen] = useState(false)
     
     // Si el plan no está cargado, mostrar contenido normal temporalmente
@@ -259,6 +267,11 @@ export const UpgradePrompt = ({
                         <p className={classes.description}>
                             {feature?.description || 'Desbloquea esta función para personalizar tu tienda.'}
                         </p>
+                        {getType(featureKey) && (
+                            <p className={classes.featureType}>
+                                Tipo: {isBinary(featureKey) ? 'Función Binaria' : 'Función con Límites'}
+                            </p>
+                        )}
                         {feature?.extendedDescription && (
                             <button className={classes.ctaLink} onClick={handleOpenModal} type="button">
                                 ¿Por qué activar esta función?

@@ -59,7 +59,32 @@ const PlanFeaturesList = ({ features }) => {
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedFeature, setSelectedFeature] = useState(null)
 
-  if (!features || Object.keys(features).length === 0) {
+  if (!features) {
+    return null
+  }
+
+  // Convertir la nueva estructura de features a la estructura esperada
+  const convertFeaturesToObject = (featuresArray) => {
+    if (!Array.isArray(featuresArray)) {
+      return featuresArray || {}
+    }
+    
+    const featuresObject = {}
+    featuresArray.forEach(featureItem => {
+      if (featureItem.feature && featureItem.feature.name) {
+        featuresObject[featureItem.feature.name] = {
+          ...featureItem.feature,
+          enabled: featureItem.enabled !== false, // Asegurar que siempre tenga enabled
+          limits: featureItem.limits
+        }
+      }
+    })
+    return featuresObject
+  }
+
+  const convertedFeatures = convertFeaturesToObject(features)
+
+  if (Object.keys(convertedFeatures).length === 0) {
     return null
   }
 
@@ -79,7 +104,7 @@ const PlanFeaturesList = ({ features }) => {
   return (
     <>
       <ul className={classes.featuresList}>
-        {Object.entries(features)
+        {Object.entries(convertedFeatures)
           .filter(([, feature]) => feature.enabled)
           .map(([key, feature]) => {
             const limitationText = getFeatureLimitationText(key, feature)
@@ -124,7 +149,10 @@ const PlanFeaturesList = ({ features }) => {
 }
 
 PlanFeaturesList.propTypes = {
-  features: PropTypes.object,
+  features: PropTypes.oneOfType([
+    PropTypes.array,
+    PropTypes.object
+  ]),
 }
 
 PlanFeaturesList.defaultProps = {

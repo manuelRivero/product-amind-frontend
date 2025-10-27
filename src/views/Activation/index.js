@@ -316,7 +316,6 @@ const Activation = () => {
             try {
                 setLoadingPlans(true)
                 const response = await getPlans({searchAvailable: true })
-                console.log('Plans fetched:', response)
                 setPlans(response.data.plans)
             } catch (error) {
                 console.error('Error fetching plans:', error)
@@ -330,13 +329,23 @@ const Activation = () => {
 
     useEffect(() => {
         if (featureParam && plans.length > 0) {
-            const plansWithFeature = plans.filter(plan => plan.features?.[featureParam]?.enabled)
+            // Función helper para verificar si un plan tiene una feature habilitada
+            const planHasFeature = (plan, featureKey) => {
+                if (!plan.features || !Array.isArray(plan.features)) {
+                    return false
+                }
+                
+                const feature = plan.features.find(f => f.feature?.name === featureKey)
+                return feature?.enabled === true
+            }
+            
+            const plansWithFeature = plans.filter(plan => planHasFeature(plan, featureParam))
             setHighlightPlans(plansWithFeature.map(p => p._id))
 
             if (plansWithFeature.length > 0) {
                 // Tomar info de la feature (title, description)
-                const featureData = plansWithFeature[0]?.features?.[featureParam]
-                setFeatureInfo(featureData)
+                const featureData = plansWithFeature[0].features.find(f => f.feature?.name === featureParam)
+                setFeatureInfo(featureData?.feature || featureData)
             } else {
                 // Ningún plan tiene la feature habilitada, usar fallback
                 setFeatureInfo(UNAVAILABLE_FEATURE_FALLBACK)
