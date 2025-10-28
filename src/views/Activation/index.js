@@ -72,7 +72,6 @@ const Activation = () => {
     // validación de conexión con mercado pago
     const mercadoPagoMarketplaceAccessToken = configDetail?.mercadoPagoMarketplaceAccessToken
     const mercadoPagoMarketplaceTokenExpiresAt = moment(configDetail?.mercadoPagoMarketplaceTokenExpiresAt).isAfter(moment())
-
     // Nueva lógica de validación de estados de suscripción
     const mpSubscriptionId = configDetail?.mpSubscriptionId
     const paymentStatus = configDetail?.paymentStatus

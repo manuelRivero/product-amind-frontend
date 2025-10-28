@@ -6,9 +6,9 @@ import CardBody from 'components/Card/CardBody.js';
 import Button from 'components/CustomButtons/Button';
 import GridContainer from 'components/Grid/GridContainer.js';
 import GridItem from 'components/Grid/GridItem.js';
-import StorefrontIcon from '@material-ui/icons/Storefront';
-import PaymentIcon from '@material-ui/icons/Payment';
-import TrendingUpIcon from '@material-ui/icons/TrendingUp';
+import SecurityIcon from '@material-ui/icons/Security';
+import VerifiedUserIcon from '@material-ui/icons/VerifiedUser';
+import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import { useDispatch } from 'react-redux';
 import { connectMarketplace } from '../../../../store/mercado-pago';
 
@@ -39,67 +39,136 @@ const useStyles = makeStyles((theme) => ({
         lineHeight: '1.6',
         marginBottom: theme.spacing(3),
         color: '#333',
+        textAlign: 'center',
     },
-    benefitsContainer: {
+    securityBanner: {
+        backgroundColor: '#e8f5e8',
+        border: '2px solid #4caf50',
+        borderRadius: '12px',
+        padding: theme.spacing(2.5),
         marginBottom: theme.spacing(3),
+        textAlign: 'center',
     },
-    benefitItem: {
+    securityTitle: {
+        fontSize: '20px',
+        color: '#2e7d32',
+        margin: '0 0 8px 0',
+        fontWeight: '600',
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+    },
+    securitySubtitle: {
+        fontSize: '16px',
+        color: '#388e3c',
+        margin: '0',
+        fontWeight: '500',
+    },
+    infoBox: {
+        backgroundColor: '#f3f8ff',
+        border: '2px solid #1976d2',
+        borderRadius: '12px',
+        padding: theme.spacing(2.5),
+        marginBottom: theme.spacing(3),
+    },
+    infoTitle: {
+        fontSize: '18px',
+        color: '#1976d2',
+        margin: '0 0 12px 0',
+        fontWeight: '600',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+    },
+    infoText: {
+        fontSize: '15px',
+        color: '#1565c0',
+        margin: '0',
+        fontWeight: '400',
+        lineHeight: '1.5',
+    },
+    securityFeatures: {
+        marginBottom: theme.spacing(3),
+    },
+    securityFeature: {
+        display: 'flex',
+        alignItems: 'flex-start',
         marginBottom: theme.spacing(2),
         padding: theme.spacing(1.5),
         backgroundColor: '#f8f9fa',
-        borderRadius: '8px',
-        borderLeft: '4px solid #20b6c9',
+        borderRadius: '10px',
+        borderLeft: '4px solid #4caf50',
     },
-    benefitIcon: {
+    securityIcon: {
         marginRight: theme.spacing(2),
-        color: '#20b6c9',
+        color: '#4caf50',
         fontSize: '24px',
+        marginTop: '2px',
     },
-    benefitText: {
+    securityText: {
         fontSize: '14px',
-        color: '#555',
+        color: '#2e7d32',
         fontWeight: '500',
+        lineHeight: '1.4',
+    },
+    summaryBox: {
+        backgroundColor: '#fff3e0',
+        border: '2px solid #ff9800',
+        borderRadius: '12px',
+        padding: theme.spacing(2.5),
+        marginBottom: theme.spacing(3),
+    },
+    summaryTitle: {
+        fontSize: '18px',
+        color: '#f57c00',
+        margin: '0 0 16px 0',
+        fontWeight: '600',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+    },
+    summaryItem: {
+        display: 'flex',
+        alignItems: 'center',
+        marginBottom: theme.spacing(1.5),
+        fontSize: '15px',
+        color: '#e65100',
+        fontWeight: '500',
+    },
+    summaryIcon: {
+        marginRight: theme.spacing(1.5),
+        color: '#4caf50',
+        fontSize: '20px',
     },
     connectButton: {
         marginTop: theme.spacing(2),
-        padding: theme.spacing(1.5, 3),
+        padding: theme.spacing(2, 4),
         fontSize: '16px',
         fontWeight: '600',
-    },
-    infoBox: {
-        backgroundColor: '#e3f2fd',
-        border: '1px solid #20b6c9',
         borderRadius: '8px',
-        padding: theme.spacing(2),
-        marginBottom: theme.spacing(3),
-    },
-    infoText: {
-        fontSize: '14px',
-        color: '#1976d2',
-        margin: 0,
-        fontWeight: '500',
+        boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
     },
     waitingBox: {
-        backgroundColor: '#fff3cd',
-        border: '1px solid #ffc107',
-        borderRadius: '8px',
-        padding: theme.spacing(2),
+        backgroundColor: '#e3f2fd',
+        border: '2px solid #2196f3',
+        borderRadius: '12px',
+        padding: theme.spacing(3),
         marginBottom: theme.spacing(3),
         textAlign: 'center',
     },
     waitingText: {
-        fontSize: '16px',
-        color: '#856404',
-        margin: 0,
+        fontSize: '18px',
+        color: '#1976d2',
+        margin: '0 0 8px 0',
         fontWeight: '600',
     },
     waitingSubtext: {
-        fontSize: '14px',
-        color: '#856404',
-        margin: '8px 0 0 0',
+        fontSize: '15px',
+        color: '#1565c0',
+        margin: '0',
         fontWeight: '400',
+        lineHeight: '1.5',
     },
 }));
 
@@ -127,27 +196,29 @@ const MarketplaceConnection = () => {
 
     const benefits = [
         {
-            icon: <StorefrontIcon className={classes.benefitIcon} />,
-            text: 'Integra tu tienda directamente con el marketplace de Mercado Pago'
+            icon: <SecurityIcon className={classes.securityIcon} />,
+            text: '🔒 Todo se realiza directamente desde la plataforma oficial de Mercado Pago, sin que nosotros almacenemos tus credenciales.'
         },
         {
-            icon: <PaymentIcon className={classes.benefitIcon} />,
-            text: 'Procesa pagos de manera segura y confiable'
-        },
-        {
-            icon: <TrendingUpIcon className={classes.benefitIcon} />,
-            text: 'Aumenta tus ventas con acceso a millones de compradores'
+            icon: <VerifiedUserIcon className={classes.securityIcon} />,
+            text: 'Porque Mercado Pago debe verificar tu cuenta y conectar tu identidad de vendedor. Esto asegura que los pagos lleguen correctamente, protege a tus compradores y cumple con las normas de seguridad financiera.'
         }
+    ];
+
+    const summaryPoints = [
+        'Tus fondos siguen en tu cuenta de Mercado Pago.',
+        'Solo se autoriza lo necesario para cobrar y transferir.',
+        'Puedes revocar el acceso cuando quieras desde tu cuenta.'
     ];
 
     return (
         <Card className={classes.card}>
             <CardHeader color="success">
                 <h4 className={classes.cardTitleWhite}>
-                    Conectar con Mercado Pago Marketplace
+                    Conecta tu cuenta de Mercado Pago con total seguridad
                 </h4>
                 <p className={classes.cardCategoryWhite}>
-                    Integra tu tienda con la plataforma de pagos más confiable de Latinoamérica
+                    Autorización segura para procesar pagos en tu tienda
                 </p>
             </CardHeader>
             <CardBody>
@@ -163,34 +234,56 @@ const MarketplaceConnection = () => {
                     </div>
                 ) : (
                     <>
-                        <p className={classes.description}>
-                            Conecta tu tienda con Mercado Pago Marketplace para acceder a una plataforma completa de comercio electrónico. 
-                            Esta integración te permitirá gestionar pagos, envíos y expandir tu negocio de manera profesional.
-                        </p>
-
-                        <div className={classes.infoBox}>
-                            <p className={classes.infoText}>
-                                <strong>Importante:</strong> Esta conexión es requerida para continuar con la gestión de tu tienda. 
-                                Te dará acceso a herramientas avanzadas de gestión de pagos y te permitirá llegar a una base de clientes más amplia a través del marketplace de Mercado Pago.
+                        <div className={classes.securityBanner}>
+                            <h3 className={classes.securityTitle}>
+                                <SecurityIcon />
+                                Conexión Segura
+                            </h3>
+                            <p className={classes.securitySubtitle}>
+                                Para procesar tus cobros, Mercado Pago necesita que autorices algunos permisos. Estos no le dan acceso a tu dinero ni a tu información personal: solo permiten que tu tienda reciba pagos, gestione órdenes y confirme las transacciones automáticamente.
                             </p>
                         </div>
 
-                        <div className={classes.benefitsContainer}>
-                            <h5 style={{ marginBottom: '16px', color: '#333', fontWeight: '600' }}>
-                                Beneficios de la conexión:
-                            </h5>
+                        <div className={classes.infoBox}>
+                            <h4 className={classes.infoTitle}>
+                                <VerifiedUserIcon />
+                                ¿Por qué se piden estos permisos?
+                            </h4>
+                            <p className={classes.infoText}>
+                                Porque Mercado Pago debe verificar tu cuenta y conectar tu identidad de vendedor. Esto asegura que los pagos lleguen correctamente, protege a tus compradores y cumple con las normas de seguridad financiera.
+                            </p>
+                        </div>
+
+                        <div className={classes.securityFeatures}>
                             {benefits.map((benefit, index) => (
-                                <div key={index} className={classes.benefitItem}>
+                                <div key={index} className={classes.securityFeature}>
                                     {benefit.icon}
-                                    <span className={classes.benefitText}>
+                                    <span className={classes.securityText}>
                                         {benefit.text}
                                     </span>
                                 </div>
                             ))}
                         </div>
 
+                        <div className={classes.summaryBox}>
+                            <h4 className={classes.summaryTitle}>
+                                <CheckCircleIcon />
+                                En resumen:
+                            </h4>
+                            {summaryPoints.map((point, index) => (
+                                <div key={index} className={classes.summaryItem}>
+                                    <CheckCircleIcon className={classes.summaryIcon} />
+                                    {point}
+                                </div>
+                            ))}
+                        </div>
+
+                        <p className={classes.description}>
+                            <strong>Autorizar estos permisos es el paso final para activar los pagos en tu tienda y comenzar a vender de forma segura y profesional.</strong>
+                        </p>
+
                         <GridContainer justify="center">
-                            <GridItem xs={12} sm={6} md={4}>
+                            <GridItem xs={12} sm={8} md={6}>
                                 <Button
                                     type="button"
                                     variant="contained"
@@ -201,7 +294,7 @@ const MarketplaceConnection = () => {
                                     onClick={submit}
                                     fullWidth
                                 >
-                                    Conectar con Mercado Pago
+                                    Autorizar Conexión Segura
                                 </Button>
                             </GridItem>
                         </GridContainer>
