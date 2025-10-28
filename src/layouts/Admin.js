@@ -140,7 +140,7 @@ export default function Admin({ ...rest }) {
             const isAdminRoute = prop.layout === '/admin'
             
             // Si la suscripción está pausada o cancelada, solo mostrar la ruta de activación
-            if (isPaymentPaused || isPaymentCancelled || !mercadoPagoMarketplaceAccessToken || !mercadoPagoMarketplaceTokenExpiresAt) {
+            if (isPaymentPaused || isPaymentCancelled || (!mercadoPagoMarketplaceAccessToken && !mercadoPagoMarketplaceTokenExpiresAt)) {
                 return isAdminRoute && prop.path === '/mercado-pago'
             }
 
