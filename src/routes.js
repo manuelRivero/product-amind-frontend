@@ -89,7 +89,7 @@ const dashboardRoutes = [
             },
         ],
     },
-    {
+   /* {
         path: '/offers',
         name: 'Promociones',
         icon: ListAltIcon,
@@ -137,7 +137,7 @@ const dashboardRoutes = [
                 component: AddCoupon,
             },
         ],
-    },
+    },*/
     {
         path: '/banners',
         name: 'Banners',
@@ -264,7 +264,7 @@ const dashboardRoutes = [
     },
     {
         path: '/mercado-pago',
-        name: 'Activación de tu cuenta',
+        name: 'Configuración de tu cuenta',
         icon: Dashboard,
         component: Activation,
         layout: '/admin',
