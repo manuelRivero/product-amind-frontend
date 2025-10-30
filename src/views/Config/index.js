@@ -26,7 +26,7 @@ import MenuItem from '@material-ui/core/MenuItem'
 
 // Lista de países soportados por Mercado Pago (ejemplo, puedes expandirla)
 const MP_COUNTRIES = [
-    { code: 'AR', name: 'Argentina', dial: '+54', phoneLength: 10 },
+    { code: 'AR', name: 'Argentina', dial: '+54', phoneLength: 8 },
     { code: 'BR', name: 'Brasil', dial: '+55', phoneLength: 11 },
     { code: 'CL', name: 'Chile', dial: '+56', phoneLength: 9 },
     { code: 'CO', name: 'Colombia', dial: '+57', phoneLength: 10 },
@@ -54,7 +54,13 @@ const BODY_FONTS = [
 
 const schema = yup.object({
     titleFont: yup.string().required('Campo obligatorio'),
-    logoUrl: yup.string().url('Debe ser una URL válida').nullable(),
+    logoUrl: yup
+        .string()
+        .nullable()
+        .test('logoUrl-format', 'Debe ser una URL válida', function (value) {
+            if (!value) return true // Campo opcional
+            return yup.string().url().isValidSync(value)
+        }),
     title: yup.string().required('El título es obligatorio'),
     country: yup.string().required('Selecciona un país'),
     phone: yup
@@ -78,30 +84,42 @@ const schema = yup.object({
         .required('El color de contraste es obligatorio'),
     textColor: yup.string().required('El color de texto es obligatorio'),
     backgroundColor: yup.string().required('El color de fondo es obligatorio'),
-    logo: yup.mixed().when('logoUrl', {
-        is: (logoUrl) => !logoUrl, // Si no hay logoUrl, logo es obligatorio
-        then: yup
-            .mixed()
-            .test('fileRequired', 'El logo es obligatorio', (value) => {
-                return value
-            })
-            .test('fileSize', 'El archivo no debe superar los 2MB', (value) => {
-                return value && value.size <= 2 * 1024 * 1024 // 2MB
-            })
-            .test(
-                'fileType',
-                'Solo se permiten archivos PNG, JPG o JPEG',
-                (value) => {
-                    return (
-                        value &&
-                        ['image/png', 'image/jpg', 'image/jpeg'].includes(
-                            value.type
-                        )
+    instagram: yup
+        .string()
+        .nullable()
+        .test('instagram-url', 'Debe ser una URL válida de Instagram', function (value) {
+            if (!value) return true // Campo opcional
+            const instagramRegex = /^https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9_.]+\/?$/
+            return instagramRegex.test(value)
+        }),
+    facebook: yup
+        .string()
+        .nullable()
+        .test('facebook-url', 'Debe ser una URL válida de Facebook', function (value) {
+            if (!value) return true // Campo opcional
+            const facebookRegex = /^https?:\/\/(www\.)?facebook\.com\/[a-zA-Z0-9_.]+\/?$/
+            return facebookRegex.test(value)
+        }),
+    logo: yup
+        .mixed()
+        .nullable()
+        .test('fileSize', 'El archivo no debe superar los 2MB', (value) => {
+            if (!value) return true // Campo opcional
+            return value && value.size <= 2 * 1024 * 1024 // 2MB
+        })
+        .test(
+            'fileType',
+            'Solo se permiten archivos PNG, JPG o JPEG',
+            (value) => {
+                if (!value) return true // Campo opcional
+                return (
+                    value &&
+                    ['image/png', 'image/jpg', 'image/jpeg'].includes(
+                        value.type
                     )
-                }
-            ),
-        otherwise: yup.mixed().notRequired(), // Si hay logoUrl, logo no es obligatorio
-    }),
+                )
+            }
+        ),
 })
 
 const useStyles = makeStyles({
@@ -254,6 +272,8 @@ export default function ConfigPage() {
             titleFont: '',
             bodyFont: '',
             country: 'AR',
+            instagram: '',
+            facebook: '',
         },
     })
     const onDrop = useCallback((acceptedFiles) => {
@@ -295,15 +315,25 @@ export default function ConfigPage() {
         form.append('backgroundColor', values.backgroundColor)
         form.append('titleFont', values.titleFont)
         form.append('bodyFont', values.bodyFont)
+        
+        // Solo agregar logo si existe
         if (values.logo) {
             form.append('logo', values.logo)
         }
+        
+        // Solo agregar logoUrl si existe y no está vacío
+        if (values.logoUrl && values.logoUrl.trim() !== '') {
+            form.append('logoUrl', values.logoUrl)
+        }
+        
         form.append('country', values.country)
         form.append('phone', values.phone)
-        form.append('province', values.province)
-        form.append('locality', values.locality)
-        form.append('postalCode', values.postalCode)
-        form.append('address', values.address)
+        form.append('province', values.province || '')
+        form.append('locality', values.locality || '')
+        form.append('postalCode', values.postalCode || '')
+        form.append('address', values.address || '')
+        form.append('instagram', values.instagram || '')
+        form.append('facebook', values.facebook || '')
 
         try {
             setLoading(true)
@@ -345,6 +375,8 @@ export default function ConfigPage() {
                     titleFont: themeConfig.typography?.title ?? '',
                     bodyFont: themeConfig.typography?.body ?? '',
                     country: themeConfig.metadata.country || 'AR',
+                    instagram: themeConfig.socialMedia?.instagram || '',
+                    facebook: themeConfig.socialMedia?.facebook || '',
                 })
             }, 1000)
         }
@@ -365,7 +397,7 @@ export default function ConfigPage() {
                 </CardHeader>
                 <CardBody>
                     <form onSubmit={handleSubmit(onSubmit)}>
-                        <p className={classes.sectionSubtitle}>Logo de tu tienda</p>
+                        <p className={classes.sectionSubtitle}>Logo de tu tienda (Opcional)</p>
                         <div className={classes.logoSection}>
                             {preview ? (
                                 <div className={classes.logoPreviewWrapper} style={{ position: 'relative' }}>
@@ -414,7 +446,7 @@ export default function ConfigPage() {
                                     ) : (
                                         <p>
                                             Arrastra tu archivo o has click para
-                                            seleccionar desde tu ordenador
+                                            seleccionar desde tu ordenador (opcional)
                                         </p>
                                     )}
                                 </div>
@@ -427,6 +459,24 @@ export default function ConfigPage() {
                                 </p>
                             </TextDanger>
                         )}
+                        <div style={{ marginTop: '16px' }}>
+                            <Controller
+                                name="logoUrl"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <TextInput
+                                        className={classes.input}
+                                        error={fieldState.error ? true : false}
+                                        errorMessage={fieldState.error}
+                                        icon={null}
+                                        label={'O URL del logo (opcional)'}
+                                        placeholder={'https://ejemplo.com/logo.png'}
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                    />
+                                )}
+                            />
+                        </div>
                         <div>
                             <h4 className={classes.sectionSubtitle}>Información de tu tienda</h4>
                             <div className={classes.colorRow}>
@@ -611,6 +661,7 @@ export default function ConfigPage() {
                                 </div>
                             </div>
                         </div>
+                       
                         <div>
                             <Controller
                                 name="description"
@@ -629,6 +680,47 @@ export default function ConfigPage() {
                                     />
                                 )}
                             />
+                        </div>
+                        <div>
+                            <h4 className={classes.sectionSubtitle}>Redes Sociales</h4>
+                            <div className={classes.colorRow}>
+                                <div className={classes.flex1}>
+                                    <Controller
+                                        name="instagram"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <TextInput
+                                                className={classes.input}
+                                                error={fieldState.error ? true : false}
+                                                errorMessage={fieldState.error}
+                                                icon={null}
+                                                label={'Instagram (URL completa)'}
+                                                placeholder={'https://www.instagram.com/tu_usuario'}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                            />
+                                        )}
+                                    />
+                                </div>
+                                <div className={classes.flex1}>
+                                    <Controller
+                                        name="facebook"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <TextInput
+                                                className={classes.input}
+                                                error={fieldState.error ? true : false}
+                                                errorMessage={fieldState.error}
+                                                icon={null}
+                                                label={'Facebook (URL completa)'}
+                                                placeholder={'https://www.facebook.com/tu_pagina'}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                            />
+                                        )}
+                                    />
+                                </div>
+                            </div>
                         </div>
                         <div>
                             <h4 className={classes.sectionSubtitle}>Personalización del tema</h4>

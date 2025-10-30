@@ -59,15 +59,24 @@ export default function Sidebar(props) {
                             to={prop.layout + prop.path}
                             className={classes.item}
                             activeClassName="active"
-                            // onClick={() =>
-                            //     !prop.childrens && props.handleDrawerToggle()
-                            // }
+                            onClick={() => {
+                                // Si no tiene hijos, cerrar el sidebar
+                                if (!prop.childrens || !hasVisibleRoutes(prop)) {
+                                    props.handleDrawerToggle()
+                                }
+                            }}
                             key={key}
                         >
                             <ListItem
                                 button
                                 className={classes.itemLink + listItemClasses}
-                                onClick={() => setActiveTab(key)}
+                                onClick={() => {
+                                    setActiveTab(key)
+                                    // Si no tiene hijos, cerrar el sidebar
+                                    if (!prop.childrens || !hasVisibleRoutes(prop)) {
+                                        props.handleDrawerToggle()
+                                    }
+                                }}
                             >
                                 {typeof prop.icon === 'string' ? (
                                     <Icon
@@ -128,9 +137,10 @@ export default function Sidebar(props) {
                                                     activeClassName={
                                                         classes.childrenActive
                                                     }
-                                                    // onClick={() =>
-                                                    //     props.handleDrawerToggle()
-                                                    // }
+                                                    onClick={() => {
+                                                        // Cerrar el sidebar al hacer clic en una ruta hija
+                                                        props.handleDrawerToggle()
+                                                    }}
                                                     style={{
                                                         color:
                                                             location.pathname ===
