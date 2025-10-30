@@ -41,14 +41,14 @@ import Categories from 'views/Categories'
 import AddCategories from 'views/AddCategories'
 import ProductDetail from './views/productDetail'
 import ConfigPage from './views/Config'
-import Offers from './views/Offers'
-import AddOffer from './views/AddOffer'
 import Activation from './views/Activation'
 import Home from './views/Home'
 import Blogs from './views/Blogs'
 import AddBlog from './views/AddBlog'
+/*import Offers from './views/Offers'
+import AddOffer from './views/AddOffer'
 import Coupons from './views/Coupons'
-import AddCoupon from './views/AddCoupon'
+import AddCoupon from './views/AddCoupon'*/
 
 const dashboardRoutes = [
     {
