@@ -58,7 +58,7 @@ const dashboardRoutes = [
         component:  Home,
         layout: '/admin',
         needConfig: false,
-        hidden: true,
+        hidden: false,
         permission: null, // No requiere permisos
     },
     {
