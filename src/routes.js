@@ -264,7 +264,7 @@ const dashboardRoutes = [
     },
     {
         path: '/mercado-pago',
-        name: 'Configuración de tu cuenta',
+        name: 'Cuenta',
         icon: Dashboard,
         component: Activation,
         layout: '/admin',

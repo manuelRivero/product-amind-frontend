@@ -60,8 +60,11 @@ export default function Sidebar(props) {
                             className={classes.item}
                             activeClassName="active"
                             onClick={() => {
-                                // Si no tiene hijos, cerrar el sidebar
-                                if (!prop.childrens || !hasVisibleRoutes(prop)) {
+                                // Si no tiene hijos, cerrar el sidebar SOLO en mobile
+                                if (
+                                    (typeof window !== 'undefined' && window.innerWidth < 960) &&
+                                    (!prop.childrens || !hasVisibleRoutes(prop))
+                                ) {
                                     props.handleDrawerToggle()
                                 }
                             }}
@@ -72,8 +75,11 @@ export default function Sidebar(props) {
                                 className={classes.itemLink + listItemClasses}
                                 onClick={() => {
                                     setActiveTab(key)
-                                    // Si no tiene hijos, cerrar el sidebar
-                                    if (!prop.childrens || !hasVisibleRoutes(prop)) {
+                                    // Si no tiene hijos, cerrar el sidebar SOLO en mobile
+                                    if (
+                                        (typeof window !== 'undefined' && window.innerWidth < 960) &&
+                                        (!prop.childrens || !hasVisibleRoutes(prop))
+                                    ) {
                                         props.handleDrawerToggle()
                                     }
                                 }}
@@ -138,8 +144,10 @@ export default function Sidebar(props) {
                                                         classes.childrenActive
                                                     }
                                                     onClick={() => {
-                                                        // Cerrar el sidebar al hacer clic en una ruta hija
-                                                        props.handleDrawerToggle()
+                                                        // Cerrar el sidebar al hacer clic en una ruta hija SOLO en mobile
+                                                        if (typeof window !== 'undefined' && window.innerWidth < 960) {
+                                                            props.handleDrawerToggle()
+                                                        }
                                                     }}
                                                     style={{
                                                         color:
