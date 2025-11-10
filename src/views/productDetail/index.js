@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useMemo } from 'react'
 
 import { makeStyles } from '@material-ui/core/styles'
-import { Box, IconButton, Divider } from '@material-ui/core'
+import { Box, IconButton, Divider, Chip } from '@material-ui/core'
 
 import { useParams, useHistory } from 'react-router-dom'
 
@@ -10,7 +10,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import LoadinScreen from 'components/LoadingScreen'
 import { getProductDetail } from 'store/products'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
-import { getCategories } from '../../store/categories'
 import { formatNumber } from '../../helpers/product'
 import Card from 'components/Card/Card.js'
 import CardHeader from 'components/Card/CardHeader.js'
@@ -259,6 +258,19 @@ const useStyles = makeStyles({
         fontWeight: '700',
         color: '#00ACC1',
     },
+    keywordsSection: {
+        background: '#fff',
+        borderRadius: '16px',
+        padding: '2rem',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+        marginTop: '2rem',
+    },
+    keywordsList: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '0.5rem',
+        marginTop: '1rem',
+    },
 })
 
 export default function ProductDetail() {
@@ -270,25 +282,6 @@ export default function ProductDetail() {
     const { loadingProductDetail, productDetail } = useSelector(
         (state) => state.products
     )
-    const { categoriesData, loadingCategoriesData } = useSelector(
-        (state) => state.categories
-    )
-
-    // const category = useMemo(() => {
-    //     if (categoriesData && productDetail) {
-    //         const target = categoriesData.data.find(
-    //             (category) => category._id === productDetail.category
-    //         )
-    //         if (target) {
-    //             return target
-    //         } else {
-    //             return null
-    //         }
-    //     } else {
-    //         return null
-    //     }
-    // }, [categoriesData, productDetail])
-    console.log('category data', categoriesData?.data)
     const dispatch = useDispatch()
     const classes = useStyles()
 
@@ -296,17 +289,78 @@ export default function ProductDetail() {
 
     useEffect(() => {
         dispatch(getProductDetail({ access: user.token, id: params.id }))
-        dispatch(
-            getCategories({
-                access: user.token,
-                filters: { page: 1, limit: 50 },
-            })
-        )
-    }, [])
+    }, [dispatch, user.token, params.id])
+
+    const categoryName = useMemo(() => {
+        return productDetail?.categoryDetail?.[0]?.name || 'Sin categoría'
+    }, [productDetail])
+
+    const formattedPrice = useMemo(
+        () => `$${formatNumber(productDetail?.price ?? 0)}`,
+        [productDetail]
+    )
+    const formattedCost = useMemo(() => {
+        if (productDetail?.cost === null || productDetail?.cost === undefined) {
+            return 'No informado'
+        }
+        return `$${formatNumber(productDetail.cost)}`
+    }, [productDetail])
+
+    const hasVariants = useMemo(
+        () => productDetail?.features?.some((feature) => feature.color || feature.size),
+        [productDetail]
+    )
+
+    const generalStock = useMemo(() => {
+        if (productDetail?.stock !== undefined && productDetail?.stock !== null) {
+            return productDetail.stock
+        }
+        const baseFeature = productDetail?.features?.find((feature) => !feature.color && !feature.size)
+        return baseFeature?.stock ?? 0
+    }, [productDetail])
+
+    const keywords = productDetail?.keywords || []
+
+    const renderFeatureValue = (value, fallback = 'Sin información') => {
+        if (value === null || value === undefined || value === '') return fallback
+        if (typeof value === 'string') return value
+        if (typeof value === 'object') {
+            return (
+                value.name ||
+                value.label ||
+                value.hexCode ||
+                value.value ||
+                value._id ||
+                fallback
+            )
+        }
+        return String(value)
+    }
 
     console.log('productDetail', productDetail)
-    if (loadingProductDetail || loadingCategoriesData) {
+    if (loadingProductDetail) {
         return <LoadinScreen />
+    }
+
+    if (!productDetail) {
+        return (
+            <section>
+                <IconButton
+                    className={classes.backButton}
+                    onClick={() => history.goBack()}
+                >
+                    <ArrowBackIcon />
+                </IconButton>
+                <Card className={classes.card}>
+                    <CardHeader color="primary">
+                        <h4 className={classes.cardTitleWhite}>Detalle del producto</h4>
+                    </CardHeader>
+                    <CardBody>
+                        <p>No se encontró información para este producto.</p>
+                    </CardBody>
+                </Card>
+            </section>
+        )
     }
 
     return (
@@ -354,15 +408,19 @@ export default function ProductDetail() {
                         </div>
                         <div className={classes.infoItem}>
                             <span className={classes.infoLabel}>Precio</span>
-                            <span className={classes.priceValue}>${formatNumber(productDetail.price)}</span>
+                            <span className={classes.priceValue}>{formattedPrice}</span>
                         </div>
                         <div className={classes.infoItem}>
                             <span className={classes.infoLabel}>Categoría</span>
-                            <span className={classes.infoValue}>{productDetail.categoryDetail[0]?.name}</span>
+                            <span className={classes.infoValue}>{categoryName}</span>
                         </div>
                         <div className={classes.infoItem}>
                             <span className={classes.infoLabel}>Descuento</span>
                             <span className={classes.infoValue}>{formatNumber(productDetail.discount ?? 0)}%</span>
+                        </div>
+                        <div className={classes.infoItem}>
+                            <span className={classes.infoLabel}>Costo</span>
+                            <span className={classes.infoValue}>{formattedCost}</span>
                         </div>
                         {productDetail.offerDiscount && <div className={classes.infoItem}>
                             <span className={classes.infoLabel}>Descuento de oferta asociado</span>
@@ -370,27 +428,32 @@ export default function ProductDetail() {
                         </div>}
                         <div className={classes.infoItem}>
                             <span className={classes.infoLabel}>Estado</span>
-                            <span className={`${classes.statusBadge} ${
-                                productDetail.status.available 
-                                    ? classes.statusAvailable 
-                                    : classes.statusUnavailable
-                            }`}>
-                                {productDetail.status.available ? 'Disponible' : 'No disponible'}
+                            <span
+                                className={`${classes.statusBadge} ${
+                                    productDetail.status?.available
+                                        ? classes.statusAvailable
+                                        : classes.statusUnavailable
+                                }`}
+                            >
+                                {productDetail.status?.available ? 'Disponible' : 'No disponible'}
                             </span>
                         </div>
                         {productDetail.features.filter((feature) => !feature.color && !feature.size).length > 0 && (
                             <div className={classes.infoItem}>
                                 <span className={classes.infoLabel}>Stock general</span>
-                                <span className={classes.stockValue}>{productDetail.features[0].stock} unidades</span>
+                                <span className={classes.stockValue}>{generalStock} unidades</span>
                             </div>
                         )}
                     </div>
 
                     {/* Descripción */}
                     <span className={classes.infoLabel}>Descripción</span>
-                    <p className={classes.descriptionText}>{productDetail.description}</p>
+                    <div
+                        className={classes.descriptionText}
+                        dangerouslySetInnerHTML={{ __html: productDetail.description || '<p>Sin descripción</p>' }}
+                    />
                     
-                    {productDetail.features.filter((feature) => feature.color || feature.size).length > 0 && (
+                    {hasVariants && (
                         <>
                             <Divider style={{ margin: '2rem 0' }} />
                             <h3 className={classes.sectionTitle}>Variantes del producto</h3>
@@ -411,13 +474,17 @@ export default function ProductDetail() {
                                                 {feature.color && (
                                                     <div className={classes.variantItem}>
                                                         <span className={classes.variantLabel}>Color</span>
-                                                        <span className={classes.variantValue}>{feature.color}</span>
+                                                        <span className={classes.variantValue}>
+                                                            {renderFeatureValue(feature.color)}
+                                                        </span>
                                                     </div>
                                                 )}
                                                 {feature.size && (
                                                     <div className={classes.variantItem}>
                                                         <span className={classes.variantLabel}>Talla</span>
-                                                        <span className={classes.variantValue}>{feature.size}</span>
+                                                        <span className={classes.variantValue}>
+                                                            {renderFeatureValue(feature.size)}
+                                                        </span>
                                                     </div>
                                                 )}
                                                 {feature.stock && (
@@ -431,6 +498,16 @@ export default function ProductDetail() {
                                     )
                                 })}
                         </>
+                    )}
+                    {keywords.length > 0 && (
+                        <Box className={classes.keywordsSection}>
+                            <h3 className={classes.sectionTitle}>Palabras clave</h3>
+                            <Box className={classes.keywordsList}>
+                                {keywords.map((keyword) => (
+                                    <Chip key={keyword} label={keyword} color="primary" variant="outlined" />
+                                ))}
+                            </Box>
+                        </Box>
                     )}
                     <Box className={classes.buttonsRow}>
                         <Button

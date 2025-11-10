@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState, useMemo } from 'react'
 
 import { makeStyles } from '@material-ui/core/styles'
 import { useDropzone } from 'react-dropzone'
@@ -25,13 +25,18 @@ import { useParams, useHistory } from 'react-router-dom'
 
 import { primaryColor } from 'assets/jss/material-dashboard-react.js'
 import { useDispatch, useSelector } from 'react-redux'
-import { postProducts } from 'store/products'
+import {
+    postProducts,
+    getProductDetail,
+    editProduct,
+    searchColors,
+    createColor,
+    searchSizes,
+    createSize,
+} from 'store/products'
 import CustomModal from 'components/CustomModal'
-import { resetProductSuccess } from 'store/products'
 import LoadinScreen from 'components/LoadingScreen'
-import { getProductDetail } from 'store/products'
-import { resetEditProductSuccess } from 'store/products'
-import { editProduct } from 'store/products'
+import AutocompleteWithCreate from 'components/AutocompleteWithCreate'
 import { Delete, DeleteForever, Crop, Add } from '@material-ui/icons'
 import { NumericFormat } from 'react-number-format'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
@@ -41,14 +46,14 @@ import CardHeader from 'components/Card/CardHeader.js'
 import CardBody from 'components/Card/CardBody.js'
 import CropModal from 'components/CropModal'
 import TinyMCEEditor from 'components/TinyMCEEditor'
+import { getCurrentTenant } from 'utils/tenant'
 
 // schema
 const featureSchema = yup.object({
     color: yup
         .string()
         .defined()
-        .matches(/^[a-zA-Z\s]+$/, 'El color solo puede contener letras')
-        .required('Campo obligatorio'), // Validación de letras
+        .required('Campo obligatorio'), // Ahora es un _id, no solo letras
     size: yup
         .string()
         .nullable()
@@ -99,6 +104,8 @@ const schema = yup.object({
         .oneOf(['1', '0'], 'Campo obligatorio')
         .required('Campo obligatorio'),
     unique: yup.boolean().required('Campo obligatorio'),
+    cost: yup.string().nullable(),
+    discount: yup.string().nullable(),
 })
 
 const useStyles = makeStyles({
@@ -222,6 +229,13 @@ const useStyles = makeStyles({
             color: '#fff',
         },
     },
+    successActions: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem',
+        marginTop: '1rem',
+        alignItems: 'center',
+    },
 
 })
 
@@ -233,21 +247,18 @@ export default function AddProducts() {
     const { categoriesData, loadingCategoriesData } = useSelector(
         (state) => state.categories
     )
-    const {
-        loadingProduct,
-        productSuccess,
-        productError,
-        loadingProductDetail,
-        loadingEditProduct,
-        editProductError,
-        editProductSuccess,
-    } = useSelector((state) => state.products)
+    const { loadingProductDetail } = useSelector((state) => state.products)
     const dispatch = useDispatch()
     const classes = useStyles()
     const [deleteImages, setDeleteImages] = useState([])
     const [openConfirmUnique, setOpenConfirmUnique] = useState(false)
     const [productDetail, setProductDetail] = useState(null)
     const [submitError, setSubmitError] = useState(null)
+    const [successProductId, setSuccessProductId] = useState(null)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
+    const isEditing = useMemo(() => Boolean(params.id), [params.id])
+    const tenantSlug = useMemo(() => getCurrentTenant(user) || 'mi-tienda', [user])
     // Estados para crop de imágenes
     const [cropModalOpen, setCropModalOpen] = useState(false)
     const [currentImageForCrop, setCurrentImageForCrop] = useState(null)
@@ -255,6 +266,20 @@ export default function AddProducts() {
     const [isSquareAspectRatio, setIsSquareAspectRatio] = useState(true) // true = cuadrado, false = rectangular vertical
     const [keywordInput, setKeywordInput] = useState('') // Estado para el input de keywords
     const [showAspectRatioModal, setShowAspectRatioModal] = useState(false) // Estado para el modal de confirmación
+
+    // Estados para autocomplete de colores
+    const [colorsSearchResults, setColorsSearchResults] = useState([])
+    const [loadingColorsSearch, setLoadingColorsSearch] = useState(false)
+    const [colorsSearchError, setColorsSearchError] = useState(false)
+    const [createColorSuccess, setCreateColorSuccess] = useState(false)
+    const [createColorError, setCreateColorError] = useState(null)
+
+    // Estados para autocomplete de tallas
+    const [sizesSearchResults, setSizesSearchResults] = useState([])
+    const [loadingSizesSearch, setLoadingSizesSearch] = useState(false)
+    const [sizesSearchError, setSizesSearchError] = useState(false)
+    const [createSizeSuccess, setCreateSizeSuccess] = useState(false)
+    const [createSizeError, setCreateSizeError] = useState(null)
     //form
     const {
         control,
@@ -277,6 +302,8 @@ export default function AddProducts() {
             status: '',
             featuresArray: [],
             unique: true,
+            cost: '',
+            discount: '',
         },
     })
     const featuresArray = useFieldArray({
@@ -292,6 +319,163 @@ export default function AddProducts() {
         name: 'images',
     })
     const watchUnique = watch('unique')
+    const watchPrice = watch('price')
+    const watchDiscount = watch('discount')
+    const watchCost = watch('cost')
+
+    // Calcular ganancia
+    const calculateProfit = () => {
+        if (!watchCost || !watchPrice || (typeof watchCost === 'string' && watchCost.trim() === '') || (typeof watchPrice === 'string' && watchPrice.trim() === '')) {
+            return ''
+        }
+
+        // Limpiar formato de precio (remover $ y comas)
+        const priceCleaned = (watchPrice || '').toString().replace(/[$,]/g, '').trim()
+        const costCleaned = (watchCost || '').toString().replace(/[$,]/g, '').trim()
+
+        if (!priceCleaned || !costCleaned) return ''
+
+        const priceValue = parseFloat(priceCleaned)
+        const costValue = parseFloat(costCleaned)
+
+        if (isNaN(priceValue) || isNaN(costValue) || costValue <= 0 || priceValue <= 0) {
+            return ''
+        }
+
+        // Calcular precio final con descuento
+        const discountValue = parseFloat(watchDiscount || '0') || 0
+        const finalPrice = priceValue * (1 - discountValue / 100)
+
+        // Calcular ganancia
+        const profit = finalPrice - costValue
+
+        // Formatear ganancia con 2 decimales y separador de miles
+        return profit.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+    }
+
+    const profitValue = calculateProfit()
+
+    // Función para obtener valores numéricos calculados (optimizada con useMemo)
+    const calculatedValues = useMemo(() => {
+        if (!watchCost || !watchPrice || (typeof watchCost === 'string' && watchCost.trim() === '') || (typeof watchPrice === 'string' && watchPrice.trim() === '')) {
+            return null
+        }
+
+        const priceCleaned = (watchPrice || '').toString().replace(/[$,]/g, '').trim()
+        const costCleaned = (watchCost || '').toString().replace(/[$,]/g, '').trim()
+
+        if (!priceCleaned || !costCleaned) return null
+
+        const priceValue = parseFloat(priceCleaned)
+        const costValue = parseFloat(costCleaned)
+        const discountValue = parseFloat(watchDiscount || '0') || 0
+
+        if (isNaN(priceValue) || isNaN(costValue) || costValue <= 0 || priceValue <= 0) {
+            return null
+        }
+
+        const finalPrice = priceValue * (1 - discountValue / 100)
+        const profit = finalPrice - costValue
+        const profitMargin = finalPrice > 0 ? (profit / finalPrice) * 100 : 0
+
+        return {
+            priceValue,
+            costValue,
+            discountValue,
+            finalPrice,
+            profit,
+            profitMargin
+        }
+    }, [watchPrice, watchCost, watchDiscount])
+
+    // Detectar alertas inteligentes (optimizado con useMemo)
+    const profitAlerts = useMemo(() => {
+        if (!calculatedValues) return []
+
+        const alerts = []
+
+        // Verificar si el descuento causa que el precio final sea menor al costo
+        const discountCausesLoss = calculatedValues.finalPrice < calculatedValues.costValue && calculatedValues.discountValue > 0
+
+        // Alerta: Descuento muy alto (>= 50%) - Escenario negativo
+        if (calculatedValues.discountValue >= 50) {
+            alerts.push({
+                severity: 'error',
+                message: `Descuento del ${calculatedValues.discountValue}% está afectando significativamente la ganancia. El precio final será $${calculatedValues.finalPrice.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} en lugar de $${calculatedValues.priceValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.`,
+                type: 'high-discount'
+            })
+        } else if (calculatedValues.discountValue >= 30) {
+            // Si el precio final es menor al costo, es un error
+            if (discountCausesLoss) {
+                alerts.push({
+                    severity: 'error',
+                    message: `Descuento del ${calculatedValues.discountValue}% reducirá el precio final a $${calculatedValues.finalPrice.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}, que es menor que el costo ($${calculatedValues.costValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}). Esto generará pérdidas.`,
+                    type: 'medium-discount-error'
+                })
+            } else {
+                alerts.push({
+                    severity: 'info',
+                    message: `Descuento del ${calculatedValues.discountValue}% reducirá el precio final a $${calculatedValues.finalPrice.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.`,
+                    type: 'medium-discount'
+                })
+            }
+        } else if (calculatedValues.discountValue > 0 && discountCausesLoss) {
+            // Cualquier descuento que cause pérdidas, incluso si es menor al 30%
+            alerts.push({
+                severity: 'error',
+                message: `Descuento del ${calculatedValues.discountValue}% reducirá el precio final a $${calculatedValues.finalPrice.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}, que es menor que el costo ($${calculatedValues.costValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}). Esto generará pérdidas.`,
+                type: 'low-discount-error'
+            })
+        }
+
+        // Alerta: Ganancia negativa (prioritaria) - Escenario negativo
+        if (calculatedValues.profit < 0) {
+            alerts.push({
+                severity: 'error',
+                message: `¡Pérdida detectada! El precio final ($${calculatedValues.finalPrice.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}) es menor que el costo ($${calculatedValues.costValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}). Estarías perdiendo $${Math.abs(calculatedValues.profit).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} por unidad.`,
+                type: 'negative-profit'
+            })
+        }
+        // Alerta: Margen de ganancia muy bajo - Escenario negativo
+        else if (calculatedValues.profitMargin < 10 && calculatedValues.profit > 0) {
+            alerts.push({
+                severity: 'error',
+                message: `Margen de ganancia muy bajo (${calculatedValues.profitMargin.toFixed(1)}%). La ganancia es de $${calculatedValues.profit.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} sobre un precio final de $${calculatedValues.finalPrice.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}. Considera revisar el precio o el costo.`,
+                type: 'low-margin'
+            })
+        } else if (calculatedValues.profitMargin < 20 && calculatedValues.profitMargin >= 10 && calculatedValues.profit > 0) {
+            alerts.push({
+                severity: 'info',
+                message: `Margen de ganancia: ${calculatedValues.profitMargin.toFixed(1)}%. Ganancia: $${calculatedValues.profit.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.`,
+                type: 'medium-margin'
+            })
+        }
+
+        // Alerta: Precio final muy bajo comparado con costo - Escenario negativo
+        if (calculatedValues.finalPrice < calculatedValues.costValue * 1.1 && calculatedValues.profit > 0) {
+            alerts.push({
+                severity: 'error',
+                message: `Precio final muy bajo. El precio final ($${calculatedValues.finalPrice.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}) es solo ${((calculatedValues.finalPrice / calculatedValues.costValue) * 100).toFixed(1)}% del costo. Esto puede no ser rentable.`,
+                type: 'low-final-price'
+            })
+        }
+
+        // Mensaje de éxito si todo está bien (solo si no hay otras alertas críticas)
+        if (calculatedValues.profit > 0 && calculatedValues.profitMargin >= 20 && calculatedValues.discountValue < 30 && alerts.length === 0) {
+            alerts.push({
+                severity: 'success',
+                message: `Margen de ganancia saludable: ${calculatedValues.profitMargin.toFixed(1)}%. Ganancia: $${calculatedValues.profit.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.`,
+                type: 'healthy-profit'
+            })
+        }
+
+        // Priorizar alertas: error primero, luego info, luego success
+        return alerts.sort((a, b) => {
+            const order = { error: 0, info: 1, success: 2 }
+            return order[a.severity] - order[b.severity]
+        })
+    }, [calculatedValues])
+
     const onDrop = useCallback((acceptedFiles) => {
         // Do something with the files
         console.log('ondrop - archivos aceptados:', acceptedFiles)
@@ -311,9 +495,94 @@ export default function AddProducts() {
         },
     })
 
+    // Handlers para buscar colores
+    const handleSearchColors = useCallback(async (query) => {
+        if (!query || query.trim().length === 0) {
+            setColorsSearchResults([])
+            return
+        }
+        setLoadingColorsSearch(true)
+        setColorsSearchError(false)
+        try {
+            const result = await dispatch(
+                searchColors({ access: user.token, query: query.trim() })
+            ).unwrap()
+            setColorsSearchResults(result.data?.colors || result.data || [])
+        } catch (error) {
+            console.error('Error al buscar colores:', error)
+            setColorsSearchError(true)
+            setColorsSearchResults([])
+        } finally {
+            setLoadingColorsSearch(false)
+        }
+    }, [dispatch, user.token])
+
+    // Handlers para crear color
+    const handleCreateColor = useCallback(async (colorName) => {
+        setCreateColorError(null)
+        try {
+            const result = await dispatch(
+                createColor({ access: user.token, data: { name: colorName } })
+            ).unwrap()
+            // La respuesta tiene la estructura: { ok: true, message: "...", color: { _id: "...", name: "..." } }
+            const newColor = result.color || result.data?.color || result.data || { name: colorName }
+            setCreateColorSuccess(true)
+            setColorsSearchResults((prev) => [newColor, ...prev])
+            // Retornar el objeto completo con _id para que el componente pueda extraer el _id
+            return newColor
+        } catch (error) {
+            console.error('Error al crear color:', error)
+            setCreateColorError(error.response?.data?.error || error.message || 'Error al crear el color')
+            throw error
+        }
+    }, [dispatch, user.token])
+
+    // Handlers para buscar tallas
+    const handleSearchSizes = useCallback(async (query) => {
+        if (!query || query.trim().length === 0) {
+            setSizesSearchResults([])
+            return
+        }
+        setLoadingSizesSearch(true)
+        setSizesSearchError(false)
+        try {
+            const result = await dispatch(
+                searchSizes({ access: user.token, query: query.trim() })
+            ).unwrap()
+            setSizesSearchResults(result.data?.sizes || result.data || [])
+        } catch (error) {
+            console.error('Error al buscar tallas:', error)
+            setSizesSearchError(true)
+            setSizesSearchResults([])
+        } finally {
+            setLoadingSizesSearch(false)
+        }
+    }, [dispatch, user.token])
+
+    // Handlers para crear talla
+    const handleCreateSize = useCallback(async (sizeName) => {
+        setCreateSizeError(null)
+        try {
+            const result = await dispatch(
+                createSize({ access: user.token, data: { name: sizeName } })
+            ).unwrap()
+            // La respuesta tiene la estructura: { ok: true, message: "...", size: { _id: "...", name: "..." } }
+            const newSize = result.size || result.data?.size || result.data || { name: sizeName }
+            setCreateSizeSuccess(true)
+            setSizesSearchResults((prev) => [newSize, ...prev])
+            // Retornar el objeto completo con _id para que el componente pueda extraer el _id
+            return newSize
+        } catch (error) {
+            console.error('Error al crear talla:', error)
+            setCreateSizeError(error.response?.data?.error || error.message || 'Error al crear la talla')
+            throw error
+        }
+    }, [dispatch, user.token])
+
     const submit = async (values) => {
         setSubmitError(null)
         const data = new FormData()
+        setIsSubmitting(true)
 
         // Agregar datos básicos del producto
         data.append('name', values.name || '')
@@ -323,6 +592,18 @@ export default function AddProducts() {
             values.price.replace(/[$,]/g, '') || 0
         )
         data.append('description', values.description || '')
+
+        // Agregar costo siempre (nuevo campo requerido)
+        const sanitizedCost =
+            values.cost !== null && values.cost !== undefined
+                ? values.cost.toString().replace(/[$,]/g, '').trim()
+                : ''
+        data.append('cost', sanitizedCost)
+
+        // Agregar descuento si existe
+        if (values.discount !== null && values.discount !== undefined && values.discount !== '') {
+            data.append('discount', values.discount)
+        }
 
         // Agregar imágenes del producto
         if (Array.isArray(values.images)) {
@@ -362,21 +643,31 @@ export default function AddProducts() {
 
         // Si es edición, manejar imágenes eliminadas
         try {
+            let response
             if (params.id) {
                 if (deleteImages && deleteImages.length > 0) {
                     data.append('deletedImages', JSON.stringify(deleteImages))
                 }
                 // Despachar acción de edición
-                dispatch(editProduct({ access: user.token, data, id: params.id }))
+                response = await dispatch(editProduct({ access: user.token, data, id: params.id })).unwrap()
+                setSuccessProductId(params.id || extractProductId(response))
             } else {
                 // Despachar acción de creación
-                await dispatch(postProducts({ access: user.token, data })).unwrap()
+                response = await dispatch(postProducts({ access: user.token, data })).unwrap()
+                setSuccessProductId(extractProductId(response))
             }
-        }
-        catch (error) {
+            setIsSuccessModalOpen(true)
+        } catch (error) {
+            const errorMessage =
+                error?.response?.data?.error ||
+                error?.error ||
+                error?.message ||
+                'Ocurrió un error al guardar el producto.'
             setSubmitError({
-                error: error.error
+                error: errorMessage,
             })
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
@@ -481,6 +772,45 @@ export default function AddProducts() {
     const handleCancelAspectRatioChange = () => {
         setShowAspectRatioModal(false)
     }
+
+    const extractProductId = (response) => {
+        if (!response) return null
+        return (response?.data?.product?._id)
+    }
+
+    const resolveProductId = () => {
+        return (successProductId)
+    }
+
+    const handleSuccessModalClose = () => {
+        setIsSuccessModalOpen(false)
+        if (!isEditing) {
+            reset()
+        }
+        setSuccessProductId(params.id || null)
+    }
+
+    const handleGoToList = () => {
+        handleSuccessModalClose()
+        history.push('/admin/products')
+    }
+
+    const handleViewDetail = () => {
+        const productId = resolveProductId()
+        if (!productId) return
+        handleSuccessModalClose()
+        history.push(`/admin/product-detail/${productId}`)
+    }
+
+    const handleViewStore = () => {
+        const productId = resolveProductId()
+        if (!productId) return
+        window.open(
+            `https://${tenantSlug}.tiendapro.com.ar/detalle-producto/${productId}`,
+            '_blank'
+        )
+    }
+
     useEffect(() => {
         const getData = async () => {
             dispatch(
@@ -515,13 +845,22 @@ export default function AddProducts() {
     useEffect(async () => {
         if (productDetail && params.id && categoriesData) {
             console.log('productDetail', productDetail)
+            // Preparar keywords para el reset
+            const keywordsArrayData = productDetail.keywords && Array.isArray(productDetail.keywords)
+                ? productDetail.keywords.map(keyword => ({ keyword: typeof keyword === 'string' ? keyword : keyword.keyword || keyword }))
+                : []
+
             reset({
                 images: productDetail.images.map((e) => ({ preview: e.url })),
                 name: productDetail.name,
                 price: productDetail.price,
                 description: productDetail.description,
                 status: productDetail.status.available ? 0 : 1,
-                discount: productDetail.discount,
+                discount: productDetail.discount ?? '',
+                cost:
+                    productDetail.cost === null || productDetail.cost === undefined
+                        ? ''
+                        : productDetail.cost.toString(),
                 hasFeatures: productDetail.features.length > 0,
                 category: categoriesData.data.some(
                     (category) => category._id === productDetail.category
@@ -530,26 +869,46 @@ export default function AddProducts() {
                         (category) => category._id === productDetail.category
                     )._id
                     : '',
+                keywords: keywordsArrayData,
             })
-            if (productDetail.keywords) {
-                productDetail.keywords.map(keyword =>
-                    {
-                        console.log('keyword', keyword)
-                        keywordsArray.append({ keyword })
-                    }
-                )
-            }
             if (productDetail.features.length > 0) {
                 setValue('unique', false)
 
+                // Cargar colores y tallas seleccionados para que se muestren correctamente
+                const colorsToLoad = []
+                const sizesToLoad = []
+
                 productDetail.features
                     .filter((feature) => feature.color || feature.size)
-                    .map((feature) =>
+                    .forEach((feature) => {
+                        // Extraer _id de color y size si vienen como objetos
+                        const colorId = feature.color?._id || feature.color?.id || feature.color
+                        const sizeId = feature.size?._id || feature.size?.id || feature.size
+
+                        // Si el color viene como objeto, agregarlo a la lista para buscar
+                        if (feature.color && typeof feature.color === 'object') {
+                            colorsToLoad.push(feature.color)
+                        }
+                        // Si el size viene como objeto, agregarlo a la lista para buscar
+                        if (feature.size && typeof feature.size === 'object') {
+                            sizesToLoad.push(feature.size)
+                        }
+
                         featuresArray.append({
                             ...feature,
+                            color: colorId,
+                            size: sizeId,
                             hasSize: Boolean(feature.size),
                         })
-                    )
+                    })
+
+                // Agregar colores y tallas a los resultados de búsqueda para que se muestren correctamente
+                if (colorsToLoad.length > 0) {
+                    setColorsSearchResults(colorsToLoad)
+                }
+                if (sizesToLoad.length > 0) {
+                    setSizesSearchResults(sizesToLoad)
+                }
                 productDetail.features
                     .filter((feature) => !feature.color && !feature.size)
                     .map((feature) => {
@@ -572,6 +931,8 @@ export default function AddProducts() {
                 featuresArray: [],
                 category: '',
                 unique: true,
+                cost: '',
+                discount: '',
             })
         }
     }, [productDetail])
@@ -820,6 +1181,86 @@ export default function AddProducts() {
                             </Box>
                             <Box flex="0 1 250px">
                                 <Controller
+                                    name="cost"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <Box>
+                                            <NumericFormat
+                                                className={classes.input}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                customInput={TextField}
+                                                label="Costo de la prenda (opcional)"
+                                                variant="outlined"
+                                                thousandSeparator=","
+                                                decimalSeparator="."
+                                                decimalScale={2}
+                                                prefix="$"
+                                                error={fieldState.error ? true : false}
+                                            />
+                                            {fieldState.error && (
+                                                <Typography
+                                                    color="error"
+                                                    variant="caption"
+                                                    sx={{
+                                                        display: 'block',
+                                                        marginTop: 1,
+                                                        fontSize: '14px',
+                                                    }}
+                                                >
+                                                    {fieldState.error.message}
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                    )}
+                                />
+                            </Box>
+                            <Box flex="0 1 250px">
+                                <TextField
+                                    fullWidth
+                                    variant="outlined"
+                                    label="Ganancia"
+                                    value={profitValue ? `$${profitValue}` : ''}
+                                    InputProps={{
+                                        readOnly: true,
+                                    }}
+                                    style={{
+                                        backgroundColor: '#f5f5f5',
+                                    }}
+                                    helperText={profitValue ? 'Ganancia calculada automáticamente' : 'Complete precio y costo para calcular la ganancia'}
+                                />
+                            </Box>
+                        </Box>
+
+                        {/* Alertas inteligentes de ganancia */}
+                        {profitAlerts.length > 0 && (
+                            <Box style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                                {profitAlerts.map((alert, index) => {
+                                    const colorMap = {
+                                        error: '#d32f2f',
+                                        info: '#20B6C9',
+                                        success: '#388e3c'
+                                    }
+                                    return (
+                                        <Typography
+                                            key={index}
+                                            variant="body2"
+                                            style={{
+                                                color: colorMap[alert.severity] || '#222',
+                                                marginBottom: index < profitAlerts.length - 1 ? '0.5rem' : '0',
+                                                fontSize: '0.875rem',
+                                            }}
+                                        >
+                                            {alert.message}
+                                        </Typography>
+                                    )
+                                })}
+                            </Box>
+                        )}
+
+                        <Box className={classes.inputRow}>
+                            <Box flex="0 1 250px">
+                                <Controller
                                     name="category"
                                     control={control}
                                     render={({ field, fieldState }) => (
@@ -1063,28 +1504,26 @@ export default function AddProducts() {
                                                     name={`featuresArray.${index}.color`}
                                                     control={control}
                                                     render={({ field, fieldState }) => {
-                                                        console.log(
-                                                            'fieldState',
-                                                            fieldState
-                                                        )
-
                                                         return (
-                                                            <TextInput
-                                                                error={
-                                                                    !!fieldState.error
-                                                                }
-                                                                errorMessage={
-                                                                    fieldState.error
-                                                                        ?.message || ''
-                                                                }
-                                                                icon={null}
+                                                            <AutocompleteWithCreate
                                                                 label="Color del producto"
-                                                                value={
-                                                                    field.value || ''
-                                                                }
-                                                                onChange={
-                                                                    field.onChange
-                                                                }
+                                                                value={field.value || ''}
+                                                                onChange={(colorId) => {
+                                                                    // El componente ahora retorna el _id directamente
+                                                                    field.onChange(colorId)
+                                                                }}
+                                                                onSearch={handleSearchColors}
+                                                                onCreate={handleCreateColor}
+                                                                searchResults={colorsSearchResults}
+                                                                loading={loadingColorsSearch}
+                                                                error={colorsSearchError}
+                                                                errorMessage={fieldState.error?.message || createColorError}
+                                                                placeholder="Escribe el color del producto"
+                                                                createButtonText="Crear nuevo color"
+                                                                noOptionsText="No se encontraron colores"
+                                                                getOptionLabel={(option) => option.name || option}
+                                                                getOptionValue={(option) => option.name || option}
+                                                                getOptionId={(option) => option._id || option.id || option}
                                                             />
                                                         )
                                                     }}
@@ -1122,16 +1561,25 @@ export default function AddProducts() {
                                                     name={`featuresArray.${index}.size`}
                                                     control={control}
                                                     render={({ field, fieldState }) => (
-                                                        <TextInput
-                                                            error={!!fieldState.error}
-                                                            errorMessage={
-                                                                fieldState.error
-                                                                    ?.message || ''
-                                                            }
-                                                            icon={null}
+                                                        <AutocompleteWithCreate
                                                             label="Talla del producto"
                                                             value={field.value || ''}
-                                                            onChange={field.onChange}
+                                                            onChange={(sizeId) => {
+                                                                // El componente ahora retorna el _id directamente
+                                                                field.onChange(sizeId)
+                                                            }}
+                                                            onSearch={handleSearchSizes}
+                                                            onCreate={handleCreateSize}
+                                                            searchResults={sizesSearchResults}
+                                                            loading={loadingSizesSearch}
+                                                            error={sizesSearchError}
+                                                            errorMessage={fieldState.error?.message || createSizeError}
+                                                            placeholder="Escribe la talla del producto"
+                                                            createButtonText="Crear nueva talla"
+                                                            noOptionsText="No se encontraron tallas"
+                                                            getOptionLabel={(option) => option.name || option}
+                                                            getOptionValue={(option) => option.name || option}
+                                                            getOptionId={(option) => option._id || option.id || option}
                                                         />
                                                     )}
                                                 />
@@ -1203,10 +1651,6 @@ export default function AddProducts() {
                                 )}
                             />
                         </Box>
-                        {productError ||
-                            (editProductError && (
-                                <p>Hubo un error al guardar el producto</p>
-                            ))}
                         {Object.keys(errors).length > 0 && (
                             <p>
                                 Al parecer faltan campos obligatorios en el formulario
@@ -1214,7 +1658,7 @@ export default function AddProducts() {
                         )}
                         <Box className={classes.buttonsRow}>
                             <Button
-                                isLoading={loadingProduct | loadingEditProduct}
+                                isLoading={isSubmitting}
                                 variant="contained"
                                 color="primary"
                                 type="submit"
@@ -1227,34 +1671,35 @@ export default function AddProducts() {
             </Card>
 
             <CustomModal
-                open={params.id ? editProductSuccess : productSuccess}
-                handleClose={() => {
-                    if (params.id) {
-                        dispatch(resetEditProductSuccess())
-                    } else {
-                        reset()
-                        dispatch(resetProductSuccess())
-                    }
-                }}
+                open={isSuccessModalOpen}
+                handleClose={handleSuccessModalClose}
                 icon={'success'}
                 title="¡Listo!"
-                subTitle="Tu producto se guardo exitosamente"
-                hasCancel={params.id ? false : true}
-                cancelText={params.id ? 'Cerrar' : 'Crear otro producto'}
+                subTitle="Tu producto se guardó exitosamente"
+                body={
+                    <Box className={classes.successActions}>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleViewDetail}
+                        >
+                            Ver detalle
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleViewStore}
+                        >
+                            Ver en la tienda
+                        </Button>
+                    </Box>
+                }
+                hasCancel={!isEditing}
+                cancelText={isEditing ? 'Cerrar' : 'Crear otro producto'}
                 confirmText="Ir al listado de productos"
                 hasConfirm={true}
-                cancelCb={() => {
-                    if (params.id) {
-                        dispatch(resetEditProductSuccess())
-                    } else {
-                        dispatch(resetProductSuccess())
-                    }
-                }}
-                confirmCb={() => {
-                    dispatch(resetProductSuccess())
-                    dispatch(resetEditProductSuccess())
-                    history.push('/admin/products')
-                }}
+                cancelCb={handleSuccessModalClose}
+                confirmCb={handleGoToList}
             />
             <CustomModal
                 open={submitError}
@@ -1311,6 +1756,74 @@ export default function AddProducts() {
                 imageUrl={currentImageForCrop}
                 onCropComplete={handleCropComplete}
                 isSquareAspectRatio={isSquareAspectRatio}
+            />
+
+            {/* Modal de éxito al crear color */}
+            <CustomModal
+                open={createColorSuccess}
+                handleClose={() => {
+                    setCreateColorSuccess(false)
+                }}
+                icon={'success'}
+                title="¡Color creado!"
+                subTitle="El color se ha creado exitosamente"
+                hasCancel={false}
+                hasConfirm={true}
+                confirmText="Aceptar"
+                confirmCb={() => {
+                    setCreateColorSuccess(false)
+                }}
+            />
+
+            {/* Modal de error al crear color */}
+            <CustomModal
+                open={!!createColorError}
+                handleClose={() => {
+                    setCreateColorError(null)
+                }}
+                icon={'error'}
+                title="¡Error!"
+                subTitle={createColorError || 'Error al crear el color'}
+                hasCancel={false}
+                hasConfirm={true}
+                confirmText="Aceptar"
+                confirmCb={() => {
+                    setCreateColorError(null)
+                }}
+            />
+
+            {/* Modal de éxito al crear talla */}
+            <CustomModal
+                open={createSizeSuccess}
+                handleClose={() => {
+                    setCreateSizeSuccess(false)
+                }}
+                icon={'success'}
+                title="¡Talla creada!"
+                subTitle="La talla se ha creado exitosamente"
+                hasCancel={false}
+                hasConfirm={true}
+                confirmText="Aceptar"
+                confirmCb={() => {
+                    setCreateSizeSuccess(false)
+                }}
+            />
+
+            {/* Modal de error al crear talla */}
+            <CustomModal
+                open={!!createSizeError}
+                handleClose={() => {
+                    setCreateSizeError(null)
+                }}
+                icon={'error'}
+                title="¡Error!"
+                subTitle={createSizeError || 'Error al crear la talla'}
+                hasCancel={false}
+                hasConfirm={true}
+                confirmText="Aceptar"
+                confirmCb={() => {
+                    setCreateSizeError(null)
+                }}
             />
         </section>
     )

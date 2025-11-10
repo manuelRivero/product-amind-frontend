@@ -77,3 +77,35 @@ export const editProduct = (access, data, id) => {
         },
     })
 }
+
+export const searchColors = (access, query) => {
+    return client.get(`/api/colors/search?q=${query}`, {
+        headers: {
+            'x-token': access,
+        },
+    })
+}
+
+export const createColor = (access, data) => {
+    return client.post(`/api/colors`, data, {
+        headers: {
+            'x-token': access,
+        },
+    })
+}
+
+export const searchSizes = (access, query) => {
+    return client.get(`/api/sizes/search?q=${query}`, {
+        headers: {
+            'x-token': access,
+        },
+    })
+}
+
+export const createSize = (access, data) => {
+    return client.post(`/api/sizes`, data, {
+        headers: {
+            'x-token': access,
+        },
+    })
+}

@@ -7,7 +7,11 @@ import {
     getProductDetail as getProductsDetailRequest,
     editProduct as editProductRequest,
     getProductsTemplateExcel as getProductsTemplateExcelRequest,
-    deleteProduct as deleteProductRequest
+    deleteProduct as deleteProductRequest,
+    searchColors as searchColorsRequest,
+    createColor as createColorRequest,
+    searchSizes as searchSizesRequest,
+    createSize as createSizeRequest
 } from 'api/products'
 
 const initialState = {
@@ -18,15 +22,9 @@ const initialState = {
     loadingZip: false,
     uploadZipError: false,
     zipErrors: null,
-    loadingProduct: false,
-    productSuccess: false,
-    productError: false,
     productDetailError:false,
     productDetail:null,
     loadingProductDetail: true,
-    loadingEditProduct:false,
-    editProductError:false,
-    editProductSuccess:false,
     loadingTemplateExcel:false,
     templateExcelResult:null
 }
@@ -107,16 +105,50 @@ export const deleteProduct = createAsyncThunk(
     }
 )
 
+export const searchColors = createAsyncThunk(
+    '/get/search-colors',
+    async (args) => {
+        const [response] = await Promise.all([
+            searchColorsRequest(args.access, args.query),
+        ])
+        return response
+    }
+)
+
+export const createColor = createAsyncThunk(
+    '/post/create-color',
+    async (args) => {
+        const [response] = await Promise.all([
+            createColorRequest(args.access, args.data),
+        ])
+        return response
+    }
+)
+
+export const searchSizes = createAsyncThunk(
+    '/get/search-sizes',
+    async (args) => {
+        const [response] = await Promise.all([
+            searchSizesRequest(args.access, args.query),
+        ])
+        return response
+    }
+)
+
+export const createSize = createAsyncThunk(
+    '/post/create-size',
+    async (args) => {
+        const [response] = await Promise.all([
+            createSizeRequest(args.access, args.data),
+        ])
+        return response
+    }
+)
+
 export const productsSlice = createSlice({
     name: 'products',
     initialState,
     reducers: {
-        resetProductSuccess: (state) => {
-            state.productSuccess = false
-        },
-        resetEditProductSuccess: (state) => {
-            state.editProductSuccess = false
-        },
         resetZipErrors: (state) => {
             state.zipErrors = null
         },
@@ -161,17 +193,6 @@ export const productsSlice = createSlice({
         [postImagesFromZip.rejected]: (state) => {
             state.loadingZip = false
         },
-        [postProducts.pending]: (state) => {
-            state.loadingProduct = true
-        },
-        [postProducts.fulfilled]: (state) => {
-            state.loadingProduct = false
-            state.productSuccess = true
-        },
-        [postProducts.rejected]: (state) => {
-            state.loadingProduct = false
-            state.productError = true
-        },
         [getProductDetail.pending]: (state) => {
             state.loadingProductDetail = true
         },
@@ -182,18 +203,6 @@ export const productsSlice = createSlice({
         [getProductDetail.rejected]: (state) => {
             state.loadingProductDetail = false
             state.productDetailError = true
-        },
-        [editProduct.pending]: (state) => {
-            state.loadingEditProduct = true
-        },
-        [editProduct.fulfilled]: (state) => {
-            state.loadingEditProduct = false
-            state.editProductSuccess = true
-            state.editProductError = false
-        },
-        [editProduct.rejected]: (state) => {
-            state.loadingEditProduct = false
-            state.editProductError = true
         },
         [getProductsTemplateExcel.pending]: (state) => {
             state.loadingTemplateExcel = true
@@ -213,6 +222,6 @@ export const productsSlice = createSlice({
         },
     },
 })
-export const { resetExcelErrors, resetProductSuccess, resetEditProductSuccess, resetZipErrors } = productsSlice.actions
+export const { resetExcelErrors, resetZipErrors } = productsSlice.actions
 
 export default productsSlice.reducer

@@ -51,6 +51,9 @@ const useStyles = makeStyles({
         gap: '1rem',
         marginTop: '1rem',
     },
+    bodyWrapper: {
+        marginTop: '1rem',
+    },
 })
 
 export default function CustomModal({
@@ -59,6 +62,7 @@ export default function CustomModal({
     icon,
     title,
     subTitle,
+    body,
     hasConfirm,
     hasCancel,
     confirmCb,
@@ -86,6 +90,7 @@ export default function CustomModal({
                     <h4>{title}</h4>
                     <p>{subTitle}</p>
                 </Box>
+                {body && <Box className={classes.bodyWrapper}>{body}</Box>}
                 <Box className={classes.buttonsWrapper}>
                     {hasCancel && (
                         <Button
