@@ -11,6 +11,8 @@ import {
     TextField,
     Chip,
     Grid,
+    Typography,
+    Box,
 } from '@material-ui/core'
 import Table from 'components/Table/Table.js'
 import React, { useEffect, useState } from 'react'
@@ -30,6 +32,7 @@ import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import MomentUtils from '@date-io/moment'
 import { Add } from '@material-ui/icons'
 import TextInput from '../../components/TextInput/Index'
+import { NumericFormat } from 'react-number-format'
 import Card from '../../components/Card/Card'
 import CardBody from '../../components/Card/CardBody'
 import EmptyTablePlaceholder from '../../components/EmptyTablePlaceholder'
@@ -43,10 +46,62 @@ import {
 import { useHistory, useParams } from 'react-router-dom'
 import { COUPON_TYPES } from '../../const/coupons'
 import { validateCouponData, generateCouponCode } from '../../helpers/coupon'
-
+import CustomModal from '../../components/CustomModal'
 
 const schema = yup.object({
-    search: yup.string(),
+    code: yup.string().required('El código del cupón es requerido'),
+    name: yup.string().required('El nombre del cupón es requerido'),
+    description: yup.string(),
+    type: yup.string().required('El tipo de descuento es requerido'),
+    value: yup
+        .string()
+        .required('El valor del cupón es requerido')
+        .test('is-positive', 'El valor debe ser mayor a 0', (value) => {
+            if (!value) return false
+            const numValue = parseFloat(value.toString().replace(/[$,]/g, ''))
+            return !isNaN(numValue) && numValue > 0
+        })
+        .test('max-percentage', 'El porcentaje no puede ser mayor a 100%', function(value) {
+            if (this.parent.type === COUPON_TYPES.PERCENTAGE && value) {
+                const numValue = parseFloat(value.toString().replace(/[$,]/g, ''))
+                return isNaN(numValue) || numValue <= 100
+            }
+            return true
+        }),
+    minimumAmount: yup
+        .string()
+        .test('is-valid-amount', 'El monto mínimo debe ser un número válido', (value) => {
+            if (!value || value === '0') return true
+            const numValue = parseFloat(value.toString().replace(/[$,]/g, ''))
+            return !isNaN(numValue) && numValue >= 0
+        }),
+    maximumDiscount: yup
+        .string()
+        .test('is-valid-amount', 'El descuento máximo debe ser un número válido', (value) => {
+            if (!value || value === '0') return true
+            const numValue = parseFloat(value.toString().replace(/[$,]/g, ''))
+            return !isNaN(numValue) && numValue >= 0
+        }),
+    usageLimit: yup
+        .string()
+        .test('is-valid-number', 'El límite de uso debe ser un número válido', (value) => {
+            if (!value) return true
+            const numValue = parseInt(value)
+            return !isNaN(numValue) && numValue > 0
+        }),
+    validFrom: yup.mixed().required('La fecha de inicio es requerida'),
+    validUntil: yup
+        .mixed()
+        .required('La fecha de finalización es requerida')
+        .test('is-after-start', 'La fecha de finalización debe ser posterior a la fecha de inicio', function(value) {
+            if (!value || !this.parent.validFrom) return true
+            return moment(value).isAfter(moment(this.parent.validFrom))
+        }),
+    firstTimeOnly: yup.boolean(),
+    maxUsesPerUser: yup
+        .number()
+        .min(1, 'El máximo de usos por usuario debe ser al menos 1')
+        .required('El máximo de usos por usuario es requerido'),
 })
 
 const useStyles = makeStyles({
@@ -145,22 +200,24 @@ export default function AddCoupon() {
         const [searchTermExcluded, setSearchTermExcluded] = useState('')
         const [loadingProducts, setLoadingProducts] = useState(false)
         const [loadingCategories, setLoadingCategories] = useState(false)
+        const [submitError, setSubmitError] = useState(null)
+        const [validationErrors, setValidationErrors] = useState({})
 
 
         const itemsPerPage = 10
 
 
-        const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm({
+        const { control, handleSubmit, setValue, watch, setError, formState: { errors } } = useForm({
             resolver: yupResolver(schema),
             defaultValues: {
                 code: generateCouponCode('CUPON', 6),
                 name: '',
                 description: '',
                 type: COUPON_TYPES.PERCENTAGE,
-                value: 0,
-                minimumAmount: 0,
-                maximumDiscount: 0,
-                usageLimit: 0,
+                value: '',
+                minimumAmount: '0',
+                maximumDiscount: '0',
+                usageLimit: '',
                 validFrom: moment(),
                 validUntil: moment().add(1, 'month'),
                 firstTimeOnly: false,
@@ -278,14 +335,14 @@ export default function AddCoupon() {
 
         useEffect(() => {
             if (productsData) {
-                setTotalPagesProducts(Math.ceil(productsData.data.total / itemsPerPage))
+                setTotalPagesProducts(Math.ceil(productsData.total / itemsPerPage))
             }
         }, [
             productsData
         ])
         useEffect(() => {
             if (categoriesData) {
-                setTotalPagesCategories(categoriesData.data.pagination.totalPages)
+                setTotalPagesCategories(categoriesData.pagination.totalPages)
             }
         }, [
             categoriesData
@@ -397,7 +454,7 @@ export default function AddCoupon() {
         // Use products directly from the service (already filtered and paginated by backend)
         console.log('categoriesData', categoriesData)
         const products = productsData?.products || []
-        const categories = categoriesData ? categoriesData.data.categories : []
+        const categories = categoriesData ? categoriesData.data : []
 
         console.log('🔵 AddCoupon: Using server-side paginated data:', {
             productsLength: products.length,
@@ -484,9 +541,21 @@ export default function AddCoupon() {
         const onSubmit = async (data) => {
             try {
                 setLoadingSubmit(true)
+                setSubmitError(null)
+                setValidationErrors({})
+
+                // Limpiar valores de moneda (remover $ y comas)
+                const cleanCurrencyValue = (value) => {
+                    if (!value || value === '0') return ''
+                    return value.toString().replace(/[$,]/g, '').trim()
+                }
 
                 const couponData = {
                     ...data,
+                    // Limpiar valores de moneda antes de enviar
+                    value: data.type === COUPON_TYPES.FIXED ? cleanCurrencyValue(data.value) : data.value,
+                    minimumAmount: cleanCurrencyValue(data.minimumAmount),
+                    maximumDiscount: data.maximumDiscount ? cleanCurrencyValue(data.maximumDiscount) : data.maximumDiscount,
                     validFrom: data.validFrom.toISOString(),
                     validUntil: data.validUntil.toISOString(),
                     applicableProducts: selectedProducts.map(p => p._id),
@@ -499,23 +568,67 @@ export default function AddCoupon() {
                     }
                 }
 
-                // Validate coupon data
+                // Validate coupon data con helper adicional
                 const validation = validateCouponData(couponData)
                 if (!validation.isValid) {
-                    console.log('Validation errors:', validation.errors)
-                    // You could show these errors to the user
+                    setValidationErrors(validation.errors)
+                    // Establecer errores en los campos del formulario
+                    Object.keys(validation.errors).forEach((field) => {
+                        setError(field, {
+                            type: 'manual',
+                            message: validation.errors[field]
+                        })
+                    })
+                    // Mostrar el primer error como mensaje general
+                    const firstError = Object.values(validation.errors)[0]
+                    setSubmitError({
+                        error: firstError || 'Por favor, corrige los errores en el formulario'
+                    })
+                    setLoadingSubmit(false)
                     return
                 }
 
+                let response
                 if (id) {
-                    await dispatch(updateCoupon({ data: couponData, id }))
+                    response = await dispatch(updateCoupon({ data: couponData, id }))
                 } else {
-                    await dispatch(addCoupon(couponData))
+                    response = await dispatch(addCoupon(couponData))
                 }
 
-                history.push('/admin/coupons')
+                // Verificar si la acción fue rechazada (error de API)
+                if (updateCoupon.rejected.match(response) || addCoupon.rejected.match(response)) {
+                    const errorMessage = 
+                        response.payload?.error ||
+                        response.payload?.message ||
+                        response.error?.message ||
+                        (id ? 'Error al actualizar el cupón' : 'Error al crear el cupón')
+                    setSubmitError({
+                        error: errorMessage
+                    })
+                    setLoadingSubmit(false)
+                    return
+                }
+
+                // Verificar si la acción fue exitosa
+                if (updateCoupon.fulfilled.match(response) || addCoupon.fulfilled.match(response)) {
+                    // Si todo salió bien, redirigir
+                    history.push('/admin/coupons')
+                } else {
+                    // Si no es ni fulfilled ni rejected, puede ser un error inesperado
+                    setSubmitError({
+                        error: id ? 'Error al actualizar el cupón' : 'Error al crear el cupón'
+                    })
+                }
             } catch (error) {
-                console.log('Error submitting coupon:', error)
+                console.error('Error submitting coupon:', error)
+                const errorMessage = 
+                    error?.response?.data?.error ||
+                    error?.error ||
+                    error?.message ||
+                    (id ? 'Ocurrió un error al actualizar el cupón' : 'Ocurrió un error al crear el cupón')
+                setSubmitError({
+                    error: errorMessage
+                })
             } finally {
                 setLoadingSubmit(false)
             }
@@ -625,13 +738,44 @@ export default function AddCoupon() {
                                             <Controller
                                                 name="value"
                                                 control={control}
-                                                render={({ field }) => (
-                                                    <TextInput
-                                                        {...field}
-                                                        type="number"
-                                                        label={watchedType === COUPON_TYPES.PERCENTAGE ? 'Porcentaje (%)' : 'Monto ($)'}
-                                                        error={errors.value}
-                                                    />
+                                                render={({ field, fieldState }) => (
+                                                    watchedType === COUPON_TYPES.PERCENTAGE ? (
+                                                        <TextInput
+                                                            {...field}
+                                                            type="number"
+                                                            label="Porcentaje (%)"
+                                                            error={errors.value}
+                                                        />
+                                                    ) : (
+                                                        <Box>
+                                                            <NumericFormat
+                                                                value={field.value}
+                                                                onChange={field.onChange}
+                                                                customInput={TextField}
+                                                                label="Monto ($)"
+                                                                variant="outlined"
+                                                                fullWidth
+                                                                thousandSeparator=","
+                                                                decimalSeparator="."
+                                                                decimalScale={2}
+                                                                prefix="$"
+                                                                error={fieldState.error ? true : false}
+                                                            />
+                                                            {fieldState.error && (
+                                                                <Typography
+                                                                    color="error"
+                                                                    variant="caption"
+                                                                    style={{
+                                                                        display: 'block',
+                                                                        marginTop: '4px',
+                                                                        fontSize: '14px',
+                                                                    }}
+                                                                >
+                                                                    {fieldState.error.message}
+                                                                </Typography>
+                                                            )}
+                                                        </Box>
+                                                    )
                                                 )}
                                             />
                                         </Grid>
@@ -639,13 +783,35 @@ export default function AddCoupon() {
                                             <Controller
                                                 name="minimumAmount"
                                                 control={control}
-                                                render={({ field }) => (
-                                                    <TextInput
-                                                        {...field}
-                                                        type="number"
-                                                        label="Monto mínimo"
-                                                        error={errors.minimumAmount}
-                                                    />
+                                                render={({ field, fieldState }) => (
+                                                    <Box>
+                                                        <NumericFormat
+                                                            value={field.value}
+                                                            onChange={field.onChange}
+                                                            customInput={TextField}
+                                                            label="Monto mínimo"
+                                                            variant="outlined"
+                                                            fullWidth
+                                                            thousandSeparator=","
+                                                            decimalSeparator="."
+                                                            decimalScale={2}
+                                                            prefix="$"
+                                                            error={fieldState.error ? true : false}
+                                                        />
+                                                        {fieldState.error && (
+                                                            <Typography
+                                                                color="error"
+                                                                variant="caption"
+                                                                style={{
+                                                                    display: 'block',
+                                                                    marginTop: '4px',
+                                                                    fontSize: '14px',
+                                                                }}
+                                                            >
+                                                                {fieldState.error.message}
+                                                            </Typography>
+                                                        )}
+                                                    </Box>
                                                 )}
                                             />
                                         </Grid>
@@ -654,13 +820,35 @@ export default function AddCoupon() {
                                                 <Controller
                                                     name="maximumDiscount"
                                                     control={control}
-                                                    render={({ field }) => (
-                                                        <TextInput
-                                                            {...field}
-                                                            type="number"
-                                                            label="Descuento máximo ($)"
-                                                            error={errors.maximumDiscount}
-                                                        />
+                                                    render={({ field, fieldState }) => (
+                                                        <Box>
+                                                            <NumericFormat
+                                                                value={field.value}
+                                                                onChange={field.onChange}
+                                                                customInput={TextField}
+                                                                label="Descuento máximo ($)"
+                                                                variant="outlined"
+                                                                fullWidth
+                                                                thousandSeparator=","
+                                                                decimalSeparator="."
+                                                                decimalScale={2}
+                                                                prefix="$"
+                                                                error={fieldState.error ? true : false}
+                                                            />
+                                                            {fieldState.error && (
+                                                                <Typography
+                                                                    color="error"
+                                                                    variant="caption"
+                                                                    style={{
+                                                                        display: 'block',
+                                                                        marginTop: '4px',
+                                                                        fontSize: '14px',
+                                                                    }}
+                                                                >
+                                                                    {fieldState.error.message}
+                                                                </Typography>
+                                                            )}
+                                                        </Box>
                                                     )}
                                                 />
                                             </Grid>
@@ -1000,6 +1188,23 @@ export default function AddCoupon() {
                             )}
                         </div>
                     </Dialog>
+
+                    {/* Error Modal */}
+                    <CustomModal
+                        open={!!submitError}
+                        handleClose={() => {
+                            setSubmitError(null)
+                        }}
+                        icon="error"
+                        title="¡Error!"
+                        subTitle={submitError?.error}
+                        hasCancel={false}
+                        hasConfirm={true}
+                        cancelCb={() => {}}
+                        confirmCb={() => {
+                            setSubmitError(null)
+                        }}
+                    />
                 </div>
             </MuiPickersUtilsProvider>
         )

@@ -140,15 +140,52 @@ const styles = {
         background: '#f8f9fa',
         padding: '1.5rem',
         borderRadius: '12px',
-        borderLeft: '4px solid #00ACC1',
         marginBottom: '2rem',
     },
     orderInfoSection: {
         background: '#f8f9fa',
         padding: '1.5rem',
         borderRadius: '12px',
-        borderLeft: '4px solid #4CAF50',
         marginBottom: '2rem',
+    },
+    discountSection: {
+        background: '#f8f9fa',
+        padding: '1.5rem',
+        borderRadius: '12px',
+        marginBottom: '2rem',
+    },
+    discountRow: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '0.75rem 0',
+        borderBottom: '1px solid #e0e0e0',
+    },
+    discountRowLast: {
+        borderBottom: 'none',
+        marginTop: '0.5rem',
+        paddingTop: '1rem',
+    },
+    discountLabel: {
+        fontSize: '1rem',
+        color: '#3C4858',
+        fontWeight: '500',
+    },
+    discountValue: {
+        fontSize: '1rem',
+        color: '#3C4858',
+        fontWeight: '600',
+    },
+    discountValueNegative: {
+        fontSize: '1rem',
+        color: '#4CAF50',
+        fontWeight: '600',
+    },
+    couponCode: {
+        fontSize: '0.875rem',
+        color: '#666',
+        fontStyle: 'italic',
+        marginTop: '0.25rem',
     },
     tableSection: {
         marginTop: '2rem',
@@ -261,36 +298,17 @@ export default function SaleDetail() {
                                                 </span>
                                             </div>
                                             <div className={classes.infoItem}>
-                                                <span className={classes.infoLabel}>Total de la orden</span>
-                                                <span className={classes.priceValue}>
-                                                    ${saleData.products
-                                                        .reduce(
-                                                            (acc, item) =>
-                                                                acc +
-                                                                finalPrice(
-                                                                    item.data.price,
-                                                                    item.data.discount
-                                                                ) * item.quantity,
-                                                            0
-                                                        )
-                                                        .toFixed(1)}
-                                                </span>
-                                            </div>
-                                            <div className={classes.infoItem}>
                                                 <span className={classes.infoLabel}>Comisión de Marketplace</span>
                                                 <span className={classes.infoValue}>
                                                     {(() => {
                                                         const marketplaceFee = saleData.marketplaceFee || 0;
                                                         const feePercentage = marketplaceFee < 1 ? marketplaceFee * 100 : marketplaceFee;
-                                                        const totalOrder = saleData.products.reduce(
-                                                            (acc, item) =>
-                                                                acc + finalPrice(item.data.price, item.data.discount) * item.quantity,
-                                                            0
-                                                        );
-                                                        const commissionAmount = (totalOrder * feePercentage / 100);
+                                                        // Usar saleData.total directamente (ya incluye descuento de cupón)
+                                                        const finalTotal = saleData.total || 0;
+                                                        const commissionAmount = (finalTotal * feePercentage / 100);
                                                         
                                                         return feePercentage > 0 ? (
-                                                            `${feePercentage.toFixed(1)}% ($${commissionAmount.toFixed(2)})`
+                                                            `${feePercentage.toFixed(1)}% ($${formatNumber(commissionAmount.toFixed(2))})`
                                                         ) : (
                                                             'Sin comisión'
                                                         );
@@ -303,19 +321,117 @@ export default function SaleDetail() {
                                                     {(() => {
                                                         const marketplaceFee = saleData.marketplaceFee || 0;
                                                         const feePercentage = marketplaceFee < 1 ? marketplaceFee * 100 : marketplaceFee;
-                                                        const totalOrder = saleData.products.reduce(
-                                                            (acc, item) =>
-                                                                acc + finalPrice(item.data.price, item.data.discount) * item.quantity,
-                                                            0
-                                                        );
-                                                        const commissionAmount = (totalOrder * feePercentage / 100);
-                                                        const totalReceived = totalOrder - commissionAmount;
+                                                        // Usar saleData.total directamente (ya incluye descuento de cupón)
+                                                        const finalTotal = saleData.total || 0;
+                                                        const commissionAmount = (finalTotal * feePercentage / 100);
+                                                        const totalReceived = finalTotal - commissionAmount;
                                                         
-                                                        return `$${totalReceived.toFixed(2)}`;
+                                                        return `$${formatNumber(totalReceived.toFixed(2))}`;
                                                     })()}
                                                 </span>
                                             </div>
                                         </div>
+                                    </div>
+
+                                    {/* Desglose de Descuentos */}
+                                    <h3 className={classes.sectionTitle}>Desglose de Descuentos</h3>
+                                    <div className={classes.discountSection}>
+                                        {(() => {
+                                            // Calcular subtotal sin descuentos (precio original de productos)
+                                            const subtotalSinDescuentos = saleData.products.reduce(
+                                                (acc, item) =>
+                                                    acc + (item.data.price || 0) * (item.quantity || 0),
+                                                0
+                                            );
+
+                                            // Calcular descuentos de productos
+                                            let productDiscounts = 0;
+                                            saleData.products.forEach((item) => {
+                                                const price = item.data.price || 0;
+                                                const quantity = item.quantity || 0;
+                                                const discount = item.data.discount || 0;
+                                                
+                                                if (discount > 0) {
+                                                    const discountAmount = (price * discount / 100) * quantity;
+                                                    productDiscounts += discountAmount;
+                                                }
+                                            });
+
+                                            // Calcular descuentos de ofertas
+                                            let offerDiscounts = 0;
+                                            saleData.products.forEach((item) => {
+                                                const price = item.data.price || 0;
+                                                const quantity = item.quantity || 0;
+                                                const offerDiscount = item.data.offerDiscount || 0;
+                                                
+                                                if (offerDiscount > 0) {
+                                                    const offerDiscountAmount = (price * offerDiscount / 100) * quantity;
+                                                    offerDiscounts += offerDiscountAmount;
+                                                }
+                                            });
+
+                                            // Calcular subtotal después de descuentos de productos y ofertas
+                                            const subtotalConDescuentos = subtotalSinDescuentos - productDiscounts - offerDiscounts;
+
+                                            // Información del cupón
+                                            const coupon = saleData.coupon;
+                                            const couponDiscount = coupon?.discount || 0;
+                                            
+                                            // Total final (ya viene calculado del backend, incluye descuento de cupón)
+                                            const finalTotal = saleData.total || subtotalConDescuentos;
+
+                                            return (
+                                                <>
+                                                    <div className={classes.discountRow}>
+                                                        <span className={classes.discountLabel}>Subtotal sin descuentos</span>
+                                                        <span className={classes.discountValue}>
+                                                            ${formatNumber(subtotalSinDescuentos.toFixed(2))}
+                                                        </span>
+                                                    </div>
+                                                    
+                                                    {productDiscounts > 0 && (
+                                                        <div className={classes.discountRow}>
+                                                            <span className={classes.discountLabel}>Descuento en productos</span>
+                                                            <span className={classes.discountValueNegative}>
+                                                                -${formatNumber(productDiscounts.toFixed(2))}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {offerDiscounts > 0 && (
+                                                        <div className={classes.discountRow}>
+                                                            <span className={classes.discountLabel}>Descuento en ofertas</span>
+                                                            <span className={classes.discountValueNegative}>
+                                                                -${formatNumber(offerDiscounts.toFixed(2))}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {coupon && couponDiscount > 0 && (
+                                                        <div className={classes.discountRow}>
+                                                            <div>
+                                                                <span className={classes.discountLabel}>Descuento de cupón</span>
+                                                                <div className={classes.couponCode}>
+                                                                    {coupon.code}
+                                                                </div>
+                                                            </div>
+                                                            <span className={classes.discountValueNegative}>
+                                                                -${formatNumber(couponDiscount.toFixed(2))}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    
+                                                    <div className={`${classes.discountRow} ${classes.discountRowLast}`}>
+                                                        <span className={classes.discountLabel} style={{ fontWeight: '700', fontSize: '1.125rem' }}>
+                                                            Total de la orden
+                                                        </span>
+                                                        <span className={classes.priceValue} style={{ fontSize: '1.5rem' }}>
+                                                            ${formatNumber(finalTotal.toFixed(2))}
+                                                        </span>
+                                                    </div>
+                                                </>
+                                            );
+                                        })()}
                                     </div>
 
                                     <Divider style={{ margin: '2rem 0' }} />
@@ -328,48 +444,23 @@ export default function SaleDetail() {
                                             'Id del producto',
                                             'Nombre del producto',
                                             'Cantidad',
-                                            'variante',
-                                            'Precio',
-                                            'Descuento',
-                                            'Precio final',
+                                            'Variante',
                                             'Acciones',
                                         ]}
                                         tableData={saleData.products.map(
                                             (product) => {
-                                                console.log(
-                                                    'format number',
-                                                    formatNumber(
-                                                        finalPrice(
-                                                            product.data.price,
-                                                            product.data
-                                                                .discount
-                                                        )
-                                                    )
-                                                )
                                                 return [
                                                     product.data._id,
                                                     product.data.name,
                                                     product.quantity,
                                                     `Color: ${
-                                                        product.data.color
+                                                        product.data.color || 'N/A'
                                                     } ${
                                                         product.data.size
-                                                            ? '- Talle:' +
+                                                            ? '- Talle: ' +
                                                               product.data.size
                                                             : ''
                                                     }`,
-                                                    '$' +
-                                                        formatNumber(
-                                                            product.data.price
-                                                        ),
-                                                    `%${product.data.discount}`,
-                                                    `$${formatNumber(
-                                                        finalPrice(
-                                                            product.data.price,
-                                                            product.data
-                                                                .discount
-                                                        )
-                                                    )}`,
                                                     <Link
                                                         key={`detail-button-${product.data._id}`}
                                                         to={`/admin/product-detail/${product.data._id}`}

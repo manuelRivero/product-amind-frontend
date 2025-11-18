@@ -1,11 +1,11 @@
 import client from 'api/client'
 
 export const addCoupon = (data) => {
-    return client.post(`api/coupons/add-coupon`, data)
+    return client.post(`api/coupons`, data)
 }
 
 export const updateCoupon = (data, id) => {
-    return client.put(`api/coupons/update-coupon/${id}`, data)
+    return client.put(`api/coupons/${id}`, data)
 }
 
 export const finishCoupon = (id) => {
@@ -13,7 +13,7 @@ export const finishCoupon = (id) => {
 }
 
 export const deleteCoupon = (id) => {
-    return client.delete(`api/coupons/delete-coupon/${id}`)
+    return client.delete(`api/coupons/${id}`)
 }
 
 export const getCoupons = () => {
@@ -21,7 +21,7 @@ export const getCoupons = () => {
 }
 
 export const getCouponDetail = (id) => {
-    return client.get(`api/coupons/get-coupon-detail-admin/${id}`)
+    return client.get(`api/coupons/${id}`)
 }
 
 export const checkProduct = (id) => {

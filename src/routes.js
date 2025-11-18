@@ -45,11 +45,10 @@ import Activation from './views/Activation'
 import Home from './views/Home'
 import Blogs from './views/Blogs'
 import AddBlog from './views/AddBlog'
-/*import Offers from './views/Offers'
+import Offers from './views/Offers'
 import AddOffer from './views/AddOffer'
 import Coupons from './views/Coupons'
-import AddCoupon from './views/AddCoupon'*/
-
+import AddCoupon from './views/AddCoupon'
 const dashboardRoutes = [
     {
         path: '/',
@@ -89,7 +88,7 @@ const dashboardRoutes = [
             },
         ],
     },
-   /* {
+   {
         path: '/offers',
         name: 'Promociones',
         icon: ListAltIcon,
@@ -137,7 +136,7 @@ const dashboardRoutes = [
                 component: AddCoupon,
             },
         ],
-    },*/
+    },
     {
         path: '/banners',
         name: 'Banners',

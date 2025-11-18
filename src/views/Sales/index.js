@@ -35,7 +35,7 @@ import {
 } from '@material-ui/core'
 import moment from 'moment-timezone'
 import ReactPaginate from 'react-paginate'
-import { formatNumber } from '../../helpers/product'
+import { formatNumber, finalPrice } from '../../helpers/product'
 import TextInput from '../../components/TextInput/Index'
 import { DeleteForever, Search } from '@material-ui/icons'
 import { useLocation } from 'react-router-dom'
@@ -279,16 +279,70 @@ export default function Sales() {
             const marketplaceFee = e.marketplaceFee || 0;
             // Si marketplaceFee es menor que 1, asumimos que viene como decimal (0.03 = 3%)
             const feePercentage = marketplaceFee < 1 ? marketplaceFee * 100 : marketplaceFee;
-            const commissionAmount = (e.total * feePercentage / 100);
-            const totalReceived = e.total - commissionAmount;
+            
+            // Calcular descuentos de productos y ofertas
+            let productDiscounts = 0;
+            let offerDiscounts = 0;
+            
+            if (e.products && Array.isArray(e.products)) {
+                e.products.forEach((item) => {
+                    const product = item.data || {};
+                    const price = product.price || 0;
+                    const quantity = item.quantity || 0;
+                    const discount = product.discount || 0;
+                    const offerDiscount = product.offerDiscount || 0;
+                    
+                    // Calcular descuento de producto
+                    if (discount > 0) {
+                        const discountAmount = (price * discount / 100) * quantity;
+                        productDiscounts += discountAmount;
+                    }
+                    
+                    // Calcular descuento de oferta
+                    if (offerDiscount > 0) {
+                        const offerDiscountAmount = (price * offerDiscount / 100) * quantity;
+                        offerDiscounts += offerDiscountAmount;
+                    }
+                });
+            }
+
+            // Calcular el total final considerando el cupón
+            // El backend puede enviar total con o sin el descuento del cupón aplicado
+            let finalTotal = e.total || 0;
+            if (e.coupon && e.coupon.discount > 0) {
+                // Si el backend envía totalBeforeCoupon, usarlo para calcular el total final
+                if (e.coupon.totalBeforeCoupon !== undefined && e.coupon.totalBeforeCoupon !== null) {
+                    finalTotal = e.coupon.totalBeforeCoupon - e.coupon.discount;
+                } else {
+                    // Si no viene totalBeforeCoupon, verificar si el total ya incluye el descuento
+                    // Si el total es igual a totalBeforeCoupon esperado, restar el descuento
+                    // Asumimos que si no viene totalBeforeCoupon, el total puede no incluir el descuento
+                    finalTotal = finalTotal - e.coupon.discount;
+                }
+            }
+            
+            const commissionAmount = (finalTotal * feePercentage / 100);
+            const totalReceived = finalTotal - commissionAmount;
+
+            // Información del cupón
+            const couponDiscount = e.coupon?.discount || 0;
+            
+            // Calcular total de descuentos (suma de productos + ofertas + cupón)
+            const totalDiscounts = productDiscounts + offerDiscounts + couponDiscount;
+            
+            // Mostrar total de descuentos
+            const discountsDisplay = totalDiscounts > 0
+                ? <p style={{ color: '#1976d2' }}>-${formatNumber(totalDiscounts.toFixed(2))}</p>
+                : <p>-</p>;
 
             return [
                 <p key={`sale-id-${e._id}`}>{e._id}</p>,
-                <p key={`sale-total-${e._id}`}>${formatNumber(e.total)}</p>,
+                <p key={`sale-total-${e._id}`}>${formatNumber((e.total || 0).toFixed(2))}</p>,
+                <div key={`sale-discounts-${e._id}`}>{discountsDisplay}</div>,
                 <p key={`sale-commission-${e._id}`}>
                     {feePercentage > 0 ? (
                         <>
-                            {feePercentage.toFixed(1)}% (${commissionAmount.toFixed(2)})
+                            {feePercentage.toFixed(1)}% (${formatNumber(commissionAmount.toFixed(2))})
                         </>
                     ) : (
                         'Sin comisión'
@@ -323,6 +377,7 @@ export default function Sales() {
                     tableHead={[
                         'Id',
                         'Total',
+                        'Descuentos',
                         'Comisión',
                         'Total Recibido',
                         'Fecha',

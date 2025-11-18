@@ -36,6 +36,7 @@ import { RemoveRedEye } from '@material-ui/icons'
 import { saleStatus } from '../../../const/sales'
 import StatusChangeModal from '../../StatusChangeModal'
 import { useStatusChange } from '../../../hooks/useStatusChange'
+import { formatNumber, finalPrice } from '../../../helpers/product'
 
 const styles = {
     pagination: {
@@ -179,6 +180,7 @@ export default function PendingOrders() {
                                         tableHead={[
                                             'Id',
                                             'Total',
+                                            'Descuentos',
                                             'Comisión',
                                             'Total Recibido',
                                             'Fecha',
@@ -195,12 +197,66 @@ export default function PendingOrders() {
                                                      ? `${e.status} - ${e.cancelReason || 'Motivo no especificado'}`
                                                      : e.status
                                                  
+                                                 // Calcular descuentos de productos y ofertas
+                                                 let productDiscounts = 0;
+                                                 let offerDiscounts = 0;
+                                                 
+                                                 if (e.products && Array.isArray(e.products)) {
+                                                     e.products.forEach((item) => {
+                                                         const product = item.data || {};
+                                                         const price = product.price || 0;
+                                                         const quantity = item.quantity || 0;
+                                                         const discount = product.discount || 0;
+                                                         const offerDiscount = product.offerDiscount || 0;
+                                                         
+                                                         // Calcular descuento de producto
+                                                         if (discount > 0) {
+                                                             const discountAmount = (price * discount / 100) * quantity;
+                                                             productDiscounts += discountAmount;
+                                                         }
+                                                         
+                                                         // Calcular descuento de oferta
+                                                         if (offerDiscount > 0) {
+                                                             const offerDiscountAmount = (price * offerDiscount / 100) * quantity;
+                                                             offerDiscounts += offerDiscountAmount;
+                                                         }
+                                                     });
+                                                 }
+
                                                  // Calcular comisión y total recibido
                                                  const marketplaceFee = e.marketplaceFee || 0;
                                                  // Si marketplaceFee es menor que 1, asumimos que viene como decimal (0.03 = 3%)
                                                  const feePercentage = marketplaceFee < 1 ? marketplaceFee * 100 : marketplaceFee;
-                                                 const commissionAmount = (e.totalPrice * feePercentage / 100);
-                                                 const totalReceived = e.totalPrice - commissionAmount;
+                                                 
+                                                 // Calcular el total final considerando el cupón
+                                                 // Usar e.total o e.totalPrice (verificar cuál está disponible, total tiene prioridad)
+                                                 let finalTotal = e.total || e.totalPrice || 0;
+                                                 if (e.coupon && e.coupon.discount > 0) {
+                                                     // Si el backend envía totalBeforeCoupon, usarlo, sino calcular desde total + discount
+                                                     if (e.coupon.totalBeforeCoupon) {
+                                                         finalTotal = e.coupon.totalBeforeCoupon - e.coupon.discount;
+                                                     } else {
+                                                         // Si no viene totalBeforeCoupon, restar el descuento del cupón
+                                                         finalTotal = finalTotal - e.coupon.discount;
+                                                     }
+                                                 }
+                                                 
+                                                 const commissionAmount = (finalTotal * feePercentage / 100);
+                                                 const totalReceived = finalTotal - commissionAmount;
+
+                                                 // Información del cupón
+                                                 const couponDiscount = e.coupon?.discount || 0;
+                                                 
+                                                 // Calcular total de descuentos (suma de productos + ofertas + cupón)
+                                                 const totalDiscounts = productDiscounts + offerDiscounts + couponDiscount;
+                                                 
+                                                 // Mostrar total de descuentos
+                                                 const discountsDisplay = totalDiscounts > 0
+                                                     ? <p style={{ color: '#1976d2' }}>-${formatNumber(totalDiscounts.toFixed(2))}</p>
+                                                     : <p>-</p>;
+                                                 
+                                                 // Total de la orden (sin modificaciones)
+                                                 const orderTotal = e.total || e.totalPrice || 0;
 
                                                  return [
                                                      <p key={`sale-id-${e._id}`}>
@@ -209,17 +265,15 @@ export default function PendingOrders() {
                                                      <p
                                                          key={`sale-total-${e._id}`}
                                                      >
-                                                         $
-                                                         {e.totalPrice.toFixed(
-                                                             2
-                                                         )}
+                                                         ${formatNumber(orderTotal.toFixed(2))}
                                                      </p>,
+                                                     <div key={`sale-discounts-${e._id}`}>{discountsDisplay}</div>,
                                                      <p
                                                          key={`sale-commission-${e._id}`}
                                                      >
                                                          {feePercentage > 0 ? (
                                                              <>
-                                                                 {feePercentage.toFixed(1)}% (${commissionAmount.toFixed(2)})
+                                                                 {feePercentage.toFixed(1)}% (${formatNumber(commissionAmount.toFixed(2))})
                                                              </>
                                                          ) : (
                                                              'Sin comisión'
@@ -228,8 +282,7 @@ export default function PendingOrders() {
                                                      <p
                                                          key={`sale-total-received-${e._id}`}
                                                      >
-                                                         $
-                                                         {totalReceived.toFixed(2)}
+                                                         ${formatNumber(totalReceived.toFixed(2))}
                                                      </p>,
                                                      <p
                                                          key={`sale-date-${e._id}`}
