@@ -26,7 +26,7 @@ import {
 import moment from 'moment'
 
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
-import { finalPrice, formatNumber } from '../../helpers/product'
+import { formatNumber } from '../../helpers/product'
 import { Link, useHistory } from 'react-router-dom'
 import Button from 'components/CustomButtons/Button'
 import { RemoveRedEye } from '@material-ui/icons'

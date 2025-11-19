@@ -201,7 +201,6 @@ export default function AddCoupon() {
         const [loadingProducts, setLoadingProducts] = useState(false)
         const [loadingCategories, setLoadingCategories] = useState(false)
         const [submitError, setSubmitError] = useState(null)
-        const [validationErrors, setValidationErrors] = useState({})
 
 
         const itemsPerPage = 10
@@ -542,7 +541,6 @@ export default function AddCoupon() {
             try {
                 setLoadingSubmit(true)
                 setSubmitError(null)
-                setValidationErrors({})
 
                 // Limpiar valores de moneda (remover $ y comas)
                 const cleanCurrencyValue = (value) => {
@@ -571,7 +569,6 @@ export default function AddCoupon() {
                 // Validate coupon data con helper adicional
                 const validation = validateCouponData(couponData)
                 if (!validation.isValid) {
-                    setValidationErrors(validation.errors)
                     // Establecer errores en los campos del formulario
                     Object.keys(validation.errors).forEach((field) => {
                         setError(field, {

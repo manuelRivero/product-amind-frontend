@@ -35,7 +35,7 @@ import {
 } from '@material-ui/core'
 import moment from 'moment-timezone'
 import ReactPaginate from 'react-paginate'
-import { formatNumber, finalPrice } from '../../helpers/product'
+import { formatNumber } from '../../helpers/product'
 import TextInput from '../../components/TextInput/Index'
 import { DeleteForever, Search } from '@material-ui/icons'
 import { useLocation } from 'react-router-dom'

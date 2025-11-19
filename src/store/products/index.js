@@ -11,7 +11,9 @@ import {
     searchColors as searchColorsRequest,
     createColor as createColorRequest,
     searchSizes as searchSizesRequest,
-    createSize as createSizeRequest
+    createSize as createSizeRequest,
+    getProductsWithoutStock as getProductsWithoutStockRequest,
+    getTopSellingProducts as getTopSellingProductsRequest
 } from 'api/products'
 
 const initialState = {
@@ -140,6 +142,26 @@ export const createSize = createAsyncThunk(
     async (args) => {
         const [response] = await Promise.all([
             createSizeRequest(args.access, args.data),
+        ])
+        return response
+    }
+)
+
+export const getProductsWithoutStock = createAsyncThunk(
+    '/get/products-without-stock',
+    async (args) => {
+        const [response] = await Promise.all([
+            getProductsWithoutStockRequest(args.access, args.params),
+        ])
+        return response
+    }
+)
+
+export const getTopSellingProducts = createAsyncThunk(
+    '/get/top-selling-products',
+    async (args) => {
+        const [response] = await Promise.all([
+            getTopSellingProductsRequest(args.access, args.params),
         ])
         return response
     }

@@ -109,3 +109,39 @@ export const createSize = (access, data) => {
         },
     })
 }
+
+export const getProductsWithoutStock = (access, params = {}) => {
+    const { page = 0, limit = 10, stock = 0 } = params
+    const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        stock: stock.toString(),
+    })
+    return client.get(`api/products/without-stock?${queryParams.toString()}`, {
+        headers: {
+            'x-token': access,
+        },
+    })
+}
+
+export const getTopSellingProducts = (access, params = {}) => {
+    const { page = 0, limit = 10, month, year, startDate, endDate } = params
+    const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+    })
+    
+    if (month && year) {
+        queryParams.append('month', month.toString())
+        queryParams.append('year', year.toString())
+    } else if (startDate && endDate) {
+        queryParams.append('startDate', startDate)
+        queryParams.append('endDate', endDate)
+    }
+    
+    return client.get(`api/products/top-selling?${queryParams.toString()}`, {
+        headers: {
+            'x-token': access,
+        },
+    })
+}

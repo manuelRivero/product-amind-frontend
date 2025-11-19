@@ -36,7 +36,7 @@ import { RemoveRedEye } from '@material-ui/icons'
 import { saleStatus } from '../../../const/sales'
 import StatusChangeModal from '../../StatusChangeModal'
 import { useStatusChange } from '../../../hooks/useStatusChange'
-import { formatNumber, finalPrice } from '../../../helpers/product'
+import { formatNumber } from '../../../helpers/product'
 
 const styles = {
     pagination: {
