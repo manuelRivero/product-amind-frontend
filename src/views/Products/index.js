@@ -25,6 +25,7 @@ import EditIcon from '@material-ui/icons/Edit'
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
 import ChevronRightIcon from '@material-ui/icons/ChevronRight'
 import AddIcon from '@material-ui/icons/Add'
+import TrendingUpIcon from '@material-ui/icons/TrendingUp'
 
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -46,11 +47,13 @@ import {
 } from '@material-ui/icons'
 import { deleteProduct } from '../../store/products'
 import StatusChangeModal from '../../components/StatusChangeModal'
+import InflationAdjustmentModal from '../../components/InflationAdjustmentModal'
 import { useStatusChange } from '../../hooks/useStatusChange'
 
 const schema = yup.object({
     search: yup.string(),
 })
+
 
 const useStyles = makeStyles({
     cardCategory: {
@@ -106,12 +109,21 @@ const useStyles = makeStyles({
         display: 'flex',
         gap: '1rem',
     },
+    inflationButtonContainer: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '.5rem',
+        alignItems: 'flex-end',
+    },
 })
 
 export default function Products() {
     const dispatch = useDispatch()
     const { user } = useSelector((state) => state.auth)
-    const { productsData, loadingProductsData } = useSelector(
+    const {
+        productsData,
+        loadingProductsData,
+    } = useSelector(
         (state) => state.products
     )
 
@@ -119,6 +131,7 @@ export default function Products() {
     const classes = useStyles()
     // states
     const [page, setPage] = useState(0)
+    const [openInflationModal, setOpenInflationModal] = useState(false)
 
     //form
     const { control, handleSubmit, watch, reset } = useForm({
@@ -158,6 +171,14 @@ export default function Products() {
                 filters: { search: watchSearch, page: 0 },
             })
         )
+    }
+
+    const handleInflationSuccess = () => {
+        // Refresh products list after successful inflation adjustment
+        dispatch(getProducts({
+            access: user.token,
+            filters: { page },
+        }))
     }
 
     useEffect(() => {
@@ -237,16 +258,41 @@ export default function Products() {
                             <GridItem xs={12} sm={12} md={6}>
                                 <Box className={classes.addProductWrapper}>
                                     <Box
-                                        className={classes.addProductContainer}
+                                        className={classes.inflationButtonContainer}
                                     >
-                                        <p
-                                            className={
-                                                classes.cardCategoryWhite
-                                            }
+                                        <Box
+                                            className={classes.addProductContainer}
                                         >
-                                            Agrega un nuevo producto
-                                        </p>
-                                        <Link to="/admin/products/add-product">
+                                            <p
+                                                className={
+                                                    classes.cardCategoryWhite
+                                                }
+                                            >
+                                                Agrega un nuevo producto
+                                            </p>
+                                            <Link to="/admin/products/add-product">
+                                                <Button
+                                                    isLoading={false}
+                                                    variant="contained"
+                                                    color="white"
+                                                    type="button"
+                                                    size="sm"
+                                                    justIcon
+                                                >
+                                                    <AddIcon />
+                                                </Button>
+                                            </Link>
+                                        </Box>
+                                        <Box
+                                            className={classes.addProductContainer}
+                                        >
+                                            <p
+                                                className={
+                                                    classes.cardCategoryWhite
+                                                }
+                                            >
+                                                Aplicar ajuste inflacionario
+                                            </p>
                                             <Button
                                                 isLoading={false}
                                                 variant="contained"
@@ -254,10 +300,11 @@ export default function Products() {
                                                 type="button"
                                                 size="sm"
                                                 justIcon
+                                                onClick={() => setOpenInflationModal(true)}
                                             >
-                                                <AddIcon />
+                                                <TrendingUpIcon />
                                             </Button>
-                                        </Link>
+                                        </Box>
                                     </Box>
                                 </Box>
                             </GridItem>
@@ -341,7 +388,7 @@ export default function Products() {
                                                 e._id,
                                                 e.name,
                                                 e.categoryDetail[0]?.name ??
-                                                    'N/A',
+                                                'N/A',
                                                 `$${formatNumber(
                                                     e.price.toFixed(1)
                                                 )}`,
@@ -408,6 +455,12 @@ export default function Products() {
                     </CardBody>
                 </Card>
             </GridItem>
+            {/* Inflation Adjustment Modal */}
+            <InflationAdjustmentModal
+                open={openInflationModal}
+                onClose={() => setOpenInflationModal(false)}
+                onSuccess={handleInflationSuccess}
+            />
         </GridContainer>
     )
 }
@@ -425,10 +478,10 @@ const ActionGroup = ({ product }) => {
         try {
             setIsLoading(true)
             const result = await dispatch(
-                deleteProduct({ 
-                    access: user.token, 
+                deleteProduct({
+                    access: user.token,
                     id: product._id,
-                    reason 
+                    reason
                 })
             ).unwrap()
             setSuccess(true)
@@ -496,7 +549,7 @@ const ActionGroup = ({ product }) => {
             </Box>
             <StatusChangeModal
                 open={modalState.open}
-                onClose={()=>closeModal()}
+                onClose={() => closeModal()}
                 onConfirm={async (data) => {
                     const { cancelReason } = data
                     return await deleteHandler(cancelReason)

@@ -145,3 +145,11 @@ export const getTopSellingProducts = (access, params = {}) => {
         },
     })
 }
+
+export const applyInflationAdjustment = (access, data) => {
+    return client.put(`api/products/adjust-prices`, data, {
+        headers: {
+            'x-token': access,
+        },
+    })
+}

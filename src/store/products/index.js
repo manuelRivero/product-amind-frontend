@@ -13,7 +13,8 @@ import {
     searchSizes as searchSizesRequest,
     createSize as createSizeRequest,
     getProductsWithoutStock as getProductsWithoutStockRequest,
-    getTopSellingProducts as getTopSellingProductsRequest
+    getTopSellingProducts as getTopSellingProductsRequest,
+    applyInflationAdjustment as applyInflationAdjustmentRequest
 } from 'api/products'
 
 const initialState = {
@@ -28,7 +29,10 @@ const initialState = {
     productDetail:null,
     loadingProductDetail: true,
     loadingTemplateExcel:false,
-    templateExcelResult:null
+    templateExcelResult:null,
+    loadingInflationAdjustment: false,
+    inflationAdjustmentSuccess: false,
+    inflationAdjustmentError: null
 }
 
 export const getProductsTemplateExcel = createAsyncThunk('/get/excel-template', async (args) => {
@@ -167,6 +171,20 @@ export const getTopSellingProducts = createAsyncThunk(
     }
 )
 
+export const applyInflationAdjustment = createAsyncThunk(
+    '/put/adjust-prices',
+    async (args, { rejectWithValue }) => {
+        try {
+            const [response] = await Promise.all([
+                applyInflationAdjustmentRequest(args.access, args.data),
+            ])
+            return response
+        } catch (error) {
+            return rejectWithValue(error.response?.data || { message: 'Error al aplicar ajuste inflacionario' })
+        }
+    }
+)
+
 export const productsSlice = createSlice({
     name: 'products',
     initialState,
@@ -176,6 +194,10 @@ export const productsSlice = createSlice({
         },
         resetExcelErrors: (state) => {
             state.uploadExcelErrors = null
+        },
+        resetInflationAdjustmentState: (state) => {
+            state.inflationAdjustmentSuccess = false
+            state.inflationAdjustmentError = null
         }
     },
     extraReducers: {
@@ -242,8 +264,23 @@ export const productsSlice = createSlice({
             const products = state.productsData.data.products.filter((product) => product._id !== id)
             state.productsData.data.products = products
         },
+        [applyInflationAdjustment.pending]: (state) => {
+            state.loadingInflationAdjustment = true
+            state.inflationAdjustmentSuccess = false
+            state.inflationAdjustmentError = null
+        },
+        [applyInflationAdjustment.fulfilled]: (state) => {
+            state.loadingInflationAdjustment = false
+            state.inflationAdjustmentSuccess = true
+            state.inflationAdjustmentError = null
+        },
+        [applyInflationAdjustment.rejected]: (state, action) => {
+            state.loadingInflationAdjustment = false
+            state.inflationAdjustmentSuccess = false
+            state.inflationAdjustmentError = action.payload || { message: 'Error al aplicar ajuste inflacionario' }
+        },
     },
 })
-export const { resetExcelErrors, resetZipErrors } = productsSlice.actions
+export const { resetExcelErrors, resetZipErrors, resetInflationAdjustmentState } = productsSlice.actions
 
 export default productsSlice.reducer
