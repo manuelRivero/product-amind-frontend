@@ -3,6 +3,9 @@ import { makeStyles } from '@material-ui/core/styles'
 import GridItem from 'components/Grid/GridItem.js'
 import GridContainer from 'components/Grid/GridContainer.js'
 import Table from 'components/Table/Table.js'
+import Card from 'components/Card/Card.js'
+import CardHeader from 'components/Card/CardHeader.js'
+import CardBody from 'components/Card/CardBody.js'
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import {
@@ -19,6 +22,9 @@ import {
     MenuItem,
     MenuList,
     Popper,
+    Tabs,
+    Tab,
+    Badge,
 } from '@material-ui/core'
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -34,9 +40,7 @@ import { saleStatus } from '../../../const/sales'
 import StatusChangeModal from '../../StatusChangeModal'
 import { useStatusChange } from '../../../hooks/useStatusChange'
 import { formatNumber } from '../../../helpers/product'
-import CustomTabs from 'components/CustomTabs/CustomTabs.js'
-import LocalShippingIcon from '@material-ui/icons/LocalShipping'
-import StoreIcon from '@material-ui/icons/Store'
+import EmptyTablePlaceholder from '../../EmptyTablePlaceholder'
 
 const styles = {
     pagination: {
@@ -133,6 +137,27 @@ const styles = {
         display: 'flex',
         justifyContent: 'center',
     },
+    tabsContainer: {
+        marginBottom: '1rem',
+        borderBottom: '1px solid #e0e0e0',
+    },
+    tabRoot: {
+        minHeight: '48px',
+        textTransform: 'none',
+        fontSize: '0.875rem',
+        fontWeight: 500,
+        color: '#3c4858',
+        '&$selected': {
+            color: '#00ACC1',
+        },
+    },
+    selected: {},
+    tabIndicator: {
+        backgroundColor: '#00ACC1',
+    },
+    badge: {
+        marginLeft: '15px',
+    },
 }
 const useStyles = makeStyles(styles)
 
@@ -158,13 +183,7 @@ export default function PendingOrders() {
     const renderOrdersTable = (filteredOrders) => {
         if (!filteredOrders || filteredOrders.length === 0) {
             return (
-                <Box
-                    display="flex"
-                    justifyContent="center"
-                    padding={4}
-                >
-                    <p>No hay órdenes para mostrar</p>
-                </Box>
+                <EmptyTablePlaceholder title="No hay órdenes para mostrar" />
             )
         }
 
@@ -175,9 +194,6 @@ export default function PendingOrders() {
                     tableHead={[
                         'Id',
                         'Total',
-                        'Descuentos',
-                        'Comisión',
-                        'Total Recibido',
                         'Fecha',
                         'Estatus',
                         'Cambiar estatus',
@@ -188,32 +204,6 @@ export default function PendingOrders() {
                         const statusDisplay = e.status === 'CANCELADO' && e.cancelReason 
                             ? `${e.status} - ${e.cancelReason || 'Motivo no especificado'}`
                             : e.status
-                        
-                        // Calcular descuentos de productos y ofertas
-                        let productDiscounts = 0;
-                        let offerDiscounts = 0;
-                        
-                        if (e.products && Array.isArray(e.products)) {
-                            e.products.forEach((item) => {
-                                const product = item.data || {};
-                                const price = product.price || 0;
-                                const quantity = item.quantity || 0;
-                                const discount = product.discount || 0;
-                                const offerDiscount = product.offerDiscount || 0;
-                                
-                                // Calcular descuento de producto
-                                if (discount > 0) {
-                                    const discountAmount = (price * discount / 100) * quantity;
-                                    productDiscounts += discountAmount;
-                                }
-                                
-                                // Calcular descuento de oferta
-                                if (offerDiscount > 0) {
-                                    const offerDiscountAmount = (price * offerDiscount / 100) * quantity;
-                                    offerDiscounts += offerDiscountAmount;
-                                }
-                            });
-                        }
 
                         // Calcular comisión y total recibido
                         const marketplaceFee = e.marketplaceFee || 0;
@@ -236,43 +226,12 @@ export default function PendingOrders() {
                         const commissionAmount = (finalTotal * feePercentage / 100);
                         const totalReceived = finalTotal - commissionAmount;
 
-                        // Información del cupón
-                        const couponDiscount = e.coupon?.discount || 0;
-                        
-                        // Calcular total de descuentos (suma de productos + ofertas + cupón)
-                        const totalDiscounts = productDiscounts + offerDiscounts + couponDiscount;
-                        
-                        // Mostrar total de descuentos
-                        const discountsDisplay = totalDiscounts > 0
-                            ? <p style={{ color: '#1976d2' }}>-${formatNumber(totalDiscounts.toFixed(2))}</p>
-                            : <p>-</p>;
-                        
-                        // Total de la orden (sin modificaciones)
-                        const orderTotal = e.total || e.totalPrice || 0;
-
                         return [
                             <p key={`sale-id-${e._id}`}>
                                 {e._id}
                             </p>,
                             <p
                                 key={`sale-total-${e._id}`}
-                            >
-                                ${formatNumber(orderTotal.toFixed(2))}
-                            </p>,
-                            <div key={`sale-discounts-${e._id}`}>{discountsDisplay}</div>,
-                            <p
-                                key={`sale-commission-${e._id}`}
-                            >
-                                {feePercentage > 0 ? (
-                                    <>
-                                        {feePercentage.toFixed(1)}% (${formatNumber(commissionAmount.toFixed(2))})
-                                    </>
-                                ) : (
-                                    'Sin comisión'
-                                )}
-                            </p>,
-                            <p
-                                key={`sale-total-received-${e._id}`}
                             >
                                 ${formatNumber(totalReceived.toFixed(2))}
                             </p>,
@@ -355,18 +314,69 @@ export default function PendingOrders() {
     const deliveryOrders = pendingOrders?.data?.sales?.filter(order => order.deliveryType === 'DELIVERY') || []
     const pickUpOrders = pendingOrders?.data?.sales?.filter(order => order.deliveryType === 'PICK-UP') || []
 
+    // Calcular totales para los badges (solo órdenes pendientes - estado PAGADO)
+    const deliveryOrdersCount = deliveryOrders.filter(order => order.status === 'PAGADO').length
+    const pickUpOrdersCount = pickUpOrders.filter(order => order.status === 'PAGADO').length
+
+    const [tabValue, setTabValue] = useState(0)
+
+    const handleTabChange = (event, newValue) => {
+        setTabValue(newValue)
+    }
+
     return (
         <div>
             <GridContainer>
                 <GridItem xs={12} sm={12} md={12}>
-                    <CustomTabs
-                        title="Órdenes pendientes"
-                        headerColor="primary"
-                        tabs={[
-                            {
-                                tabName: 'Envío a domicilio',
-                                tabIcon: LocalShippingIcon,
-                                tabContent: loadingPendingOrders ? (
+                    <Card>
+                        <CardHeader color="primary">
+                            <h4 className={classes.cardTitleWhite}>
+                                Órdenes pendientes
+                            </h4>
+                        </CardHeader>
+                        <CardBody>
+                            <Tabs
+                                value={tabValue}
+                                onChange={handleTabChange}
+                                className={classes.tabsContainer}
+                                classes={{
+                                    root: classes.tabsContainer,
+                                    indicator: classes.tabIndicator,
+                                }}
+                            >
+                                <Tab
+                                    label={
+                                        <Badge
+                                            badgeContent={deliveryOrdersCount}
+                                            color="primary"
+                                            className={classes.badge}
+                                        >
+                                            <span>Envío a domicilio</span>
+                                        </Badge>
+                                    }
+                                    classes={{
+                                        root: classes.tabRoot,
+                                        selected: classes.selected,
+                                    }}
+                                />
+                                <Tab
+                                    label={
+                                        <Badge
+                                            badgeContent={pickUpOrdersCount}
+                                            color="primary"
+                                            className={classes.badge}
+                                        >
+                                            <span>Recoger en local</span>
+                                        </Badge>
+                                    }
+                                    classes={{
+                                        root: classes.tabRoot,
+                                        selected: classes.selected,
+                                    }}
+                                />
+                            </Tabs>
+                            {tabValue === 0 && (
+                                loadingPendingOrders ? (
                                     <Box
                                         display="flex"
                                         justifyContent="center"
@@ -376,12 +386,10 @@ export default function PendingOrders() {
                                     </Box>
                                 ) : (
                                     renderOrdersTable(deliveryOrders)
-                                ),
-                            },
-                            {
-                                tabName: 'Recoger en local',
-                                tabIcon: StoreIcon,
-                                tabContent: loadingPendingOrders ? (
+                                )
+                            )}
+                            {tabValue === 1 && (
+                                loadingPendingOrders ? (
                                     <Box
                                         display="flex"
                                         justifyContent="center"
@@ -391,10 +399,10 @@ export default function PendingOrders() {
                                     </Box>
                                 ) : (
                                     renderOrdersTable(pickUpOrders)
-                                ),
-                            },
-                        ]}
-                    />
+                                )
+                            )}
+                        </CardBody>
+                    </Card>
                 </GridItem>
             </GridContainer>
         </div>

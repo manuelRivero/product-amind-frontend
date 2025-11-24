@@ -18,6 +18,7 @@ import PermissionError from '../components/PermissionError'
 import { IconButton } from '@material-ui/core'
 import CloseIcon from '@material-ui/icons/Close'
 import moment from 'moment'
+import socketService from '../services/socket'
 
 
 const mainRoutes = dashboardRoutes.map((prop, key) => {
@@ -249,6 +250,26 @@ export default function Admin({ ...rest }) {
             })
         }
     }, [configError, errorDetails])
+
+    // Socket.IO connection management
+    React.useEffect(() => {
+        // Conectar Socket.IO cuando el usuario esté autenticado y el tenant esté cargado
+        if (tenant && user?.token) {
+            console.log('Iniciando conexión Socket.IO...')
+            socketService.connect(user.token)
+            
+            // Solicitar permiso para notificaciones del navegador (deshabilitado)
+            // socketService.requestNotificationPermission()
+        }
+
+        // Cleanup: desconectar al desmontar o cuando cambie el usuario/tenant
+        return () => {
+            if (socketService.getConnectionStatus()) {
+                console.log('Desconectando Socket.IO...')
+                socketService.disconnect()
+            }
+        }
+    }, [tenant, user?.token])
 
 
 

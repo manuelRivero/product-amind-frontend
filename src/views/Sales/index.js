@@ -192,11 +192,14 @@ export default function Sales() {
         dispatch(
             getSales({
                 access: user.token,
-                page: params.page || page,
-                ...params,
+                page: params.page !== undefined ? params.page : page,
+                filters: params.filters !== undefined ? params.filters : { status: filter, search: watchSearch },
+                dateFrom: params.dateFrom !== undefined ? params.dateFrom : (watchStartDate ? moment(watchStartDate).format('DD-MM-YYYY') : undefined),
+                dateTo: params.dateTo !== undefined ? params.dateTo : (watchEndDate ? moment(watchEndDate).format('DD-MM-YYYY') : undefined),
             })
         )
     }
+
     const handleFilter = (newFilter) => {
         setFilter(newFilter)
         setValue('search', '')

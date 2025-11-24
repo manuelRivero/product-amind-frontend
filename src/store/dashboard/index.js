@@ -131,17 +131,30 @@ export const dashboardSlice = createSlice({
         notificationAdded: (state, action) => {
             console.log('notification added action', action)
 
+            // Inicializar notifications si no existe
+            if (!state.notifications) {
+                state.notifications = {
+                    notifications: [],
+                    total: 0
+                }
+            }
+
+            // Agregar nueva notificación al inicio del array
             state.notifications.notifications = [
-                ...state.notifications.notifications,
                 action.payload,
+                ...state.notifications.notifications,
             ]
+            // Incrementar el total si es una nueva notificación
+            state.notifications.total = (state.notifications.total || 0) + 1
         },
         setReadednotification: (state, action) => {
-            console.log('notification added action', action)
-            const newNotifications = [
-                ...state.notifications.notifications,
-            ].map((e) => ({ ...e, readed: true }))
-            state.notifications.notifications = newNotifications
+            console.log('setReadednotification action', action)
+            if (state.notifications && state.notifications.notifications) {
+                const newNotifications = [
+                    ...state.notifications.notifications,
+                ].map((e) => ({ ...e, readed: true }))
+                state.notifications.notifications = newNotifications
+            }
         },
         setNotificationsPage: (state, action) => {
             console.log('action', action.payload)

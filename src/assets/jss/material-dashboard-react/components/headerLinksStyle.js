@@ -1,6 +1,5 @@
 import {
   defaultFont,
-  dangerColor,
   whiteColor,
 } from "assets/jss/material-dashboard-react.js";
 
@@ -17,6 +16,7 @@ const headerLinksStyle = (theme) => ({
     margin: "0px",
   },
   buttonLink: {
+    position: "relative",
     [theme.breakpoints.down("sm")]: {
       display: "flex",
       margin: "10px 15px 0",
@@ -53,24 +53,34 @@ const headerLinksStyle = (theme) => ({
     zIndex: "4",
     [theme.breakpoints.up("md")]: {
       position: "absolute",
-      top: "2px",
-      border: "1px solid " + whiteColor,
-      right: "4px",
-      fontSize: "9px",
-      background: dangerColor[0],
+      top: "0px",
+      right: "0px",
+      fontSize: "11px",
+      fontWeight: "bold",
+      background: "#f44336", // Rojo Material Design
       color: whiteColor,
-      minWidth: "16px",
-      height: "16px",
-      borderRadius: "10px",
+      minWidth: "18px",
+      height: "18px",
+      borderRadius: "9px",
       textAlign: "center",
-      lineHeight: "16px",
+      lineHeight: "18px",
       verticalAlign: "middle",
-      display: "block",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "0 4px",
+      boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+
     },
     [theme.breakpoints.down("sm")]: {
       ...defaultFont,
       fontSize: "14px",
       marginRight: "8px",
+      background: "#f44336",
+      color: whiteColor,
+      padding: "2px 6px",
+      borderRadius: "10px",
+      fontWeight: "bold",
     },
   },
   managerWrapper:{
