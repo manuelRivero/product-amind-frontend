@@ -66,13 +66,13 @@ const schema = yup.object({
     phone: yup
         .string()
         .required('El número es obligatorio')
-        .test('solo-numeros', 'Solo se permiten números', value => /^\d+$/.test(value || ''))
-        .test('longitud', 'El número es demasiado corto o largo', function (value) {
+        .test('solo-numeros', 'Solo se permiten números', value => /^\d+$/.test(value || '')),
+      /* .test('longitud', 'El número es demasiado corto o largo', function (value) {
             const { country } = this.parent
             const countryObj = MP_COUNTRIES.find(c => c.code === country)
             if (!countryObj) return false
             return value && value.length === countryObj.phoneLength
-        }),
+        }),*/
     province: yup.string(),
     locality: yup.string(),
     postalCode: yup.string(),
@@ -129,6 +129,7 @@ const useStyles = makeStyles({
     logo: {
         width: '150px',
         border: '1px solid #ccc',
+        backgroundColor: '#c2c2c2',
         borderRadius: '9999px',
     },
     dropZone: {
@@ -539,35 +540,18 @@ export default function ConfigPage() {
                                                     variant="outlined"
                                                     fullWidth
                                                     inputProps={{
-                                                        maxLength: countryObj ? countryObj.phoneLength : 15,
                                                         inputMode: 'numeric',
                                                         pattern: '[0-9]*',
                                                     }}
                                                     onChange={e => {
                                                         let val = e.target.value.replace(/\D/g, '')
-                                                        if (countryObj && countryObj.code === 'AR') {
-                                                            // Si empieza con 549, remover 549
-                                                            if (val.startsWith('549')) {
-                                                                val = val.slice(3)
-                                                            } else if (val.startsWith('54')) {
-                                                                val = val.slice(2)
-                                                            }
-                                                            // Si después de remover 54 queda un 9 antes de la característica, también removerlo
-                                                            if (val.length > 10 && val.startsWith('9')) {
-                                                                val = val.slice(1)
-                                                            }
-                                                            // Tomar siempre los últimos 10 dígitos
-                                                            if (val.length > 10) {
-                                                                val = val.slice(-10)
-                                                            }
-                                                        }
                                                         field.onChange(val)
                                                     }}
                                                     onPaste={e => {
                                                         e.preventDefault()
                                                         let paste = (e.clipboardData || window.clipboardData).getData('text')
                                                         paste = paste.replace(/\D/g, '')
-                                                        if (countryObj && countryObj.code === 'AR') {
+                                                     /*   if (countryObj && countryObj.code === 'AR') {
                                                             if (paste.startsWith('549')) {
                                                                 paste = paste.slice(3)
                                                             } else if (paste.startsWith('54')) {
@@ -579,7 +563,7 @@ export default function ConfigPage() {
                                                             if (paste.length > 10) {
                                                                 paste = paste.slice(-10)
                                                             }
-                                                        }
+                                                        }*/
                                                         field.onChange(paste)
                                                     }}
                                                 />

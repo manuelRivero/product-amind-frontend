@@ -3,9 +3,6 @@ import { makeStyles } from '@material-ui/core/styles'
 import GridItem from 'components/Grid/GridItem.js'
 import GridContainer from 'components/Grid/GridContainer.js'
 import Table from 'components/Table/Table.js'
-import Card from 'components/Card/Card.js'
-import CardHeader from 'components/Card/CardHeader.js'
-import CardBody from 'components/Card/CardBody.js'
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import {
@@ -37,6 +34,9 @@ import { saleStatus } from '../../../const/sales'
 import StatusChangeModal from '../../StatusChangeModal'
 import { useStatusChange } from '../../../hooks/useStatusChange'
 import { formatNumber } from '../../../helpers/product'
+import CustomTabs from 'components/CustomTabs/CustomTabs.js'
+import LocalShippingIcon from '@material-ui/icons/LocalShipping'
+import StoreIcon from '@material-ui/icons/Store'
 
 const styles = {
     pagination: {
@@ -154,212 +154,247 @@ export default function PendingOrders() {
     useEffect(() => {
         dispatch(getPendingOrders({ access: user.token, page }))
     }, [page])
+
+    const renderOrdersTable = (filteredOrders) => {
+        if (!filteredOrders || filteredOrders.length === 0) {
+            return (
+                <Box
+                    display="flex"
+                    justifyContent="center"
+                    padding={4}
+                >
+                    <p>No hay órdenes para mostrar</p>
+                </Box>
+            )
+        }
+
+        return (
+            <>
+                <Table
+                    tableHeaderColor="primary"
+                    tableHead={[
+                        'Id',
+                        'Total',
+                        'Descuentos',
+                        'Comisión',
+                        'Total Recibido',
+                        'Fecha',
+                        'Estatus',
+                        'Cambiar estatus',
+                        'Acciones',
+                    ]}
+                    tableData={filteredOrders.map((e) => {
+                        // Mostrar motivo de cancelación si el estado es CANCELADO
+                        const statusDisplay = e.status === 'CANCELADO' && e.cancelReason 
+                            ? `${e.status} - ${e.cancelReason || 'Motivo no especificado'}`
+                            : e.status
+                        
+                        // Calcular descuentos de productos y ofertas
+                        let productDiscounts = 0;
+                        let offerDiscounts = 0;
+                        
+                        if (e.products && Array.isArray(e.products)) {
+                            e.products.forEach((item) => {
+                                const product = item.data || {};
+                                const price = product.price || 0;
+                                const quantity = item.quantity || 0;
+                                const discount = product.discount || 0;
+                                const offerDiscount = product.offerDiscount || 0;
+                                
+                                // Calcular descuento de producto
+                                if (discount > 0) {
+                                    const discountAmount = (price * discount / 100) * quantity;
+                                    productDiscounts += discountAmount;
+                                }
+                                
+                                // Calcular descuento de oferta
+                                if (offerDiscount > 0) {
+                                    const offerDiscountAmount = (price * offerDiscount / 100) * quantity;
+                                    offerDiscounts += offerDiscountAmount;
+                                }
+                            });
+                        }
+
+                        // Calcular comisión y total recibido
+                        const marketplaceFee = e.marketplaceFee || 0;
+                        // Si marketplaceFee es menor que 1, asumimos que viene como decimal (0.03 = 3%)
+                        const feePercentage = marketplaceFee < 1 ? marketplaceFee * 100 : marketplaceFee;
+                        
+                        // Calcular el total final considerando el cupón
+                        // Usar e.total o e.totalPrice (verificar cuál está disponible, total tiene prioridad)
+                        let finalTotal = e.total || e.totalPrice || 0;
+                        if (e.coupon && e.coupon.discount > 0) {
+                            // Si el backend envía totalBeforeCoupon, usarlo, sino calcular desde total + discount
+                            if (e.coupon.totalBeforeCoupon) {
+                                finalTotal = e.coupon.totalBeforeCoupon - e.coupon.discount;
+                            } else {
+                                // Si no viene totalBeforeCoupon, restar el descuento del cupón
+                                finalTotal = finalTotal - e.coupon.discount;
+                            }
+                        }
+                        
+                        const commissionAmount = (finalTotal * feePercentage / 100);
+                        const totalReceived = finalTotal - commissionAmount;
+
+                        // Información del cupón
+                        const couponDiscount = e.coupon?.discount || 0;
+                        
+                        // Calcular total de descuentos (suma de productos + ofertas + cupón)
+                        const totalDiscounts = productDiscounts + offerDiscounts + couponDiscount;
+                        
+                        // Mostrar total de descuentos
+                        const discountsDisplay = totalDiscounts > 0
+                            ? <p style={{ color: '#1976d2' }}>-${formatNumber(totalDiscounts.toFixed(2))}</p>
+                            : <p>-</p>;
+                        
+                        // Total de la orden (sin modificaciones)
+                        const orderTotal = e.total || e.totalPrice || 0;
+
+                        return [
+                            <p key={`sale-id-${e._id}`}>
+                                {e._id}
+                            </p>,
+                            <p
+                                key={`sale-total-${e._id}`}
+                            >
+                                ${formatNumber(orderTotal.toFixed(2))}
+                            </p>,
+                            <div key={`sale-discounts-${e._id}`}>{discountsDisplay}</div>,
+                            <p
+                                key={`sale-commission-${e._id}`}
+                            >
+                                {feePercentage > 0 ? (
+                                    <>
+                                        {feePercentage.toFixed(1)}% (${formatNumber(commissionAmount.toFixed(2))})
+                                    </>
+                                ) : (
+                                    'Sin comisión'
+                                )}
+                            </p>,
+                            <p
+                                key={`sale-total-received-${e._id}`}
+                            >
+                                ${formatNumber(totalReceived.toFixed(2))}
+                            </p>,
+                            <p
+                                key={`sale-date-${e._id}`}
+                            >
+                                {moment(e.createdAt)
+                                    .utc()
+                                    .format(
+                                        'DD-MM-YYYY HH:mm:ss A'
+                                    )}
+                            </p>,
+                            <p
+                                key={`sale-status-${e._id}`}
+                            >
+                                {statusDisplay}
+                            </p>,
+                            <ChangeStatusDropdown
+                                key={e._id}
+                                sale={e}
+                            />,
+                            <Link
+                                key={`detail-button-${e._id}`}
+                                to={`/admin/orders/detail/${e._id}`}
+                            >
+                                <Button
+                                    isLoading={false}
+                                    variant="contained"
+                                    color="primary"
+                                    type="button"
+                                >
+                                    <RemoveRedEye />
+                                </Button>
+                            </Link>,
+                        ]
+                    })}
+                />
+                <ReactPaginate
+                    forcePage={page}
+                    pageClassName={classes.page}
+                    containerClassName={classes.pagination}
+                    activeClassName={classes.activePage}
+                    breakLabel="..."
+                    nextLabel={
+                        <Button
+                            isLoading={false}
+                            variant="contained"
+                            color="primary"
+                            type="button"
+                            justIcon
+                        >
+                            <ChevronRightIcon />
+                        </Button>
+                    }
+                    onPageChange={(e) => {
+                        setPage(e.selected)
+                    }}
+                    pageRangeDisplayed={5}
+                    pageCount={Math.ceil(
+                        pendingOrders.data.total / 10
+                    )}
+                    previousLabel={
+                        <Button
+                            isLoading={false}
+                            variant="contained"
+                            color="primary"
+                            type="button"
+                            justIcon
+                        >
+                            <ChevronLeftIcon />
+                        </Button>
+                    }
+                    renderOnZeroPageCount={null}
+                />
+            </>
+        )
+    }
+
+    // Filtrar órdenes por tipo de entrega
+    const deliveryOrders = pendingOrders?.data?.sales?.filter(order => order.deliveryType === 'DELIVERY') || []
+    const pickUpOrders = pendingOrders?.data?.sales?.filter(order => order.deliveryType === 'PICK-UP') || []
+
     return (
         <div>
             <GridContainer>
                 <GridItem xs={12} sm={12} md={12}>
-                    <Card>
-                        <CardHeader color="primary">
-                            <h4 className={classes.cardTitleWhite}>
-                                Ordenes pendientes de envio
-                            </h4>
-                        </CardHeader>
-                        <CardBody>
-                            {loadingPendingOrders ? (
-                                <Box
-                                    display="flex"
-                                    justifyContent="center"
-                                    padding={4}
-                                >
-                                    <CircularProgress />
-                                </Box>
-                            ) : (
-                                <>
-                                    <Table
-                                        tableHeaderColor="primary"
-                                        tableHead={[
-                                            'Id',
-                                            'Total',
-                                            'Descuentos',
-                                            'Comisión',
-                                            'Total Recibido',
-                                            'Fecha',
-                                            'Estatus',
-                                            'Cambiar estatus',
-                                            'Acciones',
-                                        ]}
-                                                                                 tableData={pendingOrders.data.sales.map(
-                                             (e) => {
-                                                
-                                                 
-                                                 // Mostrar motivo de cancelación si el estado es CANCELADO
-                                                 const statusDisplay = e.status === 'CANCELADO' && e.cancelReason 
-                                                     ? `${e.status} - ${e.cancelReason || 'Motivo no especificado'}`
-                                                     : e.status
-                                                 
-                                                 // Calcular descuentos de productos y ofertas
-                                                 let productDiscounts = 0;
-                                                 let offerDiscounts = 0;
-                                                 
-                                                 if (e.products && Array.isArray(e.products)) {
-                                                     e.products.forEach((item) => {
-                                                         const product = item.data || {};
-                                                         const price = product.price || 0;
-                                                         const quantity = item.quantity || 0;
-                                                         const discount = product.discount || 0;
-                                                         const offerDiscount = product.offerDiscount || 0;
-                                                         
-                                                         // Calcular descuento de producto
-                                                         if (discount > 0) {
-                                                             const discountAmount = (price * discount / 100) * quantity;
-                                                             productDiscounts += discountAmount;
-                                                         }
-                                                         
-                                                         // Calcular descuento de oferta
-                                                         if (offerDiscount > 0) {
-                                                             const offerDiscountAmount = (price * offerDiscount / 100) * quantity;
-                                                             offerDiscounts += offerDiscountAmount;
-                                                         }
-                                                     });
-                                                 }
-
-                                                 // Calcular comisión y total recibido
-                                                 const marketplaceFee = e.marketplaceFee || 0;
-                                                 // Si marketplaceFee es menor que 1, asumimos que viene como decimal (0.03 = 3%)
-                                                 const feePercentage = marketplaceFee < 1 ? marketplaceFee * 100 : marketplaceFee;
-                                                 
-                                                 // Calcular el total final considerando el cupón
-                                                 // Usar e.total o e.totalPrice (verificar cuál está disponible, total tiene prioridad)
-                                                 let finalTotal = e.total || e.totalPrice || 0;
-                                                 if (e.coupon && e.coupon.discount > 0) {
-                                                     // Si el backend envía totalBeforeCoupon, usarlo, sino calcular desde total + discount
-                                                     if (e.coupon.totalBeforeCoupon) {
-                                                         finalTotal = e.coupon.totalBeforeCoupon - e.coupon.discount;
-                                                     } else {
-                                                         // Si no viene totalBeforeCoupon, restar el descuento del cupón
-                                                         finalTotal = finalTotal - e.coupon.discount;
-                                                     }
-                                                 }
-                                                 
-                                                 const commissionAmount = (finalTotal * feePercentage / 100);
-                                                 const totalReceived = finalTotal - commissionAmount;
-
-                                                 // Información del cupón
-                                                 const couponDiscount = e.coupon?.discount || 0;
-                                                 
-                                                 // Calcular total de descuentos (suma de productos + ofertas + cupón)
-                                                 const totalDiscounts = productDiscounts + offerDiscounts + couponDiscount;
-                                                 
-                                                 // Mostrar total de descuentos
-                                                 const discountsDisplay = totalDiscounts > 0
-                                                     ? <p style={{ color: '#1976d2' }}>-${formatNumber(totalDiscounts.toFixed(2))}</p>
-                                                     : <p>-</p>;
-                                                 
-                                                 // Total de la orden (sin modificaciones)
-                                                 const orderTotal = e.total || e.totalPrice || 0;
-
-                                                 return [
-                                                     <p key={`sale-id-${e._id}`}>
-                                                         {e._id}
-                                                     </p>,
-                                                     <p
-                                                         key={`sale-total-${e._id}`}
-                                                     >
-                                                         ${formatNumber(orderTotal.toFixed(2))}
-                                                     </p>,
-                                                     <div key={`sale-discounts-${e._id}`}>{discountsDisplay}</div>,
-                                                     <p
-                                                         key={`sale-commission-${e._id}`}
-                                                     >
-                                                         {feePercentage > 0 ? (
-                                                             <>
-                                                                 {feePercentage.toFixed(1)}% (${formatNumber(commissionAmount.toFixed(2))})
-                                                             </>
-                                                         ) : (
-                                                             'Sin comisión'
-                                                         )}
-                                                     </p>,
-                                                     <p
-                                                         key={`sale-total-received-${e._id}`}
-                                                     >
-                                                         ${formatNumber(totalReceived.toFixed(2))}
-                                                     </p>,
-                                                     <p
-                                                         key={`sale-date-${e._id}`}
-                                                     >
-                                                         {moment(e.createdAt)
-                                                             .utc()
-                                                             .format(
-                                                                 'DD-MM-YYYY HH:mm:ss A'
-                                                             )}
-                                                     </p>,
-                                                     <p
-                                                         key={`sale-status-${e._id}`}
-                                                     >
-                                                         {statusDisplay}
-                                                     </p>,
-                                                     <ChangeStatusDropdown
-                                                         key={e._id}
-                                                         sale={e}
-                                                     />,
-                                                     <Link
-                                                         key={`detail-button-${e._id}`}
-                                                         to={`/admin/orders/detail/${e._id}`}
-                                                     >
-                                                         <Button
-                                                             isLoading={false}
-                                                             variant="contained"
-                                                             color="primary"
-                                                             type="button"
-                                                         >
-                                                             <RemoveRedEye />
-                                                         </Button>
-                                                     </Link>,
-                                                 ]
-                                             }
-                                         )}
-                                    />
-                                    <ReactPaginate
-                                        forcePage={page}
-                                        pageClassName={classes.page}
-                                        containerClassName={classes.pagination}
-                                        activeClassName={classes.activePage}
-                                        breakLabel="..."
-                                        nextLabel={
-                                            <Button
-                                                isLoading={false}
-                                                variant="contained"
-                                                color="primary"
-                                                type="button"
-                                                justIcon
-                                            >
-                                                <ChevronRightIcon />
-                                            </Button>
-                                        }
-                                        onPageChange={(e) => {
-                                            setPage(e.selected)
-                                        }}
-                                        pageRangeDisplayed={5}
-                                        pageCount={Math.ceil(
-                                            pendingOrders.data.total / 10
-                                        )}
-                                        previousLabel={
-                                            <Button
-                                                isLoading={false}
-                                                variant="contained"
-                                                color="primary"
-                                                type="button"
-                                                justIcon
-                                            >
-                                                <ChevronLeftIcon />
-                                            </Button>
-                                        }
-                                        renderOnZeroPageCount={null}
-                                    />
-                                </>
-                            )}
-                        </CardBody>
-                    </Card>
+                    <CustomTabs
+                        title="Órdenes pendientes"
+                        headerColor="primary"
+                        tabs={[
+                            {
+                                tabName: 'Envío a domicilio',
+                                tabIcon: LocalShippingIcon,
+                                tabContent: loadingPendingOrders ? (
+                                    <Box
+                                        display="flex"
+                                        justifyContent="center"
+                                        padding={4}
+                                    >
+                                        <CircularProgress />
+                                    </Box>
+                                ) : (
+                                    renderOrdersTable(deliveryOrders)
+                                ),
+                            },
+                            {
+                                tabName: 'Recoger en local',
+                                tabIcon: StoreIcon,
+                                tabContent: loadingPendingOrders ? (
+                                    <Box
+                                        display="flex"
+                                        justifyContent="center"
+                                        padding={4}
+                                    >
+                                        <CircularProgress />
+                                    </Box>
+                                ) : (
+                                    renderOrdersTable(pickUpOrders)
+                                ),
+                            },
+                        ]}
+                    />
                 </GridItem>
             </GridContainer>
         </div>
@@ -369,11 +404,10 @@ const paymentSchema = yup.object({
     status: yup.string().required(),
 })
 const ChangeStatusDropdown = ({ sale }) => {
-    const statusOptions = ['PAGADO', 'ENVIADO', 'CANCELADO']
+    const statusOptions = ['PAGADO', 'ENVIADO', 'ENTREGADO', 'CANCELADO']
 
     const dispatch = useDispatch()
     const { loadingChangeStatus } = useSelector((state) => state.dashboard)
-    const { user } = useSelector((state) => state.auth)
 
     const classes = useStyles()
 
@@ -398,9 +432,9 @@ const ChangeStatusDropdown = ({ sale }) => {
             setAnchorEl(anchorEl ? null : event.currentTarget)
             const result = await dispatch(
                 changePendingSalesStatus({
-                    access: user.token,
                     id: sale._id,
                     status,
+                    paymentMethod: null,
                     reason,
                 })
             ).unwrap()
@@ -415,7 +449,7 @@ const ChangeStatusDropdown = ({ sale }) => {
     return (
         <>
             <Box>
-                {(sale.status !== 'CANCELADO' && sale.status !== 'ENVIADO' || loadingChangeStatus === sale._id) && (
+                {(sale.status !== 'CANCELADO' && sale.status !== 'ENTREGADO' || loadingChangeStatus === sale._id) && (
                     <Button
                         isLoading={loadingChangeStatus === sale._id}
                         variant="contained"
@@ -453,6 +487,21 @@ const ChangeStatusDropdown = ({ sale }) => {
                                     <MenuList role="menu">
                                         {statusOptions
                                             .filter((option, _, array) => {
+                                                // Ocultar ENVIADO si deliveryType no es DELIVERY
+                                                if (option === 'ENVIADO' && sale.deliveryType !== 'DELIVERY') {
+                                                    return false
+                                                }
+
+                                                // Si es PICK-UP y el estado actual es PAGADO, ocultar ENVIADO
+                                                if (option === 'ENVIADO' && sale.deliveryType === 'PICK-UP' && sale.status === 'PAGADO') {
+                                                    return false
+                                                }
+
+                                                // Si es DELIVERY y el estado actual es PAGADO, ocultar ENTREGADO (debe pasar por ENVIADO primero)
+                                                if (option === 'ENTREGADO' && sale.deliveryType === 'DELIVERY' && sale.status === 'PAGADO') {
+                                                    return false
+                                                }
+
                                                 const currentIndex = array.findIndex(
                                                     (element) =>
                                                         element === sale.status
@@ -468,13 +517,15 @@ const ChangeStatusDropdown = ({ sale }) => {
                                                     option === 'CANCELADO'
                                                 const isCurrentEnviado =
                                                     sale.status === 'ENVIADO'
+                                                const isCurrentEntregado =
+                                                    sale.status === 'ENTREGADO'
 
                                                 // Solo mostrar opciones después de la actual
-                                                // Y si el estado actual es ENVIADO, ocultar la opción CANCELADO
+                                                // Y si el estado actual es ENVIADO o ENTREGADO, ocultar la opción CANCELADO
                                                 return (
                                                     isAfterCurrent &&
                                                     !(
-                                                        isCurrentEnviado &&
+                                                        (isCurrentEnviado || isCurrentEntregado) &&
                                                         isCancelOption
                                                     )
                                                 )
@@ -506,8 +557,9 @@ const ChangeStatusDropdown = ({ sale }) => {
                 onClose={closeModal}
                 onConfirm={async (data) => {
                     const { nextStatus, cancelReason } = data
-                    const statusIndex = statusOptions.findIndex(option => option === nextStatus) + 1
-                    return await onStatusChange(statusIndex, cancelReason)
+                    const statusIndex = saleStatus[nextStatus]
+                    await onStatusChange(statusIndex, cancelReason)
+                    closeModal()
                 }}
                 nextStatus={modalState.nextStatus}
                 loading={loadingChangeStatus === sale._id}

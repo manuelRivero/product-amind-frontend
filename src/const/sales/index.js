@@ -1,7 +1,8 @@
 export const saleStatus = {
     "PAGADO": 1,
     "ENVIADO": 2,
-    "CANCELADO": 3 
+    "CANCELADO": 3,
+    "ENTREGADO": 4
 }
 
 export const cancelReason = {

@@ -109,7 +109,6 @@ export const changePendingSalesStatus = createAsyncThunk(
         try {
             console.log('put sales')
             const response = await changeSaleStatusRequest(
-                args.access,
                 args.id,
                 args.status,
                 args.paymentMethod,

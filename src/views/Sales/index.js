@@ -44,6 +44,7 @@ import MomentUtils from '@date-io/moment'
 import EmptyTablePlaceholder from '../../components/EmptyTablePlaceholder'
 import { scrollToTop } from '../../utils/globals'
 import CustomModal from '../../components/CustomModal'
+import { saleStatus } from '../../const/sales'
 
 const styles = {
     pagination: {
@@ -632,6 +633,7 @@ export default function Sales() {
                                                 { label: 'Todos', value: null },
                                                 { label: 'Pagado', value: 1 },
                                                 { label: 'Enviado', value: 2 },
+                                                { label: 'Entregado', value: 4 },
                                                 { label: 'Cancelado', value: 3 },
                                             ].map(({ label, value }) => (
                                                 <Box
@@ -680,7 +682,7 @@ const paymentSchema = yup.object({
     status: yup.string().required(),
 })
 const ChangeStatusDropdown = ({ sale }) => {
-    const statusOptions = ['PAGADO', 'ENVIADO', 'CANCELADO']
+    const statusOptions = ['PAGADO', 'ENVIADO', 'ENTREGADO', 'CANCELADO']
     const dispatch = useDispatch()
     const { loadingChangeStatus } = useSelector((state) => state.sales)
 
@@ -725,7 +727,7 @@ const ChangeStatusDropdown = ({ sale }) => {
     return (
         <>
             <Box>
-                {((sale.status !== 'CANCELADO' && sale.status !== 'ENVIADO') ||
+                {((sale.status !== 'CANCELADO' && sale.status !== 'ENTREGADO') ||
                     loadingChangeStatus === sale._id) && (
                         <Button
                             isLoading={loadingChangeStatus === sale._id}
@@ -764,6 +766,21 @@ const ChangeStatusDropdown = ({ sale }) => {
                                     <MenuList role="menu">
                                         {statusOptions
                                             .filter((option, _, array) => {
+                                                // Ocultar ENVIADO si deliveryType no es DELIVERY
+                                                if (option === 'ENVIADO' && sale.deliveryType !== 'DELIVERY') {
+                                                    return false
+                                                }
+
+                                                // Si es PICK-UP y el estado actual es PAGADO, ocultar ENVIADO
+                                                if (option === 'ENVIADO' && sale.deliveryType === 'PICK-UP' && sale.status === 'PAGADO') {
+                                                    return false
+                                                }
+
+                                                // Si es DELIVERY y el estado actual es PAGADO, ocultar ENTREGADO (debe pasar por ENVIADO primero)
+                                                if (option === 'ENTREGADO' && sale.deliveryType === 'DELIVERY' && sale.status === 'PAGADO') {
+                                                    return false
+                                                }
+
                                                 const currentIndex = array.findIndex(
                                                     (element) =>
                                                         element === sale.status
@@ -779,11 +796,13 @@ const ChangeStatusDropdown = ({ sale }) => {
                                                     option === 'CANCELADO'
                                                 const isCurrentEnviado =
                                                     sale.status === 'ENVIADO'
+                                                const isCurrentEntregado =
+                                                    sale.status === 'ENTREGADO'
 
                                                 return (
                                                     isAfterCurrent &&
                                                     !(
-                                                        isCurrentEnviado &&
+                                                        (isCurrentEnviado || isCurrentEntregado) &&
                                                         isCancelOption
                                                     )
                                                 )
@@ -815,7 +834,7 @@ const ChangeStatusDropdown = ({ sale }) => {
                 onClose={closeModal}
                 onConfirm={async (data) => {
                     const { nextStatus, cancelReason } = data
-                    const statusIndex = statusOptions.findIndex(option => option === nextStatus) + 1
+                    const statusIndex = saleStatus[nextStatus]
                     onStatusChange(statusIndex, cancelReason)
                 }}
                 nextStatus={modalState.nextStatus}

@@ -614,21 +614,13 @@ export default function AddProducts() {
             })
         }
 
-        // Agregar características (features)
-        if (values.featuresArray?.length > 0) {
+        // Agregar características (features) solo si NO es producto único
+        if (values.featuresArray?.length > 0 && !values.unique) {
             data.append('features', JSON.stringify(values.featuresArray))
         }
+        // Si es producto único, enviar stock en el root
         if (values.unique) {
-            data.append(
-                'features',
-                JSON.stringify([
-                    {
-                        color: null,
-                        size: null,
-                        stock: values.stock || 0,
-                    },
-                ])
-            )
+            data.append('stock', values.stock || 0)
         }
 
         // Agregar keywords
@@ -850,6 +842,11 @@ export default function AddProducts() {
                 ? productDetail.keywords.map(keyword => ({ keyword: typeof keyword === 'string' ? keyword : keyword.keyword || keyword }))
                 : []
 
+            // Determinar si es producto único (sin features o features vacías sin color/size)
+            const hasFeaturesWithVariants = productDetail.features?.some(
+                (feature) => feature.color || feature.size
+            ) || false
+
             reset({
                 images: productDetail.images.map((e) => ({ preview: e.url })),
                 name: productDetail.name,
@@ -861,7 +858,7 @@ export default function AddProducts() {
                     productDetail.cost === null || productDetail.cost === undefined
                         ? ''
                         : productDetail.cost.toString(),
-                hasFeatures: productDetail.features.length > 0,
+                hasFeatures: productDetail.features?.length > 0 || false,
                 category: categoriesData.data.some(
                     (category) => category._id === productDetail.category
                 )
@@ -870,8 +867,11 @@ export default function AddProducts() {
                     )._id
                     : '',
                 keywords: keywordsArrayData,
+                unique: !hasFeaturesWithVariants,
+                stock: hasFeaturesWithVariants ? '' : (productDetail.stock || ''),
             })
-            if (productDetail.features.length > 0) {
+
+            if (hasFeaturesWithVariants) {
                 setValue('unique', false)
 
                 // Cargar colores y tallas seleccionados para que se muestren correctamente
@@ -909,14 +909,10 @@ export default function AddProducts() {
                 if (sizesToLoad.length > 0) {
                     setSizesSearchResults(sizesToLoad)
                 }
-                productDetail.features
-                    .filter((feature) => !feature.color && !feature.size)
-                    .map((feature) => {
-                        console.log("feature", feature)
-                        setValue('stock', feature.stock)
-                        setValue('unique', true)
-
-                    })
+            } else {
+                // Es producto único, el stock viene directamente en productDetail.stock
+                setValue('unique', true)
+                setValue('stock', productDetail.stock || '')
             }
         } else {
             reset({
@@ -1190,7 +1186,7 @@ export default function AddProducts() {
                                                 value={field.value}
                                                 onChange={field.onChange}
                                                 customInput={TextField}
-                                                label="Costo de la prenda (opcional)"
+                                                label="Costo del producto (opcional)"
                                                 variant="outlined"
                                                 thousandSeparator=","
                                                 decimalSeparator="."
