@@ -59,7 +59,7 @@ const sidebarStyle = (theme) => ({
             left: 'auto',
             zIndex: '1032',
             visibility: 'visible',
-            overflowY: 'visible',
+            overflowY: 'auto',
             borderTop: 'none',
             textAlign: 'left',
             paddingRight: '0px',
@@ -287,6 +287,10 @@ const sidebarStyle = (theme) => ({
         width: '260px',
         zIndex: '4',
         overflowScrolling: 'touch',
+        [theme.breakpoints.down('sm')]: {
+            overflowY: 'auto',
+            height: '100vh',
+        },
     },
     activePro: {
         [theme.breakpoints.up('md')]: {

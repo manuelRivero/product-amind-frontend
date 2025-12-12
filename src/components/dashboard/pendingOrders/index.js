@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { makeStyles } from '@material-ui/core/styles'
 import GridItem from 'components/Grid/GridItem.js'
 import GridContainer from 'components/Grid/GridContainer.js'
@@ -29,7 +29,6 @@ import {
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
 import PropTypes from 'prop-types'
-import moment from 'moment'
 import ReactPaginate from 'react-paginate'
 
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
@@ -40,6 +39,7 @@ import { saleStatus } from '../../../const/sales'
 import StatusChangeModal from '../../StatusChangeModal'
 import { useStatusChange } from '../../../hooks/useStatusChange'
 import { formatNumber } from '../../../helpers/product'
+import { formatDateToArgentina } from '../../../helpers/date'
 import EmptyTablePlaceholder from '../../EmptyTablePlaceholder'
 
 const styles = {
@@ -164,23 +164,115 @@ const useStyles = makeStyles(styles)
 export default function PendingOrders() {
     const { user } = useSelector((state) => state.auth)
     const dispatch = useDispatch()
-    const { pendingOrders, loadingPendingOrders } = useSelector(
+    const { loadingPendingOrders, loadingChangeStatus } = useSelector(
         (state) => state.dashboard
     )
     const classes = useStyles()
-    const [page, setPage] = useState(0)
+    // Paginación independiente para cada tab
+    const [deliveryPage, setDeliveryPage] = useState(0)
+    const [pickUpPage, setPickUpPage] = useState(0)
+    
+    // Estado local para mantener datos de cada tipo
+    const [deliveryOrdersData, setDeliveryOrdersData] = useState(null)
+    const [pickUpOrdersData, setPickUpOrdersData] = useState(null)
+    
+    // Estado para mantener los datos de la página 0 (para badges)
+    const [deliveryPage0Data, setDeliveryPage0Data] = useState(null)
+    const [pickUpPage0Data, setPickUpPage0Data] = useState(null)
 
+    // Cargar datos iniciales para ambos tabs
     useEffect(() => {
-        const getData = async () => {
-            dispatch(getPendingOrders({ access: user.token, page: 0 }))
+        const loadInitialData = async () => {
+            // Cargar datos de DELIVERY (página 0)
+            const deliveryResult = await dispatch(getPendingOrders({ 
+                access: user.accessToken, 
+                page: 0, 
+                deliveryType: 'DELIVERY' 
+            })).unwrap()
+            setDeliveryOrdersData(deliveryResult)
+            setDeliveryPage0Data(deliveryResult)
+            
+            // Cargar datos de PICK-UP (página 0)
+            const pickUpResult = await dispatch(getPendingOrders({ 
+                access: user.accessToken, 
+                page: 0, 
+                deliveryType: 'PICK-UP' 
+            })).unwrap()
+            setPickUpOrdersData(pickUpResult)
+            setPickUpPage0Data(pickUpResult)
         }
-        getData()
+        loadInitialData()
     }, [])
+    
+    // Cargar datos cuando cambia la página del tab activo
     useEffect(() => {
-        dispatch(getPendingOrders({ access: user.token, page }))
-    }, [page])
+        const loadData = async () => {
+            if (tabValue === 0) {
+                // Tab de DELIVERY
+                const result = await dispatch(getPendingOrders({ 
+                    access: user.accessToken, 
+                    page: deliveryPage, 
+                    deliveryType: 'DELIVERY' 
+                })).unwrap()
+                setDeliveryOrdersData(result)
+            } else {
+                // Tab de PICK-UP
+                const result = await dispatch(getPendingOrders({ 
+                    access: user.accessToken, 
+                    page: pickUpPage, 
+                    deliveryType: 'PICK-UP' 
+                })).unwrap()
+                setPickUpOrdersData(result)
+            }
+        }
+        loadData()
+    }, [deliveryPage, pickUpPage, tabValue])
+    
+    // Recargar datos cuando se completa un cambio de estado
+    // Usamos useRef para evitar recargas innecesarias
+    const prevLoadingStatus = useRef(loadingChangeStatus)
+    useEffect(() => {
+        // Solo recargar si el estado cambió de un ID a null (cambio completado)
+        if (prevLoadingStatus.current !== null && loadingChangeStatus === null) {
+            const reloadData = async () => {
+                // Recargar el tab actual
+                if (tabValue === 0) {
+                    const result = await dispatch(getPendingOrders({ 
+                        access: user.accessToken, 
+                        page: deliveryPage, 
+                        deliveryType: 'DELIVERY' 
+                    })).unwrap()
+                    setDeliveryOrdersData(result)
+                } else {
+                    const result = await dispatch(getPendingOrders({ 
+                        access: user.accessToken, 
+                        page: pickUpPage, 
+                        deliveryType: 'PICK-UP' 
+                    })).unwrap()
+                    setPickUpOrdersData(result)
+                }
+                
+                // Recargar página 0 de ambos tabs para actualizar badges
+                const deliveryPage0Result = await dispatch(getPendingOrders({ 
+                    access: user.accessToken, 
+                    page: 0, 
+                    deliveryType: 'DELIVERY' 
+                })).unwrap()
+                setDeliveryPage0Data(deliveryPage0Result)
+                
+                const pickUpPage0Result = await dispatch(getPendingOrders({ 
+                    access: user.accessToken, 
+                    page: 0, 
+                    deliveryType: 'PICK-UP' 
+                })).unwrap()
+                setPickUpPage0Data(pickUpPage0Result)
+            }
+            reloadData()
+        }
+        prevLoadingStatus.current = loadingChangeStatus
+    }, [loadingChangeStatus])
 
-    const renderOrdersTable = (filteredOrders) => {
+    const renderOrdersTable = (filteredOrders, currentPage, setCurrentPage, totalOrders) => {
         if (!filteredOrders || filteredOrders.length === 0) {
             return (
                 <EmptyTablePlaceholder title="No hay órdenes para mostrar" />
@@ -238,11 +330,7 @@ export default function PendingOrders() {
                             <p
                                 key={`sale-date-${e._id}`}
                             >
-                                {moment(e.createdAt)
-                                    .utc()
-                                    .format(
-                                        'DD-MM-YYYY HH:mm:ss A'
-                                    )}
+                                {formatDateToArgentina(e.createdAt)}
                             </p>,
                             <p
                                 key={`sale-status-${e._id}`}
@@ -270,7 +358,7 @@ export default function PendingOrders() {
                     })}
                 />
                 <ReactPaginate
-                    forcePage={page}
+                    forcePage={currentPage}
                     pageClassName={classes.page}
                     containerClassName={classes.pagination}
                     activeClassName={classes.activePage}
@@ -287,11 +375,11 @@ export default function PendingOrders() {
                         </Button>
                     }
                     onPageChange={(e) => {
-                        setPage(e.selected)
+                        setCurrentPage(e.selected)
                     }}
                     pageRangeDisplayed={5}
                     pageCount={Math.ceil(
-                        pendingOrders.data.total / 10
+                        totalOrders / 10
                     )}
                     previousLabel={
                         <Button
@@ -310,13 +398,14 @@ export default function PendingOrders() {
         )
     }
 
-    // Filtrar órdenes por tipo de entrega
-    const deliveryOrders = pendingOrders?.data?.sales?.filter(order => order.deliveryType === 'DELIVERY') || []
-    const pickUpOrders = pendingOrders?.data?.sales?.filter(order => order.deliveryType === 'PICK-UP') || []
+    // Usar datos locales (ya vienen filtrados del backend)
+    const deliveryOrders = deliveryOrdersData?.data?.sales || []
+    const pickUpOrders = pickUpOrdersData?.data?.sales || []
 
     // Calcular totales para los badges (solo órdenes pendientes - estado PAGADO)
-    const deliveryOrdersCount = deliveryOrders.filter(order => order.status === 'PAGADO').length
-    const pickUpOrdersCount = pickUpOrders.filter(order => order.status === 'PAGADO').length
+    // Usar los datos de la página 0 para el badge
+    const deliveryOrdersCount = (deliveryPage0Data?.data?.sales || []).filter(order => order.status === 'PAGADO').length
+    const pickUpOrdersCount = (pickUpPage0Data?.data?.sales || []).filter(order => order.status === 'PAGADO').length
 
     const [tabValue, setTabValue] = useState(0)
 
@@ -385,7 +474,12 @@ export default function PendingOrders() {
                                         <CircularProgress />
                                     </Box>
                                 ) : (
-                                    renderOrdersTable(deliveryOrders)
+                                    renderOrdersTable(
+                                        deliveryOrders,
+                                        deliveryPage,
+                                        setDeliveryPage,
+                                        deliveryOrdersData?.data?.total || 0
+                                    )
                                 )
                             )}
                             {tabValue === 1 && (
@@ -398,7 +492,12 @@ export default function PendingOrders() {
                                         <CircularProgress />
                                     </Box>
                                 ) : (
-                                    renderOrdersTable(pickUpOrders)
+                                    renderOrdersTable(
+                                        pickUpOrders,
+                                        pickUpPage,
+                                        setPickUpPage,
+                                        pickUpOrdersData?.data?.total || 0
+                                    )
                                 )
                             )}
                         </CardBody>

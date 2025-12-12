@@ -36,9 +36,9 @@ export const getTopProducts = (access, page, date) => {
     })
 }
 
-export const getNotifications = (access, page) => {
+export const getNotifications = (access, page, tenant) => {
     return client.get(`api/notifications`, {
-        params: { page },
+        params: { page, tenant },
         headers: {
             'x-token': access,
         },

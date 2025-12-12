@@ -15,6 +15,7 @@ const initialState = {
     users: null,
     notifications: null,
     notificationsPage: 0,
+    notificationsError: null,
     monthlySales: null,
     topProductsData: null,
     loadingTopsProducts: true,
@@ -28,7 +29,7 @@ export const getPendingOrders = createAsyncThunk(
     '/get/pending-orders',
     async (args, { rejectWithValue }) => {
         try {
-            const response = await getPendingSales(args.access)
+            const response = await getPendingSales(args.access, args.page, args.deliveryType)
             console.log('response', response)
             return response
         } catch (error) {
@@ -69,11 +70,12 @@ export const getNotifications = createAsyncThunk(
         try {
             const response = await getNotificationsRequest(
                 args.access,
-                args.page
+                args.page,
+                args.tenant
             )
             return response
         } catch (error) {
-            return rejectWithValue(error.response.data)
+            return rejectWithValue(error.response?.data || { message: 'Error al cargar notificaciones' })
         }
     }
 )
@@ -245,23 +247,36 @@ export const dashboardSlice = createSlice({
         },
         [getNotifications.pending]: (state) => {
             state.loadingNotifications = true
+            state.notificationsError = null
         },
         [getNotifications.fulfilled]: (state, action) => {
             state.loadingNotifications = false
+            state.notificationsError = null
             // console.log('action.payload.data', action.payload.data)
-            const notifications = state.notifications
-                ? state.notifications.notifications
-                : []
-            state.notifications = {
-                notifications: [
-                    ...notifications,
-                    ...action.payload.data.notifications,
-                ],
-                total: action.payload.data.total,
+            const page = action.meta.arg.page
+            // Si es la página 0, reemplazar las notificaciones. Si no, concatenar
+            if (page === 0) {
+                state.notifications = {
+                    notifications: action.payload.data.notifications,
+                    total: action.payload.data.total,
+                }
+            } else {
+                const notifications = state.notifications
+                    ? state.notifications.notifications
+                    : []
+                state.notifications = {
+                    notifications: [
+                        ...notifications,
+                        ...action.payload.data.notifications,
+                    ],
+                    total: action.payload.data.total,
+                }
             }
         },
-        [getNotifications.rejected]: (state) => {
+        [getNotifications.rejected]: (state, action) => {
             state.loadingNotifications = false
+            // No alterar las notificaciones existentes, solo guardar el error
+            state.notificationsError = action.payload?.message || 'Error al cargar notificaciones'
         },
     },
 })

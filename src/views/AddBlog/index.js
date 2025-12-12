@@ -205,9 +205,6 @@ export default function AddBlog() {
     const [errorMessage, setErrorMessage] = useState('')
     const [loading, setLoading] = useState(false)
 
-    // Determinar el modo del componente basado en la URL
-    const isViewMode = window.location.pathname.includes('/view-blog/')
-
     // Redux selectors (solo para carga de detalle)
     const loadingBlogDetail = useSelector(selectLoadingBlogDetail)
     const blogDetail = useSelector(selectBlogDetail)
@@ -352,7 +349,7 @@ export default function AddBlog() {
                 })
             }
         }
-    }, [blogDetail, params.id, reset])
+    }, [blogDetail, params.id, reset, appendImage])
 
     // Manejar errores de carga de detalle
     useEffect(() => {
@@ -387,10 +384,10 @@ export default function AddBlog() {
             <Card className={classes.card}>
                 <CardHeader color="primary">
                     <h4 className={classes.cardTitleWhite}>
-                        {isViewMode ? 'Ver blog' : params.id ? 'Editar blog' : 'Crear blog'}
+                        {params.id ? 'Editar blog' : 'Crear blog'}
                     </h4>
                     <p className={classes.cardCategoryWhite}>
-                        {isViewMode ? 'Visualiza' : params.id ? 'Edita' : 'Crea'} el contenido de tu blog
+                        {params.id ? 'Edita' : 'Crea'} el contenido de tu blog
                     </p>
                 </CardHeader>
                 <CardBody>
@@ -405,14 +402,12 @@ export default function AddBlog() {
                                         className={classes.imagesWrapper}
                                         key={`file-${index}`}
                                     >
-                                        {!isViewMode && (
-                                            <IconButton
-                                                className={classes.trashICon}
-                                                onClick={() => handleDeleteImage(index)}
-                                            >
-                                                <DeleteForever />
-                                            </IconButton>
-                                        )}
+                                        <IconButton
+                                            className={classes.trashICon}
+                                            onClick={() => handleDeleteImage(index)}
+                                        >
+                                            <DeleteForever />
+                                        </IconButton>
                                         <img
                                             className={classes.productImage}
                                             src={file.preview}
@@ -421,7 +416,7 @@ export default function AddBlog() {
                                     </div>
                                 )
                             })}
-                            {imageFields.length < 1 && !isViewMode && (
+                            {imageFields.length < 1 && (
                                 <div {...getRootProps()} className={classes.dropZone}>
                                     <img
                                         src={uploadImage}
@@ -464,7 +459,6 @@ export default function AddBlog() {
                                             label="Título del blog"
                                             value={field.value}
                                             onChange={field.onChange}
-                                            disabled={isViewMode}
                                         />
                                     )}
                                 />
@@ -486,7 +480,6 @@ export default function AddBlog() {
                                             onChange={field.onChange}
                                             multiline
                                             rows={3}
-                                            disabled={isViewMode}
                                         />
                                     )}
                                 />
@@ -509,7 +502,6 @@ export default function AddBlog() {
                                         errorMessage={fieldState.error?.message}
                                         placeholder="Escribe el contenido de tu blog..."
                                         height={400}
-                                        disabled={isViewMode}
                                     />
                                 )}
                             />
@@ -525,29 +517,27 @@ export default function AddBlog() {
                                         <Typography variant="body2" style={{ color: '#666', marginBottom: '0.5rem' }}>
                                             Palabras clave SEO
                                         </Typography>
-                                        {!isViewMode && (
-                                            <Box className={classes.tagsInputRow}>
-                                                <TextField
-                                                    fullWidth
-                                                    variant="outlined"
-                                                    placeholder="Escribe una palabra clave..."
-                                                    value={keywordInput || ''}
-                                                    onChange={(e) => setKeywordInput(e.target.value)}
-                                                    onKeyPress={handleKeywordInputKeyPress}
-                                                    style={{ backgroundColor: '#FFF' }}
-                                                />
-                                                <Button
-                                                    onClick={handleAddKeyword}
-                                                    disabled={!keywordInput.trim()}
-                                                    variant="contained"
-                                                    color="primary"
-                                                    startIcon={<Add />}
-                                                    style={{ minWidth: '120px' }}
-                                                >
-                                                    Agregar
-                                                </Button>
-                                            </Box>
-                                        )}
+                                        <Box className={classes.tagsInputRow}>
+                                            <TextField
+                                                fullWidth
+                                                variant="outlined"
+                                                placeholder="Escribe una palabra clave..."
+                                                value={keywordInput || ''}
+                                                onChange={(e) => setKeywordInput(e.target.value)}
+                                                onKeyPress={handleKeywordInputKeyPress}
+                                                style={{ backgroundColor: '#FFF' }}
+                                            />
+                                            <Button
+                                                onClick={handleAddKeyword}
+                                                disabled={!keywordInput.trim()}
+                                                variant="contained"
+                                                color="primary"
+                                                startIcon={<Add />}
+                                                style={{ minWidth: '120px' }}
+                                            >
+                                                Agregar
+                                            </Button>
+                                        </Box>
                                         <Box className={classes.tagsChipsContainer}>
                                             {keywordsArray.fields.map((keyword, index) => (
                                                 <Box
@@ -564,15 +554,13 @@ export default function AddBlog() {
                                                     }}
                                                 >
                                                     <span>{keyword.keyword || ''}</span>
-                                                    {!isViewMode && (
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={() => handleRemoveKeyword(index)}
-                                                            style={{ color: '#fff', padding: '2px' }}
-                                                        >
-                                                            <Delete style={{ fontSize: '16px' }} />
-                                                        </IconButton>
-                                                    )}
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => handleRemoveKeyword(index)}
+                                                        style={{ color: '#fff', padding: '2px' }}
+                                                    >
+                                                        <Delete style={{ fontSize: '16px' }} />
+                                                    </IconButton>
                                                 </Box>
                                             ))}
                                         </Box>
@@ -588,43 +576,23 @@ export default function AddBlog() {
                             </Box>
                         </Box>
 
-                        {!isViewMode && (
-                            <Box className={classes.buttonsRow}>
-                                <Button
-                                    isLoading={loading}
-                                    variant="contained"
-                                    color="primary"
-                                    type="submit"
-                                >
-                                    {params.id ? 'Actualizar' : 'Crear'} Blog
-                                </Button>
-                                <Button
-                                    variant="outlined"
-                                    color="secondary"
-                                    onClick={() => history.push('/admin/blogs')}
-                                >
-                                    Cancelar
-                                </Button>
-                            </Box>
-                        )}
-                        {isViewMode && (
-                            <Box className={classes.buttonsRow}>
-                                <Button
-                                    variant="contained"
-                                    color="primary"
-                                    onClick={() => history.push(`/admin/edit-blog/${params.id}`)}
-                                >
-                                    Editar Blog
-                                </Button>
-                                <Button
-                                    variant="outlined"
-                                    color="secondary"
-                                    onClick={() => history.push('/admin/blogs')}
-                                >
-                                    Volver
-                                </Button>
-                            </Box>
-                        )}
+                        <Box className={classes.buttonsRow}>
+                            <Button
+                                isLoading={loading}
+                                variant="contained"
+                                color="primary"
+                                type="submit"
+                            >
+                                {params.id ? 'Actualizar' : 'Crear'} Blog
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                color="secondary"
+                                onClick={() => history.push('/admin/blogs')}
+                            >
+                                Cancelar
+                            </Button>
+                        </Box>
                     </form>
                 </CardBody>
             </Card>

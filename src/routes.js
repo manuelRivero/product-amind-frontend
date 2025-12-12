@@ -45,6 +45,7 @@ import Activation from './views/Activation'
 import Home from './views/Home'
 import Blogs from './views/Blogs'
 import AddBlog from './views/AddBlog'
+import ViewBlog from './views/ViewBlog'
 import Offers from './views/Offers'
 import AddOffer from './views/AddOffer'
 import Coupons from './views/Coupons'
@@ -248,7 +249,7 @@ const dashboardRoutes = [
                 noshow: true,
                 path: '/view-blog/:id',
                 name: 'Ver Blog',
-                component: AddBlog, // Por ahora usamos el mismo componente, se puede crear uno específico para ver
+                component: ViewBlog,
             },
         ],
     },
