@@ -185,7 +185,7 @@ export default function PendingOrders() {
         const loadInitialData = async () => {
             // Cargar datos de DELIVERY (página 0)
             const deliveryResult = await dispatch(getPendingOrders({ 
-                access: user.accessToken, 
+                access: user.token, 
                 page: 0, 
                 deliveryType: 'DELIVERY' 
             })).unwrap()
@@ -194,7 +194,7 @@ export default function PendingOrders() {
             
             // Cargar datos de PICK-UP (página 0)
             const pickUpResult = await dispatch(getPendingOrders({ 
-                access: user.accessToken, 
+                access: user.token, 
                 page: 0, 
                 deliveryType: 'PICK-UP' 
             })).unwrap()
@@ -210,7 +210,7 @@ export default function PendingOrders() {
             if (tabValue === 0) {
                 // Tab de DELIVERY
                 const result = await dispatch(getPendingOrders({ 
-                    access: user.accessToken, 
+                    access: user.token, 
                     page: deliveryPage, 
                     deliveryType: 'DELIVERY' 
                 })).unwrap()
@@ -218,7 +218,7 @@ export default function PendingOrders() {
             } else {
                 // Tab de PICK-UP
                 const result = await dispatch(getPendingOrders({ 
-                    access: user.accessToken, 
+                    access: user.token, 
                     page: pickUpPage, 
                     deliveryType: 'PICK-UP' 
                 })).unwrap()
@@ -238,14 +238,14 @@ export default function PendingOrders() {
                 // Recargar el tab actual
                 if (tabValue === 0) {
                     const result = await dispatch(getPendingOrders({ 
-                        access: user.accessToken, 
+                        access: user.token, 
                         page: deliveryPage, 
                         deliveryType: 'DELIVERY' 
                     })).unwrap()
                     setDeliveryOrdersData(result)
                 } else {
                     const result = await dispatch(getPendingOrders({ 
-                        access: user.accessToken, 
+                        access: user.token, 
                         page: pickUpPage, 
                         deliveryType: 'PICK-UP' 
                     })).unwrap()
@@ -254,14 +254,14 @@ export default function PendingOrders() {
                 
                 // Recargar página 0 de ambos tabs para actualizar badges
                 const deliveryPage0Result = await dispatch(getPendingOrders({ 
-                    access: user.accessToken, 
+                    access: user.token, 
                     page: 0, 
                     deliveryType: 'DELIVERY' 
                 })).unwrap()
                 setDeliveryPage0Data(deliveryPage0Result)
                 
                 const pickUpPage0Result = await dispatch(getPendingOrders({ 
-                    access: user.accessToken, 
+                    access: user.token, 
                     page: 0, 
                     deliveryType: 'PICK-UP' 
                 })).unwrap()

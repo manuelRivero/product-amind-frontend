@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { history } from './../../index';
 import { getTenantFromHostname } from '../../utils/tenant'
 // api
-const getUSer = () =>{
+const getUSer = () => {
     const user = window.localStorage.getItem('PRODUCT-ADMIN-USER');
     const parsedUser = user ? JSON.parse(user) : null
     console.log("User loaded from localStorage:", parsedUser)
@@ -44,11 +44,11 @@ export const fetchUserPermissions = createAsyncThunk(
 )
 
 export const authSlice = createSlice({
-    name:"auth",
+    name: "auth",
     initialState,
     reducers: {
-        logout: (state)=>{
-            state.user= null;
+        logout: (state) => {
+            state.user = null;
             state.permissions = null;
             state.permissionsError = null;
             localStorage.removeItem('PRODUCT-ADMIN-USER');
@@ -56,6 +56,14 @@ export const authSlice = createSlice({
         },
         clearPermissionsError: (state) => {
             state.permissionsError = null;
+        },
+        updateTokens: (state, action) => {
+            if (state.user) {
+                state.user.token = action.payload.token;
+                if (action.payload.refreshToken) {
+                    state.user.refreshToken = action.payload.refreshToken;
+                }
+            }
         }
     },
     extraReducers: {
@@ -64,10 +72,11 @@ export const authSlice = createSlice({
         },
         [login.fulfilled]: (state, action) => {
             state.loadingLogin = false
-            const {token, role, user} = action.payload.data
+            console.log("Login fulfilled - action", action)
+            const { token, role, user, refreshToken } = action.payload.data
             const tenant = getTenantFromHostname()
-            state.user = {token, role, userId:user.id, tenant: tenant}
-            const parseUser = JSON.stringify({token, role, userId:user.id, tenant: tenant})
+            state.user = { token, role, userId: user.id, tenant: tenant, refreshToken }
+            const parseUser = JSON.stringify({ token, role, userId: user.id, tenant: tenant, refreshToken })
             localStorage.setItem('PRODUCT-ADMIN-USER', parseUser)
             console.log("Login fulfilled - User saved:", state.user)
         },
@@ -88,6 +97,6 @@ export const authSlice = createSlice({
         },
     },
 })
-export const { logout, clearPermissionsError } = authSlice.actions;
+export const { logout, clearPermissionsError, updateTokens } = authSlice.actions;
 
 export default authSlice.reducer
