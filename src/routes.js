@@ -52,7 +52,7 @@ import Coupons from './views/Coupons'
 import AddCoupon from './views/AddCoupon'
 const dashboardRoutes = [
     {
-        path: '/',
+        path: '/inicio',
         name: 'Inicio',
         icon: Dashboard,
         component:  Home,

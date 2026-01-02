@@ -1,5 +1,5 @@
 import React from 'react'
-import { Switch, Route } from 'react-router-dom'
+import { Switch, Route, useLocation, useHistory } from 'react-router-dom'
 // @material-ui/core components
 import { makeStyles } from '@material-ui/core/styles'
 // core components
@@ -20,47 +20,34 @@ import CloseIcon from '@material-ui/icons/Close'
 import moment from 'moment'
 import socketService from '../services/socket'
 
-
-const mainRoutes = dashboardRoutes.map((prop, key) => {
-    if (prop.layout === '/admin') {
-        return (
-            <Route
-                exact
-                path={prop.layout + prop.path}
-                component={prop.component}
-                key={key}
-            ></Route>
-        )
-    }
-    return null
-})
-
-const childRoutes = dashboardRoutes.map((prop) => {
-    return prop.childrens
-        ? prop.childrens.map((e, i) => {
-              // console.log("e", prop.layout + prop.path + e.path)
-              return (
-                  <Route
-                      path={prop.layout + prop.path + e.path}
-                      component={e.component}
-                      key={`child-${e.path}-${i}`}
-                  />
-              )
-          })
-        : null
-})
-
 const useStyles = makeStyles(styles)
+
+// Componente Redirect personalizado que preserva query parameters
+const RedirectWithQuery = ({ to }) => {
+    const location = useLocation()
+    const history = useHistory()
+    
+    React.useEffect(() => {
+        // Preservar los query parameters si existen
+        const newPath = to + (location.search || '')
+        history.replace(newPath)
+    }, [to, location.search, history])
+    
+    return null
+}
 
 export default function Admin({ ...rest }) {
     const dispatch = useDispatch()
     const { user } = useSelector((state) => state.auth)
     const { configDetail, error: configError, errorDetails } = useSelector((state) => state.config)
-    const { 
+    const {
         loadingConfig: loadingConfigPermissions,
         permissionsError,
         hasUserPermission
     } = usePermissions()
+
+    const isVerified = configDetail?.isVerified
+    console.log("isVerified", isVerified)
 
     // Nueva lógica de validación de estados de suscripción (igual que en Activation)
     const paymentStatus = configDetail?.paymentStatus
@@ -72,14 +59,14 @@ export default function Admin({ ...rest }) {
         ? configDetail.userActionHistory[configDetail.userActionHistory.length - 1]
         : null;
     const lastStatus = lastStatusObj?.action;
-  
+
     // Flags de estado (igual que en Activation)
     const isPaymentApproved = (preapprovalStatus === 'authorized' && paymentStatus === 'approved');
     const isPaymentPending = (preapprovalStatus === 'authorized' && paymentStatus === 'pending');
     const isPaymentPaused = (preapprovalStatus === 'paused' || paymentStatus === 'paused' || lastStatus === 'paused');
     const isPaymentCancelled = (preapprovalStatus === 'cancelled' || paymentStatus === 'cancelled' || lastStatus === 'cancelled');
     const isSubscriptionActive = (isPaymentApproved || isPaymentPaused || isPaymentPending) && !isPaymentCancelled;
-    
+
     // Obtener la última acción del usuario
     const currentUserAction = configDetail?.currentUserAction
 
@@ -134,12 +121,19 @@ export default function Admin({ ...rest }) {
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen)
     }
-    
+
     const filteredRoutes = React.useMemo(() => {
         return dashboardRoutes.filter((prop) => {
             // Verificar si es una ruta de admin
             const isAdminRoute = prop.layout === '/admin'
-            
+            console.log("path", prop.path)
+
+            // Si el usuario no está verificado, solo mostrar la ruta admin/inicio
+            if (!isVerified) {
+                console.log('entró al if')
+                return isAdminRoute && prop.path === '/inicio'
+            }
+
             // Si la suscripción está pausada o cancelada, solo mostrar la ruta de activación
             if (isPaymentPaused || isPaymentCancelled || (!mercadoPagoMarketplaceAccessToken && !mercadoPagoMarketplaceTokenExpiresAt)) {
                 return isAdminRoute && prop.path === '/mercado-pago'
@@ -148,25 +142,59 @@ export default function Admin({ ...rest }) {
             if (isPaymentPending) {
                 return isAdminRoute && prop.path === '/mercado-pago'
             }
-            
+
             // Si el pago está aprobado pero la suscripción no está activa, mostrar todas las rutas
             if (isPaymentApproved && !isSubscriptionActive) {
                 const hasPermission = !prop.permission || hasUserPermission(prop.permission.resource, prop.permission.action)
                 return isAdminRoute && hasPermission
             }
-            
+
             // Verificar suscripción activa usando las validaciones reales
             const hasSubscription = !prop.needConfig || (prop.needConfig && isSubscriptionActive)
-            
+
             // Verificar permisos de usuario
             let hasPermission = true
             if (prop.permission) {
                 hasPermission = hasUserPermission(prop.permission.resource, prop.permission.action)
             }
-            
+
             return isAdminRoute && hasSubscription && hasPermission
         })
-    }, [isPaymentPaused, isPaymentCancelled, isPaymentApproved, isSubscriptionActive, hasUserPermission])
+    }, [isVerified, isPaymentPaused, isPaymentCancelled, isPaymentApproved, isSubscriptionActive, hasUserPermission])
+
+    // Crear rutas filtradas para el Switch
+    const filteredMainRoutes = React.useMemo(() => {
+        return filteredRoutes.map((prop, key) => {
+            // Manejar la ruta raíz correctamente
+            const routePath = prop.path;
+            console.log("routePath", routePath)
+            return (
+                <Route
+                    exact
+                    path={`${prop.layout}${routePath}`}
+                    component={prop.component}
+                    key={key}
+                />
+            )
+        })
+    }, [filteredRoutes])
+
+    console.log("filteredMainRoutes", filteredMainRoutes)
+    const filteredChildRoutes = React.useMemo(() => {
+        return filteredRoutes.map((prop) => {
+            return prop.childrens
+                ? prop.childrens.map((e, i) => {
+                    return (
+                        <Route
+                            path={prop.path + e.path}
+                            component={e.component}
+                            key={`child-${e.path}-${i}`}
+                        />
+                    )
+                })
+                : null
+        }).filter(Boolean)
+    }, [filteredRoutes])
 
 
     React.useEffect(() => {
@@ -189,7 +217,7 @@ export default function Admin({ ...rest }) {
             } catch (error) {
                 console.error('Error fetching tenant:', error)
                 setError({
-                    type:'tenant',
+                    type: 'tenant',
                     message: 'Hubo un error cargando la configuración de su tienda, por favor refresque la pagina, si el problema persiste contactese con soporte.',
                 })
                 setTenant(null)
@@ -204,7 +232,7 @@ export default function Admin({ ...rest }) {
         } else {
             console.error('Tenant not found')
             setError({
-                type:'tenant',
+                type: 'tenant',
                 message: 'No se pudo identificar la tienda. Verifique la URL e intente nuevamente.',
             })
             setLoadingTenant(false)
@@ -226,7 +254,7 @@ export default function Admin({ ...rest }) {
         } catch (error) {
             console.error('Error fetching config:', error)
             setError({
-                type:'config',
+                type: 'config',
                 message: 'Hubo un error cargando la configuración de su tienda, por favor refresque la pagina, si el problema persiste contactese con soporte.',
             })
         } finally {
@@ -257,7 +285,7 @@ export default function Admin({ ...rest }) {
         if (tenant && user?.token) {
             console.log('Iniciando conexión Socket.IO...')
             socketService.connect(user.token)
-            
+
             // Solicitar permiso para notificaciones del navegador (deshabilitado)
             // socketService.requestNotificationPermission()
         }
@@ -281,11 +309,11 @@ export default function Admin({ ...rest }) {
     if (error) {
         return (
             <div className={classes.wrapper}>
-                <div style={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     height: '100vh',
                     padding: '20px',
                     textAlign: 'center'
@@ -296,7 +324,7 @@ export default function Admin({ ...rest }) {
                     <p style={{ marginBottom: '30px', fontSize: '16px' }}>
                         {error.message}
                     </p>
-                    <button 
+                    <button
                         onClick={() => window.location.reload()}
                         style={{
                             padding: '12px 24px',
@@ -336,12 +364,17 @@ export default function Admin({ ...rest }) {
                         {/* {console.log("childRoutes", childRoutes)} */}
                         {tenant && !error && (
                             <>
+                                {console.log("filteredMainRoutes", filteredMainRoutes)}
                                 <Switch>
-                                    {mainRoutes}
-                                    {childRoutes}
+                                    {filteredMainRoutes}
+                                    {filteredChildRoutes}
+                                    {/* Ruta catch-all para rutas inexistentes - debe ir al final */}
+                                    <Route path="*">
+                                        <RedirectWithQuery to="/admin/inicio" />
+                                    </Route>
                                 </Switch>
                                 {/* Mensaje cuando no hay suscripción activa */}
-                            
+
                                 {/* Mensaje de acción del usuario */}
                                 {userActionMessage && showUserActionBanner && (
                                     <div style={{
@@ -358,15 +391,15 @@ export default function Admin({ ...rest }) {
                                         zIndex: 1002,
                                         border: `1px solid ${currentUserAction?.status === 'failed' ? '#ef5350' : '#42a5f5'}`
                                     }}>
-                                        <div style={{ 
-                                            fontWeight: 'bold', 
+                                        <div style={{
+                                            fontWeight: 'bold',
                                             marginBottom: '5px',
                                             display: 'flex',
                                             justifyContent: 'space-between',
                                             alignItems: 'center'
                                         }}>
                                             {currentUserAction?.status === 'failed' ? 'Error' : 'Procesando...'}
-                                            <IconButton 
+                                            <IconButton
                                                 onClick={() => setShowUserActionBanner(false)}
                                                 size="small"
                                                 style={{ padding: 4 }}
@@ -379,7 +412,7 @@ export default function Admin({ ...rest }) {
                                         </div>
                                     </div>
                                 )}
-                                
+
                                 {/* Mensaje de error de permisos */}
                                 {permissionsError && (
                                     <div style={{
@@ -388,7 +421,7 @@ export default function Admin({ ...rest }) {
                                         right: '20px',
                                         zIndex: 1001
                                     }}>
-                                        <PermissionError 
+                                        <PermissionError
                                             message="Error al cargar permisos"
                                             showDetails={false}
                                             showRetry={true}

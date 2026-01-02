@@ -43,6 +43,56 @@ export const fetchUserPermissions = createAsyncThunk(
     }
 )
 
+export const resendVerification = createAsyncThunk(
+    'auth/resendVerification',
+    async (args, { rejectWithValue }) => {
+        try {
+            const response = await fetch(`${process.env.REACT_APP_API_KEY}/api/auth/resend-verification`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email: args.email }),
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            return rejectWithValue({ message: error.message || 'Error al reenviar la verificación' });
+        }
+    }
+)
+
+export const verifyToken = createAsyncThunk(
+    'auth/verifyToken',
+    async (args, { rejectWithValue }) => {
+        try {
+            const response = await fetch(`${process.env.REACT_APP_API_KEY}/api/auth/verify`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ token: args.token }),
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            return rejectWithValue({ message: error.message || 'Error al verificar el token' });
+        }
+    }
+)
+
 export const authSlice = createSlice({
     name: "auth",
     initialState,
@@ -64,6 +114,15 @@ export const authSlice = createSlice({
                     state.user.refreshToken = action.payload.refreshToken;
                 }
             }
+        },
+        updateUserVerification: (state) => {
+            if (state.user) {
+                state.user.verified = true;
+                // Actualizar también en localStorage
+                const userData = JSON.parse(localStorage.getItem('PRODUCT-ADMIN-USER') || '{}');
+                userData.verified = true;
+                localStorage.setItem('PRODUCT-ADMIN-USER', JSON.stringify(userData));
+            }
         }
     },
     extraReducers: {
@@ -75,8 +134,8 @@ export const authSlice = createSlice({
             console.log("Login fulfilled - action", action)
             const { token, role, user, refreshToken } = action.payload.data
             const tenant = getTenantFromHostname()
-            state.user = { token, role, userId: user.id, tenant: tenant, refreshToken }
-            const parseUser = JSON.stringify({ token, role, userId: user.id, tenant: tenant, refreshToken })
+            state.user = { token, role, userId: user.id, tenant: tenant, refreshToken, verified: user.verified, email: user.email }
+            const parseUser = JSON.stringify({ token, role, userId: user.id, tenant: tenant, refreshToken, verified: user.verified, email: user.email })
             localStorage.setItem('PRODUCT-ADMIN-USER', parseUser)
             console.log("Login fulfilled - User saved:", state.user)
         },
@@ -97,6 +156,6 @@ export const authSlice = createSlice({
         },
     },
 })
-export const { logout, clearPermissionsError, updateTokens } = authSlice.actions;
+export const { logout, clearPermissionsError, updateTokens, updateUserVerification } = authSlice.actions;
 
 export default authSlice.reducer
