@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import { Switch, Route, useLocation, useHistory } from 'react-router-dom'
 // @material-ui/core components
 import { makeStyles } from '@material-ui/core/styles'
@@ -19,6 +20,8 @@ import { IconButton } from '@material-ui/core'
 import CloseIcon from '@material-ui/icons/Close'
 import moment from 'moment'
 import socketService from '../services/socket'
+import AnnouncementModal from '../components/AnnouncementModal'
+import { fetchAnnouncements, fetchUnreadCount, openAnnouncementsModal } from '../store/announcements'
 
 const useStyles = makeStyles(styles)
 
@@ -36,10 +39,15 @@ const RedirectWithQuery = ({ to }) => {
     return null
 }
 
+RedirectWithQuery.propTypes = {
+    to: PropTypes.string.isRequired
+}
+
 export default function Admin({ ...rest }) {
     const dispatch = useDispatch()
     const { user } = useSelector((state) => state.auth)
     const { configDetail, error: configError, errorDetails } = useSelector((state) => state.config)
+    const { announcements, unreadCount, loadingAnnouncements, isModalOpen } = useSelector((state) => state.announcements)
     const {
         loadingConfig: loadingConfigPermissions,
         permissionsError,
@@ -299,7 +307,25 @@ export default function Admin({ ...rest }) {
         }
     }, [tenant, user?.token])
 
+    // Fetch automático de anuncios al montar el layout
+    React.useEffect(() => {
+        if (tenant && user?.token) {
+            dispatch(fetchAnnouncements({ page: 0, limit: 10 }))
+            dispatch(fetchUnreadCount())
+        }
+    }, [tenant, user?.token, dispatch])
 
+    // Abrir modal automáticamente si hay anuncios no leídos
+    React.useEffect(() => {
+        if (
+            !loadingAnnouncements &&
+            announcements.length > 0 &&
+            unreadCount > 0 &&
+            !isModalOpen
+        ) {
+            dispatch(openAnnouncementsModal())
+        }
+    }, [loadingAnnouncements, announcements.length, unreadCount, isModalOpen, dispatch])
 
 
     if (loadingTenant || loadingConfig || loadingConfigPermissions) {
@@ -434,6 +460,7 @@ export default function Admin({ ...rest }) {
                     </div>
                 </div>
             </div>
+            <AnnouncementModal />
         </div>
     )
 }

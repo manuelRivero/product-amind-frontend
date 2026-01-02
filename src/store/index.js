@@ -10,6 +10,7 @@ import offers from './offers'
 import blogs from './blogs'
 import coupons from './coupons'
 import mercadoPago from './mercado-pago'
+import announcements from './announcements'
 
 export const store = configureStore({
     reducer: {
@@ -22,7 +23,8 @@ export const store = configureStore({
         offers,
         blogs,
         coupons,
-        mercadoPago
+        mercadoPago,
+        announcements
     },
 })
 
