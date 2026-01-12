@@ -17,3 +17,5 @@ export const markAsRead = (id) => {
     return client.post(`api/announcements/tenant/${id}/read`)
 }
 
+
+

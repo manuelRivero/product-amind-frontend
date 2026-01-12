@@ -47,7 +47,7 @@ export default function Admin({ ...rest }) {
     const dispatch = useDispatch()
     const { user } = useSelector((state) => state.auth)
     const { configDetail, error: configError, errorDetails } = useSelector((state) => state.config)
-    const { announcements, unreadCount, loadingAnnouncements, isModalOpen } = useSelector((state) => state.announcements)
+    const { announcements, loadingAnnouncements, isModalOpen, hasBeenClosedManually, pagination } = useSelector((state) => state.announcements)
     const {
         loadingConfig: loadingConfigPermissions,
         permissionsError,
@@ -315,17 +315,21 @@ export default function Admin({ ...rest }) {
         }
     }, [tenant, user?.token, dispatch])
 
-    // Abrir modal automáticamente si hay anuncios no leídos
+    // Abrir modal automáticamente si hay anuncios no leídos (solo si no fue cerrado manualmente)
     React.useEffect(() => {
+        // Usar pagination.unread si está disponible (más confiable), sino filtrar anuncios
+        const unreadCountFromPagination = pagination?.unread ?? 0
+        const hasUnread = unreadCountFromPagination > 0 || announcements.some(ann => !ann.isRead)
+        
         if (
             !loadingAnnouncements &&
-            announcements.length > 0 &&
-            unreadCount > 0 &&
-            !isModalOpen
+            hasUnread &&
+            !isModalOpen &&
+            !hasBeenClosedManually
         ) {
             dispatch(openAnnouncementsModal())
         }
-    }, [loadingAnnouncements, announcements.length, unreadCount, isModalOpen, dispatch])
+    }, [loadingAnnouncements, announcements, pagination, isModalOpen, hasBeenClosedManually, dispatch])
 
 
     if (loadingTenant || loadingConfig || loadingConfigPermissions) {

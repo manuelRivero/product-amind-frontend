@@ -36,10 +36,12 @@ export const markAnnouncementAsRead = createAsyncThunk(
     'announcements/markAsRead',
     async (args, { rejectWithValue }) => {
         try {
+            console.log('markAnnouncementAsRead thunk - llamando API con id:', args.id)
             const response = await markAsReadRequest(args.id)
+            console.log('markAnnouncementAsRead thunk - respuesta:', response)
             return response
         } catch (error) {
-            console.log('thunk error', error)
+            console.log('thunk error al marcar como leído', error)
             return rejectWithValue(error.response?.data || { message: 'Error al marcar como leído' })
         }
     }
@@ -55,7 +57,8 @@ const initialState = {
     currentPage: 0,
     limit: 10,
     currentAnnouncementIndex: 0,
-    isModalOpen: false
+    isModalOpen: false,
+    hasBeenClosedManually: false // Flag para evitar reabrir automáticamente si el usuario lo cerró
 }
 
 export const announcementSlice = createSlice({
@@ -63,18 +66,23 @@ export const announcementSlice = createSlice({
     initialState,
     reducers: {
         openAnnouncementsModal: (state) => {
-            state.isModalOpen = true
-            // Si hay anuncios, encontrar el primer no leído o usar el primero
-            if (state.announcements.length > 0) {
+            // Solo abrir si hay anuncios no leídos
+            const unreadAnnouncements = state.announcements.filter(ann => !ann.isRead)
+            if (unreadAnnouncements.length > 0) {
+                state.isModalOpen = true
+                // Encontrar el índice del primer no leído en el array completo
                 const firstUnreadIndex = state.announcements.findIndex(ann => !ann.isRead)
                 state.currentAnnouncementIndex = firstUnreadIndex >= 0 ? firstUnreadIndex : 0
             } else {
+                // Si no hay no leídos, no abrir el modal
+                state.isModalOpen = false
                 state.currentAnnouncementIndex = 0
             }
         },
         closeAnnouncementsModal: (state) => {
             state.isModalOpen = false
             state.currentAnnouncementIndex = 0
+            state.hasBeenClosedManually = true // Marcar que fue cerrado manualmente
         },
         setCurrentAnnouncementIndex: (state, action) => {
             const newIndex = action.payload
@@ -117,6 +125,10 @@ export const announcementSlice = createSlice({
             state.pagination = data.pagination || null
             if (data.pagination) {
                 state.currentPage = data.pagination.page
+                // Actualizar unreadCount desde pagination.unread (más confiable)
+                if (data.pagination.unread !== undefined) {
+                    state.unreadCount = data.pagination.unread
+                }
             }
         },
         [fetchAnnouncements.rejected]: (state, action) => {

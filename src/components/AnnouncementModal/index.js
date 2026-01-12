@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { makeStyles } from '@material-ui/core/styles'
 import {
@@ -12,14 +12,12 @@ import {
 import CloseIcon from '@material-ui/icons/Close'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward'
-import GetAppIcon from '@material-ui/icons/GetApp'
 import Button from 'components/CustomButtons/Button'
 import {
     closeAnnouncementsModal,
-    goToNextAnnouncement,
-    goToPreviousAnnouncement,
     markAnnouncementAsRead,
-    fetchAnnouncements
+    fetchAnnouncements,
+    setCurrentAnnouncementIndex
 } from '../../store/announcements'
 import { ANNOUNCEMENT_TYPES, PRIORITIES, MESSAGES } from './const'
 import moment from 'moment'
@@ -31,19 +29,23 @@ const useStyles = makeStyles({
         maxHeight: '90vh'
     },
     dialogTitle: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        position: 'relative',
         padding: '1rem 1.5rem',
+        paddingRight: '3.5rem',
         borderBottom: '1px solid #e0e0e0'
     },
     titleText: {
         margin: 0,
         fontSize: '1.25rem',
-        fontWeight: 500
+        fontWeight: 500,
+        paddingRight: '1rem'
     },
     closeButton: {
-        padding: '0.5rem'
+        position: 'absolute',
+        top: '0.5rem',
+        right: '0.5rem',
+        padding: '0.5rem',
+        zIndex: 1
     },
     dialogContent: {
         padding: '1.5rem'
@@ -119,22 +121,43 @@ const useStyles = makeStyles({
         fontSize: '1rem',
         fontWeight: 600
     },
-    attachmentItem: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.5rem',
-        padding: '0.75rem',
+    imagesGrid: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+        gap: '1rem',
+        marginTop: '0.75rem'
+    },
+    imageContainer: {
+        position: 'relative',
+        width: '100%',
+        paddingTop: '100%',
+        borderRadius: '8px',
+        overflow: 'hidden',
         backgroundColor: '#f5f5f5',
-        borderRadius: '4px',
-        marginBottom: '0.5rem',
-        textDecoration: 'none',
-        color: '#333',
+        cursor: 'pointer',
         '&:hover': {
-            backgroundColor: '#e0e0e0'
+            opacity: 0.9
         }
     },
-    attachmentIcon: {
-        color: '#666'
+    attachmentImage: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        borderRadius: '8px'
+    },
+    imageModal: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '2rem'
+    },
+    imageModalContent: {
+        maxWidth: '90vw',
+        maxHeight: '90vh',
+        objectFit: 'contain'
     },
     navigationSection: {
         display: 'flex',
@@ -188,6 +211,7 @@ const useStyles = makeStyles({
 export default function AnnouncementModal() {
     const classes = useStyles()
     const dispatch = useDispatch()
+    const [selectedImage, setSelectedImage] = useState(null)
     const {
         announcements,
         pagination,
@@ -197,17 +221,51 @@ export default function AnnouncementModal() {
         isModalOpen
     } = useSelector((state) => state.announcements)
 
+    // Filtrar solo anuncios no leídos para mostrar
+    const unreadAnnouncements = announcements.filter(ann => !ann.isRead)
+    const unreadIndices = announcements
+        .map((ann, index) => (!ann.isRead ? index : null))
+        .filter(index => index !== null)
+    
+    // Obtener el índice en el array de no leídos
+    const currentUnreadIndex = unreadIndices.indexOf(currentAnnouncementIndex)
     const currentAnnouncement = announcements[currentAnnouncementIndex]
-    const hasNext = currentAnnouncementIndex < announcements.length - 1 || (pagination && pagination.hasNextPage)
-    const hasPrevious = currentAnnouncementIndex > 0
-    const totalAnnouncements = pagination?.total || announcements.length
+    
+    // Navegación solo entre no leídos
+    const hasNext = currentUnreadIndex < unreadIndices.length - 1 || (pagination && pagination.hasNextPage)
+    const hasPrevious = currentUnreadIndex > 0
+    const totalAnnouncements = pagination?.unread || unreadAnnouncements.length
+
+    // Debug: verificar estado del anuncio actual
+    useEffect(() => {
+        if (currentAnnouncement) {
+            console.log('Anuncio actual:', {
+                id: currentAnnouncement._id,
+                isRead: currentAnnouncement.isRead,
+                title: currentAnnouncement.title
+            })
+        }
+    }, [currentAnnouncement])
+
+    // Limpiar imagen seleccionada cuando se cierra el modal
+    useEffect(() => {
+        if (!isModalOpen) {
+            setSelectedImage(null)
+        }
+    }, [isModalOpen])
+
+    // Limpiar imagen seleccionada cuando cambia el anuncio
+    useEffect(() => {
+        setSelectedImage(null)
+    }, [currentAnnouncementIndex])
 
     // Marcar como leído automáticamente al mostrar el anuncio
     useEffect(() => {
-        if (isModalOpen && currentAnnouncement && !currentAnnouncement.isRead) {
+        if (isModalOpen && currentAnnouncement && currentAnnouncement._id && !currentAnnouncement.isRead) {
+            console.log('Marcando anuncio como leído automáticamente:', currentAnnouncement._id)
             dispatch(markAnnouncementAsRead({ id: currentAnnouncement._id }))
         }
-    }, [isModalOpen, currentAnnouncement, dispatch])
+    }, [isModalOpen, currentAnnouncement?._id, currentAnnouncement?.isRead, dispatch])
 
     // Cargar más anuncios si se navega cerca del final
     useEffect(() => {
@@ -222,19 +280,43 @@ export default function AnnouncementModal() {
         }
     }, [isModalOpen, currentAnnouncementIndex, announcements.length, pagination, loadingAnnouncements, dispatch])
 
-    const handleClose = () => {
+    const handleClose = (e) => {
+        if (e) {
+            e.stopPropagation()
+            e.preventDefault()
+        }
+        // Marcar el anuncio actual como leído antes de cerrar si no está leído
+        if (currentAnnouncement && currentAnnouncement._id && !currentAnnouncement.isRead) {
+            console.log('Marcando anuncio como leído al cerrar:', currentAnnouncement._id, currentAnnouncement)
+            dispatch(markAnnouncementAsRead({ id: currentAnnouncement._id }))
+        } else {
+            console.log('No se marca como leído al cerrar:', {
+                hasAnnouncement: !!currentAnnouncement,
+                hasId: !!currentAnnouncement?._id,
+                isRead: currentAnnouncement?.isRead
+            })
+        }
+        setSelectedImage(null)
         dispatch(closeAnnouncementsModal())
     }
 
     const handleNext = () => {
         if (hasNext) {
-            dispatch(goToNextAnnouncement())
+            // Si hay más no leídos en el array actual, ir al siguiente
+            if (currentUnreadIndex < unreadIndices.length - 1) {
+                const nextUnreadIndex = unreadIndices[currentUnreadIndex + 1]
+                dispatch(setCurrentAnnouncementIndex(nextUnreadIndex))
+            } else if (pagination && pagination.hasNextPage) {
+                // Si no hay más no leídos pero hay más páginas, cargar siguiente página
+                dispatch(fetchAnnouncements({ page: pagination.page + 1, limit: 10 }))
+            }
         }
     }
 
     const handlePrevious = () => {
-        if (hasPrevious) {
-            dispatch(goToPreviousAnnouncement())
+        if (hasPrevious && currentUnreadIndex > 0) {
+            const prevUnreadIndex = unreadIndices[currentUnreadIndex - 1]
+            dispatch(setCurrentAnnouncementIndex(prevUnreadIndex))
         }
     }
 
@@ -276,7 +358,8 @@ export default function AnnouncementModal() {
             )
         }
 
-        if (announcements.length === 0) {
+        // Verificar si hay anuncios no leídos
+        if (unreadAnnouncements.length === 0) {
             return (
                 <div className={classes.emptyContainer}>
                     <p className={classes.emptyMessage}>{MESSAGES.noAnnouncements}</p>
@@ -284,7 +367,12 @@ export default function AnnouncementModal() {
             )
         }
 
-        if (!currentAnnouncement) {
+        if (!currentAnnouncement || currentAnnouncement.isRead) {
+            // Si el anuncio actual está leído, buscar el siguiente no leído
+            const nextUnreadIndex = unreadIndices[0]
+            if (nextUnreadIndex !== undefined) {
+                dispatch(setCurrentAnnouncementIndex(nextUnreadIndex))
+            }
             return null
         }
 
@@ -335,18 +423,24 @@ export default function AnnouncementModal() {
                 {currentAnnouncement.attachments && currentAnnouncement.attachments.length > 0 && (
                     <div className={classes.attachmentsSection}>
                         <h3 className={classes.attachmentsTitle}>{MESSAGES.attachments}</h3>
-                        {currentAnnouncement.attachments.map((attachment, index) => (
-                            <a
-                                key={index}
-                                href={attachment.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={classes.attachmentItem}
-                            >
-                                <GetAppIcon className={classes.attachmentIcon} />
-                                <span>{attachment.name}</span>
-                            </a>
-                        ))}
+                        <div className={classes.imagesGrid}>
+                            {currentAnnouncement.attachments.map((attachment, index) => (
+                                <div
+                                    key={index}
+                                    className={classes.imageContainer}
+                                    onClick={() => setSelectedImage(attachment.url)}
+                                >
+                                    <img
+                                        src={attachment.url}
+                                        alt={attachment.name || `Imagen ${index + 1}`}
+                                        className={classes.attachmentImage}
+                                        onError={(e) => {
+                                            e.target.style.display = 'none'
+                                        }}
+                                    />
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
 
@@ -373,7 +467,7 @@ export default function AnnouncementModal() {
                     </div>
                     <div className={classes.positionIndicator}>
                         {MESSAGES.position
-                            .replace('{current}', currentAnnouncementIndex + 1)
+                            .replace('{current}', currentUnreadIndex + 1)
                             .replace('{total}', totalAnnouncements)}
                     </div>
                 </div>
@@ -391,7 +485,11 @@ export default function AnnouncementModal() {
         >
             <DialogTitle className={classes.dialogTitle}>
                 <h2 className={classes.titleText}>{MESSAGES.title}</h2>
-                <IconButton className={classes.closeButton} onClick={handleClose}>
+                <IconButton 
+                    className={classes.closeButton} 
+                    onClick={handleClose}
+                    aria-label="Cerrar"
+                >
                     <CloseIcon />
                 </IconButton>
             </DialogTitle>
@@ -404,10 +502,37 @@ export default function AnnouncementModal() {
                         </Button>
                     )}
                 </div>
-                <Button variant="contained" color="primary" onClick={handleClose}>
+                <Button 
+                    variant="contained" 
+                    color="primary" 
+                    onClick={handleClose}
+                >
                     {MESSAGES.close}
                 </Button>
             </DialogActions>
+
+            {/* Modal para ver imagen en tamaño completo */}
+            <Dialog
+                open={Boolean(selectedImage)}
+                onClose={() => setSelectedImage(null)}
+                maxWidth="lg"
+                fullWidth
+            >
+                <DialogContent className={classes.imageModal}>
+                    {selectedImage && (
+                        <img
+                            src={selectedImage}
+                            alt="Vista completa"
+                            className={classes.imageModalContent}
+                        />
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button variant="contained" color="primary" onClick={() => setSelectedImage(null)}>
+                        {MESSAGES.close}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Dialog>
     )
 }
