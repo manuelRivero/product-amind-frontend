@@ -194,7 +194,7 @@ export default function Admin({ ...rest }) {
                 ? prop.childrens.map((e, i) => {
                     return (
                         <Route
-                            path={prop.path + e.path}
+                            path={`${prop.layout}${prop.path}${e.path}`}
                             component={e.component}
                             key={`child-${e.path}-${i}`}
                         />
