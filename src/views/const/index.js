@@ -105,6 +105,8 @@ export const ACTION_TYPES = {
     RESUME: "RESUME"
 };
 
+// Constantes para modales de Activation
+
 // Constantes para tipos de planes
 export const PLAN_TYPES = {
     BASIC: 'basic',

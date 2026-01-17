@@ -10,12 +10,17 @@ import GridItem from 'components/Grid/GridItem.js';
 import Button from 'components/CustomButtons/Button';
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import FeatureAlert from 'components/FeatureAlert';
+import LoadinScreen from 'components/LoadingScreen';
 import { formatNumber } from '../../../../helpers/product';
 import {
     PlanFeaturesList,
     formatBillingCycle
 } from '../../../helpers';
 import { isFreePlan } from '../../../../utils/planPermissions';
+import { UNAVAILABLE_FEATURE_FALLBACK } from '../../../const';
+import { VIEW_MODE_KEYS } from '../../activationConstants';
+import { PLAN_DISPLAY_TEXTS } from '../../../helpers';
+import { usePlanSelectionState } from '../../hooks/usePlanSelectionState';
 
 const useStyles = makeStyles((theme) => ({
     card: {
@@ -110,31 +115,33 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const PlanSelection = ({
-    hasPlan,
     setViewMode,
-    featureParam,
-    featureInfo,
-    UNAVAILABLE_FEATURE_FALLBACK,
-    plans,
     isSubscriptionActive,
-    configDetail,
-    highlightPlans,
     setSelectedPlan,
-    setShowComparisonModal,
-    PLAN_DISPLAY_TEXTS
+    setShowComparisonModal
 }) => {
     const classes = useStyles();
+    const {
+        loadingPlans,
+        plans,
+        featureParam,
+        featureInfo,
+        highlightPlans,
+        configDetail
+    } = usePlanSelectionState();
+
+    if (loadingPlans) {
+        return <LoadinScreen />;
+    }
 
     return (
         <>
-            {hasPlan && (
-                <IconButton
-                    className={classes.backButton}
-                    onClick={() => setViewMode('subscription-details')}
-                >
-                    <ArrowBackIcon />
-                </IconButton>
-            )}
+            <IconButton
+                className={classes.backButton}
+                onClick={() => setViewMode(VIEW_MODE_KEYS.SUBSCRIPTION_DETAILS)}
+            >
+                <ArrowBackIcon />
+            </IconButton>
             {featureParam && featureInfo && (
                 <FeatureAlert severity="info" className={classes.featureAlert}>
                     {featureInfo === UNAVAILABLE_FEATURE_FALLBACK ? (
@@ -167,7 +174,7 @@ const PlanSelection = ({
                     <GridContainer>
                         {plans
                             .filter((plan) =>
-                                (isSubscriptionActive && hasPlan)
+                                isSubscriptionActive
                                     ? plan._id !== configDetail?.plan?._id
                                     : true
                             )
@@ -251,21 +258,19 @@ const PlanSelection = ({
                                 </GridItem>
                             ))}
                     </GridContainer>
-                    {hasPlan && (
-                        <div className={classes.continueButtonContainer}>
-                            <Button
-                                type="button"
-                                variant="contained"
-                                color="primary"
-                                disabled={false}
-                                loading={false}
-                                className={classes.button}
-                                onClick={() => setViewMode('subscription-details')}
-                            >
-                                {PLAN_DISPLAY_TEXTS.CONTINUE_BUTTON}
-                            </Button>
-                        </div>
-                    )}
+                    <div className={classes.continueButtonContainer}>
+                        <Button
+                            type="button"
+                            variant="contained"
+                            color="primary"
+                            disabled={false}
+                            loading={false}
+                            className={classes.button}
+                            onClick={() => setViewMode(VIEW_MODE_KEYS.SUBSCRIPTION_DETAILS)}
+                        >
+                            {PLAN_DISPLAY_TEXTS.CONTINUE_BUTTON}
+                        </Button>
+                    </div>
                 </CardBody>
             </Card>
         </>
@@ -273,18 +278,10 @@ const PlanSelection = ({
 };
 
 PlanSelection.propTypes = {
-    hasPlan: PropTypes.bool,
     setViewMode: PropTypes.func.isRequired,
-    featureParam: PropTypes.string,
-    featureInfo: PropTypes.object,
-    UNAVAILABLE_FEATURE_FALLBACK: PropTypes.object,
-    plans: PropTypes.array.isRequired,
     isSubscriptionActive: PropTypes.bool,
-    configDetail: PropTypes.object,
-    highlightPlans: PropTypes.array.isRequired,
     setSelectedPlan: PropTypes.func.isRequired,
-    setShowComparisonModal: PropTypes.func.isRequired,
-    PLAN_DISPLAY_TEXTS: PropTypes.object.isRequired,
+    setShowComparisonModal: PropTypes.func.isRequired
 };
 
 export default PlanSelection;

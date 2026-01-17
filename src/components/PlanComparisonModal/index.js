@@ -23,6 +23,7 @@ import {
     CheckCircle as CheckCircleIcon,
     Cancel as CancelIcon
 } from '@material-ui/icons'
+import Button from '../CustomButtons/Button'
 import {
     FEATURE_CONFIG,
     formatBillingCycle,
@@ -160,6 +161,11 @@ const useStyles = makeStyles((theme) => ({
         marginRight: theme.spacing(1),
         fontSize: '1rem',
     },
+    supportText: {
+        marginTop: theme.spacing(2),
+        color: theme.palette.text.secondary,
+        fontSize: '0.875rem',
+    },
 }))
 
 const PlanComparisonModal = ({
@@ -167,7 +173,8 @@ const PlanComparisonModal = ({
     onClose,
     currentPlan,
     newPlan,
-    onConfirm
+    onConfirm,
+    supportMessage
 }) => {
     // Función helper para formatear precios
     const formatPrice = (plan) => {
@@ -505,25 +512,30 @@ const PlanComparisonModal = ({
                     </Box>
                     </CardBody>
                 </Card>
+                {supportMessage && (
+                    <Typography className={classes.supportText}>
+                        {supportMessage}
+                    </Typography>
+                )}
             </DialogContent>
 
             <DialogActions>
-                <button onClick={onClose} style={{ padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                    Cancelar
-                </button>
-                <button
-                    onClick={onConfirm}
-                    style={{
-                        padding: '8px 16px',
-                        backgroundColor: '#1976d2',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                    }}
+                <Button
+                    type="button"
+                    variant="contained"
+                    color="transparent"
+                    onClick={onClose}
                 >
-                    Confirmar Cambio
-                </button>
+                    Cancelar
+                </Button>
+                <Button
+                    type="button"
+                    variant="contained"
+                    color="primary"
+                    onClick={onConfirm}
+                >
+                    Confirmar cambio
+                </Button>
             </DialogActions>
         </Dialog>
     )
@@ -535,6 +547,7 @@ PlanComparisonModal.propTypes = {
     currentPlan: PropTypes.object,
     newPlan: PropTypes.object,
     onConfirm: PropTypes.func.isRequired,
+    supportMessage: PropTypes.string,
 }
 
 export default PlanComparisonModal 

@@ -7,7 +7,8 @@ import CardBody from 'components/Card/CardBody.js';
 import Button from 'components/CustomButtons/Button';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import moment from 'moment';
-import { isFreePlan } from '../../../../utils/planPermissions';
+import { ACTION_TYPES } from '../../../const';
+import { useSubscriptionDetails } from '../../hooks/useSubscriptionDetails';
 
 const useStyles = makeStyles((theme) => ({
     card: {
@@ -90,17 +91,16 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const SubscriptionDetails = ({ 
-    configDetail, 
-    loadingCancelSubscription, 
-    loadingPauseSubscription, 
-    handleConfirmAction, 
-    ACTION_TYPES,
-    getNextPaymentDate 
+    handleConfirmAction
 }) => {
     const classes = useStyles();
-    
-    // Verificar si el plan actual es gratuito
-    const isCurrentPlanFree = isFreePlan(configDetail?.plan);
+    const {
+        configDetail,
+        loadingCancelSubscription,
+        loadingPauseSubscription,
+        isCurrentPlanFree,
+        nextPaymentDate
+    } = useSubscriptionDetails();
 
     return (
         <Card className={classes.card}>
@@ -114,13 +114,13 @@ const SubscriptionDetails = ({
             </CardHeader>
             <CardBody>
                 <div className={classes.subscriptionActiveBanner}>
-                    Tu subscripción está activa
+                    Tu suscripción está activa
                     <CheckCircleIcon style={{ marginLeft: 12, fontSize: 32 }} />
                 </div>
                 <p className={classes.description} style={{ marginTop: 0 }}>
                     Puedes operar tu tienda con normalidad
                 </p>
-                <h4 className={classes.subtitle}>Detalles de tu subscripción:</h4>
+                <h4 className={classes.subtitle}>Detalles de tu suscripción:</h4>
                 <ul className={classes.subscriptionDetailsList}>
                     <li className={classes.subscriptionDetailItem}>
                         <div className={classes.subscriptionDetailBullet}></div>
@@ -136,13 +136,15 @@ const SubscriptionDetails = ({
                             {configDetail?.startDate ? moment(configDetail.startDate).format('DD/MM/YYYY') : 'No configurado'}
                         </span>
                     </li>
-                    <li className={classes.subscriptionDetailItem}>
-                        <div className={classes.subscriptionDetailBullet}></div>
-                        <span className={classes.subscriptionDetailLabel}>Fecha del próximo cobro:</span>
-                        <span className={classes.subscriptionDetailValue}>
-                            {getNextPaymentDate() || 'No configurado'}
-                        </span>
-                    </li>
+                    {!isCurrentPlanFree && (
+                        <li className={classes.subscriptionDetailItem}>
+                            <div className={classes.subscriptionDetailBullet}></div>
+                            <span className={classes.subscriptionDetailLabel}>Fecha del próximo cobro:</span>
+                            <span className={classes.subscriptionDetailValue}>
+                                {nextPaymentDate || 'No configurado'}
+                            </span>
+                        </li>
+                    )}
                 </ul>
                 <div className={classes.buttonContainer}>
                     <Button
@@ -154,7 +156,7 @@ const SubscriptionDetails = ({
                         className={classes.button}
                         onClick={() => handleConfirmAction(ACTION_TYPES.CHANGE_PLAN)}
                     >
-                        Cambiar de plan
+                        {isCurrentPlanFree ? 'Descubre más funcionalidades' : 'Cambiar de plan'}
                     </Button>
                     {!isCurrentPlanFree && (
                         <>
@@ -189,12 +191,7 @@ const SubscriptionDetails = ({
 };
 
 SubscriptionDetails.propTypes = {
-    configDetail: PropTypes.object,
-    loadingCancelSubscription: PropTypes.bool,
-    loadingPauseSubscription: PropTypes.bool,
     handleConfirmAction: PropTypes.func.isRequired,
-    ACTION_TYPES: PropTypes.object.isRequired,
-    getNextPaymentDate: PropTypes.func.isRequired,
 };
 
 export default SubscriptionDetails;

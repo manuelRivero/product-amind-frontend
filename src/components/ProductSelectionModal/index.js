@@ -119,6 +119,11 @@ const useStyles = makeStyles((theme) => ({
         borderTop: '1px solid #e0e0e0',
         backgroundColor: '#fafafa',
     },
+    supportText: {
+        marginTop: theme.spacing(2),
+        color: theme.palette.text.secondary,
+        fontSize: '0.875rem',
+    },
 }))
 
 const ProductSelectionModal = ({
@@ -126,6 +131,7 @@ const ProductSelectionModal = ({
     onClose,
     newPlan,
     onConfirm,
+    supportMessage,
 }) => {
     const classes = useStyles()
     const { configDetail } = useSelector((state) => state.config)
@@ -440,6 +446,11 @@ const ProductSelectionModal = ({
                     </CardBody>
                 </Card>
 
+                {supportMessage && (
+                    <Typography className={classes.supportText}>
+                        {supportMessage}
+                    </Typography>
+                )}
             </DialogContent>
             
             <DialogActions className={classes.dialogActions}>
@@ -468,6 +479,7 @@ ProductSelectionModal.propTypes = {
     onClose: PropTypes.func.isRequired,
     newPlan: PropTypes.object.isRequired,
     onConfirm: PropTypes.func.isRequired,
+    supportMessage: PropTypes.string,
 }
 
 export default ProductSelectionModal 

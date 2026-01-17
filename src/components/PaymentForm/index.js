@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
 
-import Button from '@material-ui/core/Button';
+import Button from 'components/CustomButtons/Button';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogTitle from '@material-ui/core/DialogTitle';
@@ -13,10 +13,13 @@ import { isFreePlan } from '../../utils/planPermissions';
 import Card from '../Card/Card.js';
 import CardHeader from '../Card/CardHeader.js';
 import CardBody from '../Card/CardBody.js';
+import ArrowBackIcon from '@material-ui/icons/ArrowBack';
+import { IconButton } from '@material-ui/core';
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles((theme) => ({
     card: {
-        marginTop: 20,
+        
+        marginTop: theme.spacing(8),
     },
     cardTitleWhite: {
         color: '#FFFFFF',
@@ -45,6 +48,17 @@ const useStyles = makeStyles(() => ({
     button: {
         marginTop: 20,
     },
+    buttonRow: {
+        display: 'flex',
+        justifyContent: 'flex-end',
+        gap: 12,
+    },
+    backButton: {
+        display: 'flex',
+        gap: '1rem',
+        alignItems: 'center',
+        cursor: 'pointer',
+    }
 }));
 
 const PaymentForm = ({
@@ -53,7 +67,7 @@ const PaymentForm = ({
     selectedProductForPlanChange,
     selectedCategoryForPlanChange,
     onSuccess,
-
+    onCancel,
     resetPlan
 }) => {
     const classes = useStyles();
@@ -266,6 +280,12 @@ const PaymentForm = ({
 
     return (
         <>
+                <IconButton
+                    className={classes.backButton}
+                    onClick={onCancel}
+                >
+                    <ArrowBackIcon />
+                </IconButton>
             <Card className={classes.card}>
                 <CardHeader color="primary">
                     <h4 className={classes.cardTitleWhite}>
@@ -343,17 +363,29 @@ const PaymentForm = ({
                                     {error}
                                 </p>
                             )}
-                            <Button
-                                type="button"
-                                variant="contained"
-                                color="primary"
-                                disabled={!mp || loading}
-                                loading={loading}
-                                className={classes.button}
-                                onClick={handleSubmit}
-                            >
-                                Aceptar
-                            </Button>
+                            <div className={classes.buttonRow}>
+                                <Button
+                                    type="button"
+                                    variant="contained"
+                                    color="transparent"
+                                    disabled={loading}
+                                    className={classes.button}
+                                    onClick={onCancel}
+                                >
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="contained"
+                                    color="primary"
+                                    disabled={!mp || loading}
+                                    loading={loading}
+                                    className={classes.button}
+                                    onClick={handleSubmit}
+                                >
+                                    Aceptar
+                                </Button>
+                            </div>
                         </>
                     )}
                 </CardBody>
@@ -393,7 +425,7 @@ PaymentForm.propTypes = {
     selectedProductForPlanChange: PropTypes.object,
     selectedCategoryForPlanChange: PropTypes.object,
     onSuccess: PropTypes.func,
-
+    onCancel: PropTypes.func,
     resetPlan: PropTypes.func
 };
 
@@ -403,7 +435,7 @@ PaymentForm.defaultProps = {
     selectedProductForPlanChange: null,
     selectedCategoryForPlanChange: null,
     onSuccess: null,
-
+    onCancel: null,
     resetPlan: null
 };
 

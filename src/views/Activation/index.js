@@ -2,36 +2,36 @@
 
 import React, { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import {
-    Dialog,
-    DialogActions,
-    DialogTitle,
-} from '@material-ui/core'
-import Button from 'components/CustomButtons/Button'
-
 import { makeStyles } from '@material-ui/core/styles'
 import { useDispatch, useSelector } from 'react-redux'
 
-import LoadinScreen from '../../components/LoadingScreen'
 import {
     PaymentPending,
     PaymentPaused,
     PaymentCancelled,
     SubscriptionDetails,
     PaymentAuthorized,
-    PaymentFormWrapper,
     PlanSelection,
     MarketplaceConnection
 } from './ActivationComponents'
-import { getPlans } from '../../api/plans'
-import moment from 'moment'
+import PaymentForm from '../../components/PaymentForm'
 import { getConfigRequest, cancelSubscriptionRequest, pauseSubscriptionRequest, resumeSubscriptionRequest } from '../../store/config'
-import { SUBSCRIPTION_MESSAGES, ACTION_TYPES, PLAN_CHANGE_MESSAGES, UNAVAILABLE_FEATURE_FALLBACK } from '../const'
+import { ACTION_TYPES } from '../const'
 import PlanComparisonModal from '../../components/PlanComparisonModal'
 import ProductSelectionModal from '../../components/ProductSelectionModal'
 import CategorySelectionModal from '../../components/CategorySelectionModal'
-import { PLAN_DISPLAY_TEXTS } from '../helpers'
-import { isFreePlan } from '../../utils/planPermissions'
+import { useActivationStatus } from './hooks/useActivationStatus'
+import { useConfirmation } from './hooks/useConfirmation'
+import { getViewMode } from './activationUtils'
+import {
+    ACTIVATION_ERROR_TYPES,
+    ACTIVATION_SUPPORT_MESSAGE,
+    ACTIVATION_VIEW_STATES,
+    MODAL_KEYS,
+    VIEW_MODE_KEYS
+} from './activationConstants'
+import ConfirmActionModal from './ActivationComponents/ConfirmActionModal'
+import ActivationErrorModal from './ActivationComponents/ActivationErrorModal'
 
 const useStyles = makeStyles((theme) => ({
     // Modal
@@ -63,99 +63,63 @@ const useStyles = makeStyles((theme) => ({
         backgroundColor: '#fff3cd',
         border: '1px solid #ffeaa7',
     },
+    modalSupport: {
+        color: theme.palette.text.secondary,
+        fontSize: '0.875rem',
+        marginTop: theme.spacing(1.5),
+    },
 }))
 
 const Activation = () => {
-    const { configDetail, loadingCancelSubscription, loadingPauseSubscription } = useSelector((state) => state.config)
-    const dispatch = useDispatch()
-
-    // validación de conexión con mercado pago
-    const mercadoPagoMarketplaceAccessToken = configDetail?.mercadoPagoMarketplaceAccessToken
-    const mercadoPagoMarketplaceTokenExpiresAt = moment(configDetail?.mercadoPagoMarketplaceTokenExpiresAt).isAfter(moment())
-    // Nueva lógica de validación de estados de suscripción
-    const mpSubscriptionId = configDetail?.mpSubscriptionId
-    const paymentStatus = configDetail?.paymentStatus
-    const preapprovalStatus = configDetail?.preapprovalStatus
-    const plan = configDetail?.plan
-    
-    // Tomar el último status de userActionHistory (ordenado por fecha ascendente)
-    const lastStatusObj = Array.isArray(configDetail?.userActionHistory) && configDetail.userActionHistory.length > 0
-        ? configDetail.userActionHistory[configDetail.userActionHistory.length - 1]
-        : null;
-    const lastStatus = lastStatusObj?.action;
-    const lastPauseDate = lastStatusObj && lastStatusObj.status === 'paused' ? lastStatusObj.date : null;
-    const lastCancelDate = lastStatusObj && lastStatusObj.status === 'cancelled' ? lastStatusObj.date : null;
-
-    // Flags de estado - actualizados para manejar tiendas sin plan
-    const hasPlan = plan !== null && plan !== undefined;
-    const hasSubscription = mpSubscriptionId !== null && mpSubscriptionId !== undefined;
-    
-    // Estados de pago corregidos
-    const isPaymentApproved = hasPlan && hasSubscription && (preapprovalStatus === 'approved' && paymentStatus === 'approved');
-    const isPaymentAuthorized = hasPlan && hasSubscription && (preapprovalStatus === 'authorized' && paymentStatus === 'authorized');
-    const isPaymentPending = hasPlan && hasSubscription && (preapprovalStatus === 'authorized' && paymentStatus === 'pending');
-    const isPaymentPaused = hasPlan && hasSubscription && (preapprovalStatus === 'paused' || paymentStatus === 'paused' || lastStatus === 'paused');
-    const isPaymentCancelled = hasPlan && hasSubscription && (preapprovalStatus === 'cancelled' || paymentStatus === 'cancelled' || lastStatus === 'cancelled');
-    
-    // Suscripción activa cuando está aprobada o es plan gratuito
-    const isSubscriptionActive = hasPlan && (isFreePlan(plan) || (hasSubscription && isPaymentApproved && !isPaymentCancelled));
-
-    // Función para determinar el modo de vista
-    const getViewMode = () => {
-        if (!mercadoPagoMarketplaceAccessToken && !mercadoPagoMarketplaceTokenExpiresAt) return 'marketplace-connection';
-        
-        // Si no hay plan configurado, mostrar selección de plan
-        if (!hasPlan) return 'plan-selection';
-        
-        // Si es plan gratuito, mostrar detalles de suscripción directamente
-        if (isFreePlan(plan)) return 'subscription-details';
-        
-        // Si hay plan pero no hay suscripción, mostrar selección de plan
-        if (!hasSubscription) return 'plan-selection';
-        
-        if (isPaymentCancelled) return 'payment-cancelled';
-        if (isPaymentPaused) return 'payment-paused';
-        if (isPaymentPending) return 'payment-pending';
-        if (isPaymentAuthorized) return 'payment-authorized';
-        if (isPaymentApproved) return 'subscription-details';
-        return 'subscription-details';
-    };
-
-    const [viewMode, setViewMode] = React.useState(getViewMode());
-
-    // Actualizar viewMode cuando cambian los flags
-    React.useEffect(() => {
-        setViewMode(getViewMode());
-    }, [hasPlan, hasSubscription, isPaymentApproved, isPaymentAuthorized, isPaymentPending, isPaymentPaused, isPaymentCancelled, isSubscriptionActive]);
-
-    const [loadingPlans, setLoadingPlans] = React.useState(false)
-    const [plans, setPlans] = React.useState([])
-
-    const [selectedPlan, setSelectedPlan] = React.useState(null)
-    const [showConfirmModal, setShowConfirmModal] = React.useState(false)
-    const [confirmAction, setConfirmAction] = React.useState(null)
-    const [showComparisonModal, setShowComparisonModal] = React.useState(false)
-    const [showProductSelectionModal, setShowProductSelectionModal] = React.useState(false)
-    const [showCategorySelectionModal, setShowCategorySelectionModal] = React.useState(false)
     const classes = useStyles()
-
     const location = useLocation()
-    const [featureParam, setFeatureParam] = useState(null)
-    const [highlightPlans, setHighlightPlans] = useState([])
-    const [featureInfo, setFeatureInfo] = useState(null)
+    const { configDetail } = useSelector((state) => state.config)
+    const dispatch = useDispatch()
+    const mpSubscriptionId = configDetail?.mpSubscriptionId
+    const { viewState, meta } = useActivationStatus(configDetail)
+    const validMPToken = meta.tokenValid
+
+    const [viewMode, setViewMode] = React.useState(getViewMode({ viewState, meta, validMPToken }));
+    const [selectedPlan, setSelectedPlan] = React.useState(null)
+    const [confirmAction, setConfirmAction] = React.useState(null)
+    const [activeModal, setActiveModal] = React.useState(MODAL_KEYS.NONE)
+    const [errorInfo, setErrorInfo] = React.useState({ type: null, message: '' })
+
     const [selectedProductForPlanChange, setSelectedProductForPlanChange] = useState(null)
     const [selectedCategoryForPlanChange, setSelectedCategoryForPlanChange] = useState(null)
     const [showCardForm, setShowCardForm] = useState(false)
+
+        // Actualizar viewMode cuando cambian los flags
+        React.useEffect(() => {
+            setViewMode(getViewMode({
+                viewState,
+                meta,
+                validMPToken
+            }));
+        }, [viewState, meta, validMPToken]);
+    
 
     useEffect(() => {
         const params = new URLSearchParams(location.search)
         const feature = params.get('feature')
         if (feature) {
-            setFeatureParam(feature)
-            setViewMode('plan-selection')
+            setViewMode(VIEW_MODE_KEYS.PLAN_SELECTION)
         }
     }, [location.search])
 
+    const openErrorModal = (type, error) => {
+        setErrorInfo({
+            type,
+            message: error?.message || ''
+        })
+        setConfirmAction(null)
+        setActiveModal(MODAL_KEYS.ERROR_FEEDBACK)
+    }
+
+    const handleCloseErrorModal = () => {
+        setActiveModal(MODAL_KEYS.NONE)
+        setErrorInfo({ type: null, message: '' })
+    }
 
     const handleCancelSubscription = async () => {
         if (!mpSubscriptionId) {
@@ -164,10 +128,11 @@ const Activation = () => {
         }
         try {
             await dispatch(cancelSubscriptionRequest(mpSubscriptionId))
-            setShowConfirmModal(false)
+            setActiveModal(MODAL_KEYS.NONE)
             setConfirmAction(null)
         } catch (error) {
             console.error('Error al cancelar la suscripción:', error)
+            openErrorModal(ACTIVATION_ERROR_TYPES.CANCEL_SUBSCRIPTION, error)
         }
     }
 
@@ -178,11 +143,12 @@ const Activation = () => {
         }
         try {
             await dispatch(pauseSubscriptionRequest(mpSubscriptionId))
-            setShowConfirmModal(false)
+            setActiveModal(MODAL_KEYS.NONE)
             setConfirmAction(null)
             dispatch(getConfigRequest()) // Refrescar la configuración tras pausar
         } catch (error) {
             console.error('Error al pausar la suscripción:', error)
+            openErrorModal(ACTIVATION_ERROR_TYPES.PAUSE_SUBSCRIPTION, error)
         }
     }
 
@@ -193,12 +159,18 @@ const Activation = () => {
         }
         try {
             await dispatch(resumeSubscriptionRequest(mpSubscriptionId))
-            setShowConfirmModal(false)
+            setActiveModal(MODAL_KEYS.NONE)
             setConfirmAction(null)
             dispatch(getConfigRequest()) // Refrescar la configuración tras reactivar
         } catch (error) {
             console.error('Error al reactivar la suscripción:', error)
+            openErrorModal(ACTIVATION_ERROR_TYPES.RESUME_SUBSCRIPTION, error)
         }
+    }
+
+    const handlePaymentSuccess = () => {
+        dispatch(getConfigRequest())
+        setSelectedPlan(null)
     }
 
     const handleChangePlan = async () => {
@@ -221,8 +193,7 @@ const Activation = () => {
             // Si el nuevo plan tiene límite menor, obtener productos y mostrar modal de selección
             if (newProductLimit !== Infinity && newProductLimit < currentProductLimit) {
                 console.log('Límite menor detectado, obteniendo productos...');
-                setShowProductSelectionModal(true);
-                setShowConfirmModal(false);
+                setActiveModal(MODAL_KEYS.PRODUCT_SELECTION);
             } else {
                 console.log('No hay límite menor, procediendo con cambio directo');
                 await proceedWithPlanChange();
@@ -243,11 +214,10 @@ const Activation = () => {
             const newCategoriesLimit = selectedPlan?.features?.createCategories?.limits?.maxCategories || Infinity;
             console.log("limit", currentCategorieLimit > newCategoriesLimit)
             if (currentCategorieLimit > newCategoriesLimit) {
-                setShowProductSelectionModal(false)
-                setShowCategorySelectionModal(true)
+                setActiveModal(MODAL_KEYS.CATEGORY_SELECTION)
             } else {
-                setShowConfirmModal(false)
-                setViewMode('payment-form')
+                setActiveModal(MODAL_KEYS.NONE)
+                setViewMode(VIEW_MODE_KEYS.PAYMENT_FORM)
                 setShowCardForm(true)
             }
 
@@ -266,8 +236,7 @@ const Activation = () => {
             const newCategoriesLimit = selectedPlan?.features?.createCategories?.limits?.maxCategories || Infinity;
             console.log("limit", currentCategorieLimit > newCategoriesLimit)
             if (currentCategorieLimit > newCategoriesLimit) {
-                setShowProductSelectionModal(false)
-                setShowCategorySelectionModal(true)
+                setActiveModal(MODAL_KEYS.CATEGORY_SELECTION)
             }
 
         } catch (error) {
@@ -280,8 +249,8 @@ const Activation = () => {
             setSelectedCategoryForPlanChange(selectionData)
             console.log('Categorías seleccionados:', selectionData);
             setShowCardForm(true)
-            setViewMode('payment-form')
-            setShowCategorySelectionModal(false)
+            setViewMode(VIEW_MODE_KEYS.PAYMENT_FORM)
+            setActiveModal(MODAL_KEYS.NONE)
 
         } catch (error) {
             console.error('Error en handleCategorySelectionConfirm:', error);
@@ -290,177 +259,103 @@ const Activation = () => {
 
     const handleConfirmAction = (action) => {
         setConfirmAction(action)
-        setShowConfirmModal(true)
+        setActiveModal(MODAL_KEYS.CONFIRM_ACTION)
+    }
+
+    const {
+        modalConfig,
+        confirmDisabled,
+        confirmLoading,
+        cancelDisabled,
+        handleClose
+    } = useConfirmation({
+        confirmAction,
+        selectedPlan,
+        setActiveModal
+    })
+
+    const handleChangePlanAction = () => {
+        console.log('Cambiando de plan')
+        setViewMode(VIEW_MODE_KEYS.PLAN_SELECTION)
+        setActiveModal(MODAL_KEYS.NONE)
+    }
+
+    const handleInitialChangePlanAction = () => {
+        console.log('Cambiando de plan inicial')
+        setActiveModal(MODAL_KEYS.NONE)
+        setConfirmAction(null)
+        setViewMode(VIEW_MODE_KEYS.PAYMENT_FORM)
+    }
+
+    const actionHandlers = {
+        [ACTION_TYPES.CANCEL]: handleCancelSubscription,
+        [ACTION_TYPES.PAUSE]: handlePauseSubscription,
+        [ACTION_TYPES.RESUME]: handleResumeSubscription,
+        [ACTION_TYPES.CHANGE_PLAN]: handleChangePlanAction,
+        [ACTION_TYPES.CHANGE_PLAN_INITIAL]: handleInitialChangePlanAction
     }
 
     const executeAction = () => {
-        if (confirmAction === ACTION_TYPES.CANCEL) {
-            handleCancelSubscription()
-        } else if (confirmAction === ACTION_TYPES.PAUSE) {
-            handlePauseSubscription()
-        } else if (confirmAction === ACTION_TYPES.CHANGE_PLAN) {
-            console.log('Cambiando de plan')
-            setViewMode('plan-selection')
-            setShowConfirmModal(false)
-        } else if (confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL) {
-            console.log('Cambiando de plan inicial')
-
-            setShowConfirmModal(false)
-            setConfirmAction(null)
-            setViewMode('payment-form')
-        } else if (confirmAction === ACTION_TYPES.RESUME) {
-            handleResumeSubscription()
+        const handler = actionHandlers[confirmAction]
+        if (handler) {
+            handler()
         }
     }
 
 
-
-    useEffect(() => {
-        const getData = async () => {
-            try {
-                setLoadingPlans(true)
-                const response = await getPlans({searchAvailable: true })
-                setPlans(response.data.plans)
-            } catch (error) {
-                console.error('Error fetching plans:', error)
-                setLoadingPlans(false)
-            } finally {
-                setLoadingPlans(false)
-            }
-        }
-        getData()
-    }, [])
-
-    useEffect(() => {
-        if (featureParam && plans.length > 0) {
-            // Función helper para verificar si un plan tiene una feature habilitada
-            const planHasFeature = (plan, featureKey) => {
-                if (!plan.features || !Array.isArray(plan.features)) {
-                    return false
-                }
-                
-                const feature = plan.features.find(f => f.feature?.name === featureKey)
-                return feature?.enabled === true
-            }
-            
-            const plansWithFeature = plans.filter(plan => planHasFeature(plan, featureParam))
-            setHighlightPlans(plansWithFeature.map(p => p._id))
-
-            if (plansWithFeature.length > 0) {
-                // Tomar info de la feature (title, description)
-                const featureData = plansWithFeature[0].features.find(f => f.feature?.name === featureParam)
-                setFeatureInfo(featureData?.feature || featureData)
-            } else {
-                // Ningún plan tiene la feature habilitada, usar fallback
-                setFeatureInfo(UNAVAILABLE_FEATURE_FALLBACK)
-            }
-        }
-    }, [featureParam, plans])
-
-
-const getNextPaymentDate = () => {
-    // Validar que configDetail y rawData existan
-    if (!configDetail?.rawData?.auto_recurring) {
-        return null
-    }
-
-    const frequencyType = configDetail.rawData.auto_recurring.frequency_type
-    const frequencyInterval = configDetail.rawData.auto_recurring.frequency
-    const startDate = configDetail.rawData.auto_recurring.start_date
-
-    if (frequencyType === 'days') {
-        return moment(startDate).add(frequencyInterval, 'days').format('DD/MM/YYYY')
-    } else if (frequencyType === 'weeks') {
-        return moment(startDate).add(frequencyInterval, 'weeks').format('DD/MM/YYYY')
-    } else if (frequencyType === 'months') {
-        return moment(startDate).add(frequencyInterval, 'months').format('DD/MM/YYYY')
-    }
-    
-    return null
-}
-console.log('configDetail.rawData.next_payment_date', configDetail?.rawData?.auto_recurring?.frequency_type)
-
-    if (loadingPlans) {
-        return <LoadinScreen />
-    }
     const renderContent = () => {
         switch (viewMode) {
-            case 'payment-pending':
+            case VIEW_MODE_KEYS.PAYMENT_PENDING:
                 return <PaymentPending />;
 
-            case 'payment-paused':
+            case VIEW_MODE_KEYS.PAYMENT_PAUSED:
                 return (
                     <PaymentPaused
-                        configDetail={configDetail}
-                        lastPauseDate={lastPauseDate}
-                        loadingCancelSubscription={loadingCancelSubscription}
                         handleConfirmAction={handleConfirmAction}
-                        ACTION_TYPES={ACTION_TYPES}
-                        hasSubscription={hasSubscription}
                     />
                 );
 
-            case 'payment-cancelled':
-                return (
-                    <PaymentCancelled
-                        configDetail={configDetail}
-                        lastCancelDate={lastCancelDate}
-                        hasSubscription={hasSubscription}
-                    />
-                );
+            case VIEW_MODE_KEYS.PAYMENT_CANCELLED:
+                return <PaymentCancelled />;
 
-            case 'subscription-details':
+            case VIEW_MODE_KEYS.SUBSCRIPTION_DETAILS:
                 return (
                     <SubscriptionDetails
-                        configDetail={configDetail}
-                        loadingCancelSubscription={loadingCancelSubscription}
-                        loadingPauseSubscription={loadingPauseSubscription}
                         handleConfirmAction={handleConfirmAction}
-                        ACTION_TYPES={ACTION_TYPES}
-                        getNextPaymentDate={getNextPaymentDate}
-                        hasSubscription={hasSubscription}
                     />
                 );
 
-            case 'payment-authorized':
-                return (
-                    <PaymentAuthorized
-                        configDetail={configDetail}
-                        hasSubscription={hasSubscription}
-                    />
-                );
+            case VIEW_MODE_KEYS.PAYMENT_AUTHORIZED:
+                return <PaymentAuthorized />;
 
-            case 'payment-form':
+            case VIEW_MODE_KEYS.PAYMENT_FORM:
                 return (
-                    <PaymentFormWrapper
+                    <PaymentForm
                         showCardForm={showCardForm}
                         selectedPlan={selectedPlan}
                         selectedProductForPlanChange={selectedProductForPlanChange}
                         selectedCategoryForPlanChange={selectedCategoryForPlanChange}
-                        setSelectedPlan={setSelectedPlan}
-                        setViewMode={setViewMode}
+                        resetPlan={() => setSelectedPlan(null)}
+                        onSuccess={handlePaymentSuccess}
+                        onCancel={() => {
+                            setShowCardForm(false)
+                            setSelectedPlan(null)
+                            setViewMode(VIEW_MODE_KEYS.PLAN_SELECTION)
+                        }}
                     />
                 );
 
-            case 'plan-selection':
+            case VIEW_MODE_KEYS.PLAN_SELECTION:
                 return (
                     <PlanSelection
-                        hasPlan={hasPlan}
                         setViewMode={setViewMode}
-                        featureParam={featureParam}
-                        featureInfo={featureInfo}
-                        UNAVAILABLE_FEATURE_FALLBACK={UNAVAILABLE_FEATURE_FALLBACK}
-                        plans={plans}
-                        isSubscriptionActive={isSubscriptionActive}
-                        configDetail={configDetail}
-                        highlightPlans={highlightPlans}
+                        isSubscriptionActive={viewState === ACTIVATION_VIEW_STATES.ACTIVE}
                         setSelectedPlan={setSelectedPlan}
-                        setShowComparisonModal={setShowComparisonModal}
-                        PLAN_DISPLAY_TEXTS={PLAN_DISPLAY_TEXTS}
+                        setShowComparisonModal={() => setActiveModal(MODAL_KEYS.PLAN_COMPARISON)}
                     />
                 );
 
-            case 'marketplace-connection':
+            case VIEW_MODE_KEYS.MARKETPLACE_CONNECTION:
                 return (
                     <MarketplaceConnection />
                 );
@@ -472,195 +367,56 @@ console.log('configDetail.rawData.next_payment_date', configDetail?.rawData?.aut
 
     return (
         <>
-
             {renderContent()}
 
-            <Dialog open={showConfirmModal} onClose={
-                loadingCancelSubscription || loadingPauseSubscription ? undefined : () => setShowConfirmModal(false)
-            } maxWidth="sm" fullWidth>
-                {console.log('Modal abierto:', showConfirmModal, 'Acción:', confirmAction)}
-                <DialogTitle>
-                    {confirmAction === ACTION_TYPES.CANCEL
-                        ? SUBSCRIPTION_MESSAGES.CANCEL.title
-                        : confirmAction === ACTION_TYPES.PAUSE
-                            ? SUBSCRIPTION_MESSAGES.PAUSE.title
-                            : confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL
-                                ? PLAN_CHANGE_MESSAGES.INITIAL.title
-                                                                    : confirmAction === ACTION_TYPES.CHANGE_PLAN
-                                        ? (() => {
-                                            const currentPlan = configDetail?.plan;
-                                            const selectedPlanData = selectedPlan;
+            <ConfirmActionModal
+                open={activeModal === MODAL_KEYS.CONFIRM_ACTION}
+                onClose={handleClose}
+                onConfirm={executeAction}
+                config={modalConfig}
+                classes={classes}
+                confirmDisabled={confirmDisabled}
+                confirmLoading={confirmLoading}
+                cancelDisabled={cancelDisabled}
+                supportMessage={ACTIVATION_SUPPORT_MESSAGE}
+            />
 
-                                            if (currentPlan && selectedPlanData) {
-                                                if (selectedPlanData.price > currentPlan.price) {
-                                                    return PLAN_CHANGE_MESSAGES.UPGRADE.title;
-                                                } else if (selectedPlanData.price < currentPlan.price) {
-                                                    return PLAN_CHANGE_MESSAGES.DOWNGRADE.title;
-                                                } else {
-                                                    return PLAN_CHANGE_MESSAGES.SAME_PLAN.title;
-                                                }
-                                            }
-                                            return 'Seleccionar plan';
-                                        })()
-                                    : confirmAction === ACTION_TYPES.RESUME
-                                        ? SUBSCRIPTION_MESSAGES.RESUME.title
-                                        : 'Confirmar acción'
-                    }
-                </DialogTitle>
-                <div className={classes.modalContent}>
-                    {confirmAction === ACTION_TYPES.CHANGE_PLAN ? (
-                        <>
-                            <p className={classes.modalDescription}>
-                                {PLAN_CHANGE_MESSAGES.INITIAL.description}
-                            </p>
-                            <ul className={classes.modalList}>
-                                {PLAN_CHANGE_MESSAGES.INITIAL.benefits.map((benefit, index) => (
-                                    <li key={index} className={classes.modalListItem}>
-                                        {benefit}
-                                    </li>
-                                ))}
-                            </ul>
-                            <p className={`${classes.modalWarning} ${classes.modalWarningSuccess}`}>
-                                {PLAN_CHANGE_MESSAGES.INITIAL.warning}
-                            </p>
-                        </>
-                    ) : confirmAction === ACTION_TYPES.RESUME ? (
-                        <>
-                            <p className={classes.modalDescription}>
-                                {SUBSCRIPTION_MESSAGES.RESUME.description}
-                            </p>
-                            <ul className={classes.modalList}>
-                                {SUBSCRIPTION_MESSAGES.RESUME.benefits.map((benefit, index) => (
-                                    <li key={index} className={classes.modalListItem}>
-                                        {benefit}
-                                    </li>
-                                ))}
-                            </ul>
-                            <p className={`${classes.modalWarning} ${classes.modalWarningSuccess}`}>
-                                {SUBSCRIPTION_MESSAGES.RESUME.warning}
-                            </p>
-                        </>
-                    ) : (
-                        <>
-                            <p className={classes.modalDescription}>
-                                {confirmAction === ACTION_TYPES.CANCEL
-                                    ? SUBSCRIPTION_MESSAGES.CANCEL.description
-                                    : SUBSCRIPTION_MESSAGES.PAUSE.description
-                                }
-                            </p>
-                            <ul className={classes.modalList}>
-                                {(confirmAction === ACTION_TYPES.CANCEL
-                                    ? SUBSCRIPTION_MESSAGES.CANCEL.consequences
-                                    : SUBSCRIPTION_MESSAGES.PAUSE.consequences
-                                ).map((consequence, index) => (
-                                    <li key={index} className={classes.modalListItem}>
-                                        {consequence}
-                                    </li>
-                                ))}
-                            </ul>
-                            <p className={`${classes.modalWarning} ${classes.modalWarningWarning}`}>
-                                {confirmAction === ACTION_TYPES.CANCEL
-                                    ? SUBSCRIPTION_MESSAGES.CANCEL.warning
-                                    : SUBSCRIPTION_MESSAGES.PAUSE.warning
-                                }
-                            </p>
-                        </>
-                    )}
-                </div>
-                <DialogActions>
-                    <Button
-                        onClick={() => setShowConfirmModal(false)}
-                        color="transparent"
-                        disabled={loadingCancelSubscription || loadingPauseSubscription}
-                    >
-                        {confirmAction === ACTION_TYPES.CANCEL
-                            ? SUBSCRIPTION_MESSAGES.CANCEL.cancelText
-                            : confirmAction === ACTION_TYPES.PAUSE
-                                ? SUBSCRIPTION_MESSAGES.PAUSE.cancelText
-                                : confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL
-                                    ? PLAN_CHANGE_MESSAGES.INITIAL.cancelText
-                                    : confirmAction === ACTION_TYPES.CHANGE_PLAN
-                                        ? (() => {
-                                            const currentPlan = configDetail?.plan;
-                                            const selectedPlanData = selectedPlan;
-
-                                            if (currentPlan && selectedPlanData) {
-                                                if (selectedPlanData.price > currentPlan.price) {
-                                                    return PLAN_CHANGE_MESSAGES.UPGRADE.cancelText;
-                                                } else if (selectedPlanData.price < currentPlan.price) {
-                                                    return PLAN_CHANGE_MESSAGES.DOWNGRADE.cancelText;
-                                                } else {
-                                                    return PLAN_CHANGE_MESSAGES.SAME_PLAN.cancelText;
-                                                }
-                                            }
-                                            return 'Cancelar';
-                                        })()
-                                        : confirmAction === ACTION_TYPES.RESUME
-                                            ? SUBSCRIPTION_MESSAGES.RESUME.cancelText
-                                            : 'Cancelar'
-                        }
-                    </Button>
-                    <Button
-                        onClick={executeAction}
-                        color={confirmAction === ACTION_TYPES.CANCEL ? 'danger' : confirmAction === ACTION_TYPES.RESUME ? 'success' : 'primary'}
-                        disabled={
-                            (confirmAction === ACTION_TYPES.CANCEL && loadingCancelSubscription) ||
-                            (confirmAction === ACTION_TYPES.PAUSE && loadingPauseSubscription) ||
-                            (confirmAction === ACTION_TYPES.RESUME && loadingPauseSubscription) ||
-                            (confirmAction === ACTION_TYPES.CHANGE_PLAN && loadingPauseSubscription) ||
-                            (confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL && loadingPauseSubscription)
-                        }
-                        loading={
-                            (confirmAction === ACTION_TYPES.CANCEL && loadingCancelSubscription) ||
-                            (confirmAction === ACTION_TYPES.PAUSE && loadingPauseSubscription) ||
-                            (confirmAction === ACTION_TYPES.RESUME && loadingPauseSubscription) ||
-                            (confirmAction === ACTION_TYPES.CHANGE_PLAN && loadingPauseSubscription) ||
-                            (confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL && loadingPauseSubscription)
-                        }
-                    >
-                        {confirmAction === ACTION_TYPES.CANCEL
-                            ? SUBSCRIPTION_MESSAGES.CANCEL.confirmText
-                            : confirmAction === ACTION_TYPES.PAUSE
-                                ? SUBSCRIPTION_MESSAGES.PAUSE.confirmText
-                                : confirmAction === ACTION_TYPES.CHANGE_PLAN_INITIAL
-                                    ? PLAN_CHANGE_MESSAGES.INITIAL.confirmText
-                                    : confirmAction === ACTION_TYPES.CHANGE_PLAN
-                                        ? PLAN_CHANGE_MESSAGES.INITIAL.confirmText
-                                        : confirmAction === ACTION_TYPES.RESUME
-                                            ? SUBSCRIPTION_MESSAGES.RESUME.confirmText
-                                            : 'Confirmar'
-                        }
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
+            <ActivationErrorModal
+                open={activeModal === MODAL_KEYS.ERROR_FEEDBACK}
+                onClose={handleCloseErrorModal}
+                errorType={errorInfo.type}
+                errorMessage={errorInfo.message}
+            />
 
 
             {/* Modal de comparación de planes */}
             <PlanComparisonModal
-                open={showComparisonModal}
-                onClose={() => setShowComparisonModal(false)}
+                open={activeModal === MODAL_KEYS.PLAN_COMPARISON}
+                onClose={() => setActiveModal(MODAL_KEYS.NONE)}
                 currentPlan={configDetail?.plan}
                 newPlan={selectedPlan}
+                supportMessage={ACTIVATION_SUPPORT_MESSAGE}
                 onConfirm={() => {
-                    setShowComparisonModal(false);
+                    setActiveModal(MODAL_KEYS.NONE);
                     // Proceder con el flujo normal de cambio de plan
                     handleChangePlan()
                 }}
             />
 
-            {configDetail && showProductSelectionModal && <ProductSelectionModal
-                open={showProductSelectionModal}
-                onClose={() => setShowProductSelectionModal(false)}
+            {configDetail && activeModal === MODAL_KEYS.PRODUCT_SELECTION && <ProductSelectionModal
+                open
+                onClose={() => setActiveModal(MODAL_KEYS.NONE)}
                 newPlan={selectedPlan}
                 onConfirm={handleProductSelectionConfirm}
+                supportMessage={ACTIVATION_SUPPORT_MESSAGE}
             />}
 
-            {configDetail && showCategorySelectionModal && <CategorySelectionModal
-                open={showCategorySelectionModal}
-                onClose={() => showCategorySelectionModal(false)}
+            {configDetail && activeModal === MODAL_KEYS.CATEGORY_SELECTION && <CategorySelectionModal
+                open
+                onClose={() => setActiveModal(MODAL_KEYS.NONE)}
                 newPlan={selectedPlan}
                 onConfirm={handleCategorySelectionConfirm}
+                supportMessage={ACTIVATION_SUPPORT_MESSAGE}
             />}
         </>
     )

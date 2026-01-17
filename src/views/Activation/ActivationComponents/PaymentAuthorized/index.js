@@ -1,5 +1,5 @@
 import React from 'react';
-import PropTypes from 'prop-types';
+import { usePaymentAuthorized } from '../../hooks/usePaymentAuthorized';
 import { makeStyles } from '@material-ui/core/styles';
 import Card from 'components/Card/Card.js';
 import CardHeader from 'components/Card/CardHeader.js';
@@ -61,8 +61,9 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-const PaymentAuthorized = ({ configDetail }) => {
+const PaymentAuthorized = () => {
     const classes = useStyles();
+    const { configDetail } = usePaymentAuthorized();
 
     return (
         <Card className={classes.card}>
@@ -98,10 +99,6 @@ const PaymentAuthorized = ({ configDetail }) => {
             </CardBody>
         </Card>
     );
-};
-
-PaymentAuthorized.propTypes = {
-    configDetail: PropTypes.object,
 };
 
 export default PaymentAuthorized;

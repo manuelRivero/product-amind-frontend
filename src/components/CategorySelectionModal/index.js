@@ -116,6 +116,11 @@ const useStyles = makeStyles((theme) => ({
         borderTop: '1px solid #e0e0e0',
         backgroundColor: '#fafafa',
     },
+    supportText: {
+        marginTop: theme.spacing(2),
+        color: theme.palette.text.secondary,
+        fontSize: '0.875rem',
+    },
 }))
 
 const CategorySelectionModal = ({
@@ -123,6 +128,7 @@ const CategorySelectionModal = ({
     onClose,
     newPlan,
     onConfirm,
+    supportMessage,
 }) => {
     const classes = useStyles()
     const dispatch = useDispatch()
@@ -342,6 +348,11 @@ const CategorySelectionModal = ({
                     </CardBody>
                 </Card>
 
+                {supportMessage && (
+                    <Typography className={classes.supportText}>
+                        {supportMessage}
+                    </Typography>
+                )}
             </DialogContent>
 
             <DialogActions className={classes.dialogActions}>
@@ -370,6 +381,7 @@ CategorySelectionModal.propTypes = {
     onClose: PropTypes.func.isRequired,
     newPlan: PropTypes.object.isRequired,
     onConfirm: PropTypes.func.isRequired,
+    supportMessage: PropTypes.string,
 }
 
 export default CategorySelectionModal 

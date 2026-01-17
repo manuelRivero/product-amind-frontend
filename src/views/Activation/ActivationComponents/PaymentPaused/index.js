@@ -7,7 +7,8 @@ import CardBody from 'components/Card/CardBody.js';
 import Button from 'components/CustomButtons/Button';
 import PauseCircleFilledIcon from '@material-ui/icons/PauseCircleFilled';
 import moment from 'moment';
-import { isFreePlan } from '../../../../utils/planPermissions';
+import { ACTION_TYPES } from '../../../const';
+import { usePausePayment } from '../../hooks/usePausePayment';
 
 const useStyles = makeStyles((theme) => ({
     card: {
@@ -89,17 +90,16 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-const PaymentPaused = ({ 
-    configDetail, 
-    lastPauseDate, 
-    loadingCancelSubscription, 
-    handleConfirmAction, 
-    ACTION_TYPES 
+const PaymentPaused = ({
+    handleConfirmAction
 }) => {
     const classes = useStyles();
-    
-    // Verificar si el plan actual es gratuito
-    const isCurrentPlanFree = isFreePlan(configDetail?.plan);
+    const {
+        configDetail,
+        lastPauseDate,
+        loadingCancelSubscription,
+        isCurrentPlanFree
+    } = usePausePayment();
 
     return (
         <Card className={classes.card}>
@@ -113,13 +113,13 @@ const PaymentPaused = ({
             </CardHeader>
             <CardBody>
                 <div className={classes.subscriptionPausedBanner}>
-                    Tu subscripción está pausada temporalmente
+                    Tu suscripción está pausada temporalmente
                     <PauseCircleFilledIcon style={{ marginLeft: 12, fontSize: 32 }} />
                 </div>
                 <p className={classes.description} style={{ marginTop: 0 }}>
-                    Por favor contacta a soporte para reactivar tu subscripción y continuar operando tu tienda.
+                    Por favor contacta a soporte para reactivar tu suscripción y continuar operando tu tienda.
                 </p>
-                <h4 className={classes.subtitle}>Detalles de tu subscripción:</h4>
+                <h4 className={classes.subtitle}>Detalles de tu suscripción:</h4>
                 <ul className={classes.subscriptionDetailsList}>
                     <li className={classes.subscriptionDetailItem}>
                         <div className={classes.subscriptionDetailBullet}></div>
@@ -186,11 +186,7 @@ const PaymentPaused = ({
 };
 
 PaymentPaused.propTypes = {
-    configDetail: PropTypes.object,
-    lastPauseDate: PropTypes.string,
-    loadingCancelSubscription: PropTypes.bool,
     handleConfirmAction: PropTypes.func.isRequired,
-    ACTION_TYPES: PropTypes.object.isRequired,
 };
 
 export default PaymentPaused;

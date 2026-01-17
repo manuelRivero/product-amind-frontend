@@ -1,11 +1,11 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
 import Card from 'components/Card/Card.js';
 import CardHeader from 'components/Card/CardHeader.js';
 import CardBody from 'components/Card/CardBody.js';
 import CancelIcon from '@material-ui/icons/Cancel';
 import moment from 'moment';
+import { useCancelPayment } from '../../hooks/useCancelPayment';
 
 const useStyles = makeStyles((theme) => ({
     card: {
@@ -78,8 +78,9 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-const PaymentCancelled = ({ configDetail, lastCancelDate }) => {
+const PaymentCancelled = () => {
     const classes = useStyles();
+    const { configDetail, lastCancelDate } = useCancelPayment();
 
     return (
         <Card className={classes.card}>
@@ -128,11 +129,6 @@ const PaymentCancelled = ({ configDetail, lastCancelDate }) => {
             </CardBody>
         </Card>
     );
-};
-
-PaymentCancelled.propTypes = {
-    configDetail: PropTypes.object,
-    lastCancelDate: PropTypes.string,
 };
 
 export default PaymentCancelled;
