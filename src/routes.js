@@ -26,6 +26,7 @@ import SettingsIcon from '@material-ui/icons/Settings'
 import DescriptionIcon from '@material-ui/icons/Description'
 // core components/views for Admin layout
 import DashboardPage from 'views/Dashboard/Dashboard.js'
+import DailyComparison from 'views/DailyComparison'
 
 import Products from 'views/Products'
 import Login from 'views/Login'
@@ -70,6 +71,15 @@ const dashboardRoutes = [
         layout: '/admin',
         needConfig: true,
         permission: { resource: 'reports', action: 'read' },
+        childrens: [
+            {
+                path: '/daily-comparison',
+                name: 'Analisis comparativo',
+                component: DailyComparison,
+                noshow: true,
+            },
+            
+        ],
     },
     {
         path: '/orders',

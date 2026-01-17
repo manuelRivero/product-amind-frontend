@@ -12,6 +12,9 @@ import { getSales } from 'store/sales'
 import TotalSalesSelect from '../totalSalesSelect'
 import moment from 'moment'
 import { Box } from '@material-ui/core'
+import { Link } from 'react-router-dom'
+import Button from 'components/CustomButtons/Button'
+import SearchIcon from '@material-ui/icons/Search'
 // import io from 'socket.io-client'
 // import { userAdded } from 'store/dashboard'
 
@@ -27,14 +30,24 @@ const useStyles = makeStyles(() => ({
     selectorContainer: {
         flexGrow: 0,
     },
+    ctaContainer: {
+        marginTop: '0.75rem',
+        display: 'flex',
+        justifyContent: 'center',
+    },
+    ctaContent: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+    },
     // Estilos para el resumen financiero
     financialSummary: {
         display: 'flex',
         justifyContent: 'space-around',
         flexWrap: 'wrap',
-        gap: '1rem',
+        gap: '.5rem',
         marginTop: '1rem',
-        padding: '1rem',
+        padding: '.5rem',
         backgroundColor: '#f5f5f5',
         borderRadius: '8px',
     },
@@ -69,8 +82,8 @@ export default function MainStats() {
     // Función para cargar datos completos de todas las páginas
     const loadCompleteData = async (selectedDate) => {
         try {
-            const dateFrom = moment(selectedDate, 'DD-MM-YYYY').startOf('month').format('DD-MM-YYYY')
-            const dateTo = moment(selectedDate, 'DD-MM-YYYY').endOf('month').format('DD-MM-YYYY')
+            const dateFrom = moment(selectedDate, 'DD-MM-YYYY').startOf('day').format('DD-MM-YYYY')
+            const dateTo = moment(selectedDate, 'DD-MM-YYYY').endOf('day').format('DD-MM-YYYY')
 
             // 1. Obtener primera página para obtener metadata
             const firstPageResponse = await dispatch(getSales({
@@ -184,7 +197,7 @@ export default function MainStats() {
 
         <Card>
             <CardHeader color="primary">
-                <h4 className={classes.cardTitleWhite}>Resumen Financiero del Mes</h4>
+                <h4 className={classes.cardTitleWhite}>Resumen Financiero del Dia</h4>
             </CardHeader>
             <CardBody>
                 <div className={classes.container}>
@@ -192,28 +205,41 @@ export default function MainStats() {
                         <TotalSalesSelect onDateChange={handleDaylySaleDate} />
                     </div>
                 </div>
-                
-                {/* Resumen financiero del mes */}
+                {/* Resumen financiero del dia */}
                 <Box className={classes.financialSummary}>
                     <div className={classes.financialItem}>
                         <div className={classes.financialValue} style={{ color: '#1976d2' }}>
                             ${financialSummary.totalRevenue.toFixed(2)}
                         </div>
-                        <div className={classes.financialLabel}>Ingresos Totales del Mes</div>
+                        <div className={classes.financialLabel}>Ingresos Totales</div>
                     </div>
                     <div className={classes.financialItem}>
                         <div className={classes.financialValue} style={{ color: '#4CAF50' }}>
                             ${financialSummary.totalReceived.toFixed(2)}
                         </div>
-                        <div className={classes.financialLabel}>Total Recibido del Mes</div>
+                        <div className={classes.financialLabel}>Total Recibido</div>
                     </div>
                     <div className={classes.financialItem}>
                         <div className={classes.financialValue} style={{ color: '#ff9800' }}>
                             ${financialSummary.totalCommissions.toFixed(2)}
                         </div>
-                        <div className={classes.financialLabel}>Comisiones del Mes</div>
+                        <div className={classes.financialLabel}>Comisiones</div>
                     </div>
                 </Box>
+                <div className={classes.ctaContainer}>
+                    <Link to="/admin/dashboard/daily-comparison">
+                        <Button
+                            isLoading={false}
+                            variant="contained"
+                            color="primary"
+                            type="button"
+                        >
+                            <span className={classes.ctaContent}>
+                                <SearchIcon fontSize="small" />
+                            </span>
+                        </Button>
+                    </Link>
+                </div>
             </CardBody>
         </Card>
 
