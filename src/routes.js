@@ -17,13 +17,19 @@
 */
 // @material-ui/icons
 import Dashboard from '@material-ui/icons/Dashboard'
+import HomeIcon from '@material-ui/icons/Home'
 // import Person from "@material-ui/icons/Person";
 import StorefrontIcon from '@material-ui/icons/Storefront'
 import CategoryIcon from '@material-ui/icons/Category'
-import ListAltIcon from '@material-ui/icons/ListAlt'
+import ReceiptIcon from '@material-ui/icons/Receipt'
+import LocalOfferIcon from '@material-ui/icons/LocalOffer'
+import ConfirmationNumberIcon from '@material-ui/icons/ConfirmationNumber'
 import ImageIcon from '@material-ui/icons/Image'
 import SettingsIcon from '@material-ui/icons/Settings'
 import DescriptionIcon from '@material-ui/icons/Description'
+import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet'
+import LockOpenIcon from '@material-ui/icons/LockOpen'
+import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 // core components/views for Admin layout
 import DashboardPage from 'views/Dashboard/Dashboard.js'
 import DailyComparison from 'views/DailyComparison'
@@ -55,7 +61,7 @@ const dashboardRoutes = [
     {
         path: '/inicio',
         name: 'Inicio',
-        icon: Dashboard,
+        icon: HomeIcon,
         component:  Home,
         layout: '/admin',
         needConfig: false,
@@ -84,7 +90,7 @@ const dashboardRoutes = [
     {
         path: '/orders',
         name: 'Ordenes',
-        icon: ListAltIcon,
+        icon: ReceiptIcon,
         component: Sales,
         layout: '/admin',
         needConfig: true,
@@ -102,7 +108,7 @@ const dashboardRoutes = [
    {
         path: '/offers',
         name: 'Promociones',
-        icon: ListAltIcon,
+        icon: LocalOfferIcon,
         component: Offers,
         layout: '/admin',
         needConfig: true,
@@ -127,7 +133,7 @@ const dashboardRoutes = [
     {
         path: '/coupons',
         name: 'Cupones',
-        icon: ListAltIcon,
+        icon: ConfirmationNumberIcon,
         component: Coupons,
         layout: '/admin',
         needConfig: true,
@@ -195,7 +201,7 @@ const dashboardRoutes = [
     {
         path: '/product-detail/:id',
         name: 'Detalle del producto',
-        icon: StorefrontIcon,
+        icon: InfoOutlinedIcon,
         component: ProductDetail,
         layout: '/admin',
         needConfig: true,
@@ -275,7 +281,7 @@ const dashboardRoutes = [
     {
         path: '/mercado-pago',
         name: 'Cuenta',
-        icon: Dashboard,
+        icon: AccountBalanceWalletIcon,
         component: Activation,
         layout: '/admin',
         needConfig: false,
@@ -295,7 +301,7 @@ const authRoutes = [
     {
         path: '/login',
         name: 'Dashboard',
-        icon: Dashboard,
+        icon: LockOpenIcon,
         component: Login,
         layout: '/auth',
     },

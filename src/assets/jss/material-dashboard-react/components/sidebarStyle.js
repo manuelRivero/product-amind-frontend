@@ -68,6 +68,24 @@ const sidebarStyle = (theme) => ({
             ...transition,
         },
     },
+    backdropCta: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: whiteColor,
+    },
+    backdropCtaText: {
+        backgroundColor: 'rgba(' + hexToRgb(blackColor) + ', 0.7)',
+        border: '1px solid rgba(' + hexToRgb(whiteColor) + ', 0.5)',
+        borderRadius: '20px',
+        padding: '10px 16px',
+        fontSize: '12px',
+        letterSpacing: '0.6px',
+        textTransform: 'uppercase',
+        cursor: 'pointer',
+        color: whiteColor,
+        outline: 'none',
+    },
     drawerPaperRTL: {
         [theme.breakpoints.up('md')]: {
             left: 'auto !important',

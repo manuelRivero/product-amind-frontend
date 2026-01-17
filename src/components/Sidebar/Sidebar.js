@@ -6,6 +6,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 // @material-ui/core components
 import { makeStyles } from '@material-ui/core/styles'
 import Drawer from '@material-ui/core/Drawer'
+import Backdrop from '@material-ui/core/Backdrop'
 import Hidden from '@material-ui/core/Hidden'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
@@ -22,6 +23,27 @@ export default function Sidebar(props) {
     const classes = useStyles()
     let location = useLocation()
     const [activeTab, setActiveTab] = useState(null)
+    const isMobile =
+        typeof window !== 'undefined' && window.innerWidth < 960
+
+    const BackdropWithCta = (backdropProps) => (
+        <Backdrop
+            {...backdropProps}
+            className={classNames(backdropProps.className, classes.backdropCta)}
+        >
+            <button
+                type="button"
+                className={classes.backdropCtaText}
+                onClick={(event) => {
+                    event.preventDefault()
+                    event.stopPropagation()
+                    props.handleDrawerToggle()
+                }}
+            >
+                Cerrar menú
+            </button>
+        </Backdrop>
+    )
     // verifies if routeName is the one active (in browser input)
     function activeRoute(routeName) {
         return location.pathname.includes(routeName)
@@ -72,12 +94,15 @@ export default function Sidebar(props) {
                         >
                             <ListItem
                                 button
-                                className={classes.itemLink + listItemClasses}
+                                className={classNames(
+                                    classes.itemLink,
+                                    listItemClasses
+                                )}
                                 onClick={() => {
                                     setActiveTab(key)
                                     // Si no tiene hijos, cerrar el sidebar SOLO en mobile
                                     if (
-                                        (typeof window !== 'undefined' && window.innerWidth < 960) &&
+                                        isMobile &&
                                         (!prop.childrens || !hasVisibleRoutes(prop))
                                     ) {
                                         props.handleDrawerToggle()
@@ -188,6 +213,7 @@ export default function Sidebar(props) {
                     onClose={props.handleDrawerToggle}
                     ModalProps={{
                         keepMounted: true, // Better open performance on mobile.
+                        BackdropComponent: BackdropWithCta,
                     }}
                 >
                     <div className={classes.sidebarWrapper}>
