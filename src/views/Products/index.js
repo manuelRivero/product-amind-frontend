@@ -60,6 +60,32 @@ const useStyles = makeStyles({
         color: '#999',
     },
     cardTitle: { color: '#3C4858' },
+    cardTitleWhite: {
+        color: '#FFFFFF',
+        marginTop: 0,
+        minHeight: 'auto',
+        fontWeight: '300',
+        fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
+        marginBottom: '3px',
+        textDecoration: 'none',
+    },
+    cardCategoryWhite: {
+        color: '#fff',
+        margin: 0,
+        fontSize: '14px',
+        marginTop: 0,
+        marginBottom: 0,
+    },
+    ctaRow: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        gap: '1rem',
+        margin: '1rem 0',
+        padding: 0,
+        width: '100%',
+    },
     pagination: {
         display: 'flex',
         margin: 0,
@@ -89,12 +115,6 @@ const useStyles = makeStyles({
             color: '#00ACC1',
         },
     },
-    addProductWrapper: {
-        display: 'flex',
-        justifyContent: 'flex-end',
-        alignItems: 'flex-end',
-        height: '100%',
-    },
     addProductContainer: {
         display: 'flex',
         alignItems: 'center',
@@ -108,12 +128,6 @@ const useStyles = makeStyles({
         marginTop: '1rem',
         display: 'flex',
         gap: '1rem',
-    },
-    inflationButtonContainer: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '.5rem',
-        alignItems: 'flex-end',
     },
 })
 
@@ -254,45 +268,12 @@ export default function Products() {
                                     Aquí puedes visualizar tu listado de
                                     productos
                                 </p>
-                            </GridItem>
-                            <GridItem xs={12} sm={12} md={6}>
-                                <Box className={classes.addProductWrapper}>
-                                    <Box
-                                        className={classes.inflationButtonContainer}
-                                    >
-                                        <Box
-                                            className={classes.addProductContainer}
-                                        >
-                                            <p
-                                                className={
-                                                    classes.cardCategoryWhite
-                                                }
-                                            >
-                                                Agrega un nuevo producto
-                                            </p>
-                                            <Link to="/admin/products/add-product">
-                                                <Button
-                                                    isLoading={false}
-                                                    variant="contained"
-                                                    color="white"
-                                                    type="button"
-                                                    size="sm"
-                                                    justIcon
-                                                >
-                                                    <AddIcon />
-                                                </Button>
-                                            </Link>
-                                        </Box>
-                                        <Box
-                                            className={classes.addProductContainer}
-                                        >
-                                            <p
-                                                className={
-                                                    classes.cardCategoryWhite
-                                                }
-                                            >
-                                                Aplicar ajuste inflacionario
-                                            </p>
+                                <Box className={classes.ctaRow}>
+                                    <Box className={classes.addProductContainer}>
+                                        <p className={classes.cardCategoryWhite}>
+                                            Agrega un nuevo producto
+                                        </p>
+                                        <Link to="/admin/products/add-product">
                                             <Button
                                                 isLoading={false}
                                                 variant="contained"
@@ -300,11 +281,26 @@ export default function Products() {
                                                 type="button"
                                                 size="sm"
                                                 justIcon
-                                                onClick={() => setOpenInflationModal(true)}
                                             >
-                                                <TrendingUpIcon />
+                                                <AddIcon />
                                             </Button>
-                                        </Box>
+                                        </Link>
+                                    </Box>
+                                    <Box className={classes.addProductContainer}>
+                                        <p className={classes.cardCategoryWhite}>
+                                            Aplicar ajuste inflacionario
+                                        </p>
+                                        <Button
+                                            isLoading={false}
+                                            variant="contained"
+                                            color="white"
+                                            type="button"
+                                            size="sm"
+                                            justIcon
+                                            onClick={() => setOpenInflationModal(true)}
+                                        >
+                                            <TrendingUpIcon />
+                                        </Button>
                                     </Box>
                                 </Box>
                             </GridItem>

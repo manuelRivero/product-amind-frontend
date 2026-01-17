@@ -34,6 +34,21 @@ const useStyles = makeStyles({
         alignItems: 'center',
         gap: '.5rem',
     },
+    ctaRow: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        gap: '1rem',
+        margin: '1rem 0',
+        padding: 0,
+        width: '100%',
+    },
+    cardCategory: {
+        color: '#999',
+        margin: 0,
+        fontSize: '14px',
+    },
     cardCategoryWhite: {
         color: '#FFFFFF',
         marginTop: '0px',
@@ -100,7 +115,7 @@ export default function Coupons() {
                                 <p className={classes.cardCategoryWhite}>
                                     Aquí puedes ver, agregar, editar y eliminar cupones de descuento para tu tienda.
                                 </p>
-                                <div className={classes.cardHeaderActions}>
+                                <div className={classes.ctaRow}>
                                     <div className={classes.cardHeaderActionsInner}>
                                         <p className={classes.cardCategoryWhite}>
                                             Agregar nuevo cupón
