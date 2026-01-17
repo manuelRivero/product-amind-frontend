@@ -26,7 +26,6 @@ import { getViewMode } from './activationUtils'
 import {
     ACTIVATION_ERROR_TYPES,
     ACTIVATION_SUPPORT_MESSAGE,
-    ACTIVATION_VIEW_STATES,
     MODAL_KEYS,
     VIEW_MODE_KEYS
 } from './activationConstants'
@@ -89,14 +88,7 @@ const Activation = () => {
     const [selectedCategoryForPlanChange, setSelectedCategoryForPlanChange] = useState(null)
     const [showCardForm, setShowCardForm] = useState(false)
 
-        // Actualizar viewMode cuando cambian los flags
-        React.useEffect(() => {
-            setViewMode(getViewMode({
-                viewState,
-                meta,
-                validMPToken
-            }));
-        }, [viewState, meta, validMPToken]);
+    // Nota: sin canal push desde backend, evitamos recalcular viewMode
     
 
     useEffect(() => {
@@ -284,7 +276,7 @@ const Activation = () => {
         console.log('Cambiando de plan inicial')
         setActiveModal(MODAL_KEYS.NONE)
         setConfirmAction(null)
-        setViewMode(VIEW_MODE_KEYS.PAYMENT_FORM)
+        setViewMode(VIEW_MODE_KEYS.PLAN_SELECTION)
     }
 
     const actionHandlers = {
@@ -349,7 +341,6 @@ const Activation = () => {
                 return (
                     <PlanSelection
                         setViewMode={setViewMode}
-                        isSubscriptionActive={viewState === ACTIVATION_VIEW_STATES.ACTIVE}
                         setSelectedPlan={setSelectedPlan}
                         setShowComparisonModal={() => setActiveModal(MODAL_KEYS.PLAN_COMPARISON)}
                     />

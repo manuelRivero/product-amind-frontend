@@ -116,7 +116,6 @@ const useStyles = makeStyles((theme) => ({
 
 const PlanSelection = ({
     setViewMode,
-    isSubscriptionActive,
     setSelectedPlan,
     setShowComparisonModal
 }) => {
@@ -173,11 +172,12 @@ const PlanSelection = ({
                 <CardBody>
                     <GridContainer>
                         {plans
-                            .filter((plan) =>
-                                isSubscriptionActive
-                                    ? plan._id !== configDetail?.plan?._id
-                                    : true
-                            )
+                            .filter((plan) => {
+                                if (!configDetail?.plan?._id) {
+                                    return true;
+                                }
+                                return plan._id !== configDetail.plan._id;
+                            })
                             .map((plan) => (
                                 <GridItem xs={12} sm={6} md={4} key={plan._id}>
                                     <Card className={highlightPlans.includes(plan._id) ? `${classes.card} ${classes.planGlow}` : classes.card}>
@@ -279,7 +279,6 @@ const PlanSelection = ({
 
 PlanSelection.propTypes = {
     setViewMode: PropTypes.func.isRequired,
-    isSubscriptionActive: PropTypes.bool,
     setSelectedPlan: PropTypes.func.isRequired,
     setShowComparisonModal: PropTypes.func.isRequired
 };
