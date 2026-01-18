@@ -179,6 +179,11 @@ export default function PendingOrders() {
     // Estado para mantener los datos de la página 0 (para badges)
     const [deliveryPage0Data, setDeliveryPage0Data] = useState(null)
     const [pickUpPage0Data, setPickUpPage0Data] = useState(null)
+    const [tabValue, setTabValue] = useState(0)
+
+    const handleTabChange = (event, newValue) => {
+        setTabValue(newValue)
+    }
 
     // Cargar datos iniciales para ambos tabs
     useEffect(() => {
@@ -406,12 +411,6 @@ export default function PendingOrders() {
     // Usar los datos de la página 0 para el badge
     const deliveryOrdersCount = (deliveryPage0Data?.data?.sales || []).filter(order => order.status === 'PAGADO').length
     const pickUpOrdersCount = (pickUpPage0Data?.data?.sales || []).filter(order => order.status === 'PAGADO').length
-
-    const [tabValue, setTabValue] = useState(0)
-
-    const handleTabChange = (event, newValue) => {
-        setTabValue(newValue)
-    }
 
     return (
         <div>
