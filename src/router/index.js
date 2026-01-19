@@ -53,6 +53,18 @@ export default function Router() {
                 ) : (
                     <>
                         <Route path="/auth" component={Auth} />
+                        <Route exact path="/">
+                            <RedirectWithQuery from="/" to="/auth/login" />
+                        </Route>
+                        <Route exact path="/auth/forgot-password">
+                            <RedirectWithQuery from="/auth/forgot-password" to="/auth/forgot-password" />
+                        </Route>
+                        <Route exact path="/auth/password-reset">
+                            <RedirectWithQuery from="/auth/password-reset" to="/auth/password-reset" />
+                        </Route>
+                        <Route exact path="/auth/password-reset/success">
+                            <RedirectWithQuery from="/auth/password-reset/success" to="/auth/password-reset/success" />
+                        </Route>
                         <Redirect from="/" to="/auth/login" />
                     </>
                 )}

@@ -9,7 +9,7 @@ import { makeStyles, TextField } from '@material-ui/core'
 import Button from "./../../components/CustomButtons/Button"
 import { useDispatch } from 'react-redux'
 import { login } from 'store/auth'
-import { useHistory } from 'react-router-dom/cjs/react-router-dom.min'
+import { useHistory, Link } from 'react-router-dom/cjs/react-router-dom.min'
 import { getTenantForLogin } from '../../utils/tenant'
 
 // schema
@@ -38,6 +38,10 @@ const useStyles = makeStyles((theme) => {
         },
         inputAlert: {
             fontSize: theme.spacing(1.5),
+            textAlign: 'center',
+        },
+        linkWrapper: {
+            marginTop: theme.spacing(2),
             textAlign: 'center',
         },
     }
@@ -160,6 +164,9 @@ export default function Login() {
                         </Button>
                     </div>
                 </form>
+                <div className={classes.linkWrapper}>
+                    <Link to="/auth/forgot-password">Olvidé mi contraseña</Link>
+                </div>
             </div>
         </div>
     )

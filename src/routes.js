@@ -36,6 +36,9 @@ import DailyComparison from 'views/DailyComparison'
 
 import Products from 'views/Products'
 import Login from 'views/Login'
+import ForgotPassword from 'views/PasswordReset/ForgotPassword'
+import PasswordReset from 'views/PasswordReset/PasswordReset'
+import PasswordResetSuccess from 'views/PasswordReset/PasswordResetSuccess'
 // import UploadImagesFromZip from 'views/uploadImagesFromZip'
 import AddProducts from 'views/AddProducts'
 import Sales from 'views/Sales'
@@ -303,6 +306,27 @@ const authRoutes = [
         name: 'Dashboard',
         icon: LockOpenIcon,
         component: Login,
+        layout: '/auth',
+    },
+    {
+        path: '/forgot-password',
+        name: 'Olvidé mi contraseña',
+        icon: LockOpenIcon,
+        component: ForgotPassword,
+        layout: '/auth',
+    },
+    {
+        path: '/password-reset/success',
+        name: 'Contraseña actualizada',
+        icon: LockOpenIcon,
+        component: PasswordResetSuccess,
+        layout: '/auth',
+    },
+    {
+        path: '/password-reset',
+        name: 'Restablecer contraseña',
+        icon: LockOpenIcon,
+        component: PasswordReset,
         layout: '/auth',
     },
 ]

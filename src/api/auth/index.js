@@ -15,3 +15,28 @@ export const getUserPermissions = (userId, token, tenant) => {
         }
     })
 }
+
+export const requestPasswordReset = ({ email, tenant }) => {
+    return client.post(`api/auth/password-reset/request`, { email }, {
+        params: {
+            tenant,
+        },
+    })
+}
+
+export const validatePasswordResetToken = ({ token, tenant }) => {
+    return client.get(`api/auth/password-reset`, {
+        params: {
+            token,
+            tenant,
+        },
+    })
+}
+
+export const confirmPasswordReset = ({ token, newPassword, tenant }) => {
+    return client.post(`api/auth/password-reset`, { token, newPassword }, {
+        params: {
+            tenant,
+        },
+    })
+}
