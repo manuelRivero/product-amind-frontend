@@ -17,6 +17,9 @@ const useStyles = makeStyles((theme) => ({
         textAlign: 'center',
         marginBottom: theme.spacing(2),
     },
+    title: {
+        textAlign: 'center',
+    },
 }))
 
 export default function PasswordResetSuccess() {
@@ -24,7 +27,7 @@ export default function PasswordResetSuccess() {
 
     return (
         <div className={classes.wrapper}>
-            <h2>{PASSWORD_RESET_COPY.successTitle}</h2>
+            <h3 className={classes.title}>{PASSWORD_RESET_COPY.successTitle}</h3>
             <p className={classes.helperText}>{PASSWORD_RESET_COPY.successDescription}</p>
             <Button variant="contained" color="primary" component={Link} to="/auth/login">
                 {PASSWORD_RESET_COPY.successCta}

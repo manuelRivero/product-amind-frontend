@@ -40,6 +40,9 @@ const useStyles = makeStyles((theme) => ({
         textAlign: 'center',
         marginBottom: theme.spacing(2),
     },
+    title: {
+        textAlign: 'center',
+    },
     linkWrapper: {
         marginTop: theme.spacing(2),
         textAlign: 'center',
@@ -104,7 +107,7 @@ export default function PasswordReset() {
     if (status === 'checking') {
         return (
             <div className={classes.wrapper}>
-                <h2>{PASSWORD_RESET_COPY.resetTitle}</h2>
+                <h3 className={classes.title}>{PASSWORD_RESET_COPY.resetTitle}</h3>
                 <p className={classes.helperText}>{PASSWORD_RESET_COPY.validating}</p>
                 {validating && <p className={classes.inputAlert}>Un momento...</p>}
             </div>
@@ -114,7 +117,7 @@ export default function PasswordReset() {
     if (status === 'invalid') {
         return (
             <div className={classes.wrapper}>
-                <h2>{PASSWORD_RESET_COPY.invalidTitle}</h2>
+                <h4 className={classes.title}>{PASSWORD_RESET_COPY.invalidTitle}</h4>
                 <p className={classes.helperText}>
                     {tokenMessage || PASSWORD_RESET_COPY.invalidDescription}
                 </p>
@@ -134,7 +137,7 @@ export default function PasswordReset() {
 
     return (
         <div className={classes.wrapper}>
-            <h2>{PASSWORD_RESET_COPY.resetTitle}</h2>
+            <h3 className={classes.title}>{PASSWORD_RESET_COPY.resetTitle}</h3>
             <p className={classes.helperText}>{PASSWORD_RESET_COPY.resetDescription}</p>
             <form onSubmit={handleSubmit(submit)} autoComplete="false">
                 <div className={classes.inputWrapper}>

@@ -18,7 +18,7 @@ const useStyles = makeStyles((theme) => ({
         backgroundColor: theme.palette.white,
         padding: theme.spacing(2),
         borderRadius: theme.spacing(1),
-        maxWidth: '400px',
+        maxWidth: '300px',
     },
     inputWrapper: {
         marginBottom: theme.spacing(4),
@@ -35,6 +35,9 @@ const useStyles = makeStyles((theme) => ({
         fontSize: theme.spacing(1.5),
         textAlign: 'center',
         marginBottom: theme.spacing(2),
+    },
+    title: {
+        textAlign: 'center',
     },
     linkWrapper: {
         marginTop: theme.spacing(2),
@@ -55,7 +58,7 @@ export default function ForgotPassword() {
 
     return (
         <div className={classes.wrapper}>
-            <h2>{PASSWORD_RESET_COPY.requestTitle}</h2>
+            <h3 className={classes.title}>{PASSWORD_RESET_COPY.requestTitle}</h3>
             <p className={classes.helperText}>{PASSWORD_RESET_COPY.requestDescription}</p>
             <form onSubmit={handleSubmit(submit)} autoComplete="false">
                 <div className={classes.inputWrapper}>

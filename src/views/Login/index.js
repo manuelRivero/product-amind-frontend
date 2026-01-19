@@ -5,12 +5,14 @@ import { useForm, Controller } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 //components
-import { makeStyles, TextField } from '@material-ui/core'
+import { makeStyles, TextField, InputAdornment, IconButton } from '@material-ui/core'
 import Button from "./../../components/CustomButtons/Button"
 import { useDispatch } from 'react-redux'
 import { login } from 'store/auth'
 import { useHistory, Link } from 'react-router-dom/cjs/react-router-dom.min'
 import { getTenantForLogin } from '../../utils/tenant'
+import Visibility from '@material-ui/icons/Visibility'
+import VisibilityOff from '@material-ui/icons/VisibilityOff'
 
 // schema
 const schema = yup.object({
@@ -40,6 +42,9 @@ const useStyles = makeStyles((theme) => {
             fontSize: theme.spacing(1.5),
             textAlign: 'center',
         },
+        title: {
+            textAlign: 'center',
+        },
         linkWrapper: {
             marginTop: theme.spacing(2),
             textAlign: 'center',
@@ -60,6 +65,7 @@ export default function Login() {
     //states
     const [formAlert, setFormAlert] = useState(null)
     const [loadingSubmit, setLoadingSubmit] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
 
     const submit = async (values) => {
         setFormAlert(null)
@@ -101,7 +107,7 @@ export default function Login() {
     return (
         <div className={classes.wrapper}>
             <div className={classes.content}>
-                <h2>Inicio de sesión</h2>
+                <h3 className={classes.title}>Inicio de sesión</h3>
                 <form onSubmit={handleSubmit(submit)} autoComplete={'false'}>
                     <div className={classes.inputWrapper}>
                         <Controller
@@ -135,13 +141,36 @@ export default function Login() {
                                 <>
                                     <TextField
                                         size="small"
-                                        type={'password'}
+                                        type={showPassword ? 'text' : 'password'}
                                         fullWidth
                                         value={field.value}
                                         onChange={(e) => field.onChange(e)}
                                         id="password"
                                         label="Contraseña"
                                         variant="outlined"
+                                        InputProps={{
+                                            endAdornment: (
+                                                <InputAdornment position="end">
+                                                    <IconButton
+                                                        onClick={() =>
+                                                            setShowPassword((prev) => !prev)
+                                                        }
+                                                        edge="end"
+                                                        aria-label={
+                                                            showPassword
+                                                                ? 'Ocultar contraseña'
+                                                                : 'Mostrar contraseña'
+                                                        }
+                                                    >
+                                                        {showPassword ? (
+                                                            <VisibilityOff />
+                                                        ) : (
+                                                            <Visibility />
+                                                        )}
+                                                    </IconButton>
+                                                </InputAdornment>
+                                            ),
+                                        }}
                                     />
                                     {fieldState.error && (
                                         <p className={classes.inputAlert}>
